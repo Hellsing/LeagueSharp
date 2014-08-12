@@ -1,0 +1,4 @@
+LeagueSharp
+===========
+
+Assemblies for League#
