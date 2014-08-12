@@ -2,10 +2,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using LeagueSharp;
 using LeagueSharp.Common;
 using SharpDX;
+using Color = System.Drawing.Color;
 
 namespace ViktorSharp
 {
@@ -57,6 +57,29 @@ namespace ViktorSharp
 
             // Register events
             Game.OnGameUpdate += Game_OnGameUpdate;
+            Drawing.OnDraw += Drawing_OnDraw;
+
+            // Print shit
+            Game.PrintChat("ViktorSharp has been loaded.");
+        }
+
+        private static void Drawing_OnDraw(EventArgs args)
+        {
+            // Spell ranges
+            foreach (var spell in spellList)
+            {
+                // Regular spell ranges
+                var circleEntry = menu.Item("range" + spell.Slot).GetValue<Circle>();
+                if (circleEntry.Active)
+                    Utility.DrawCircle(player.Position, spell.Range, circleEntry.Color);
+                // Extended E range
+                if (spell.Slot == SpellSlot.E)
+                {
+                    circleEntry = menu.Item("rangeEMax").GetValue<Circle>();
+                    if (circleEntry.Active)
+                        Utility.DrawCircle(player.Position, maxRangeE, circleEntry.Color);
+                }
+            }
         }
 
         private static void Game_OnGameUpdate(EventArgs args)
@@ -125,7 +148,7 @@ namespace ViktorSharp
         private static void predictCastE(Obj_AI_Hero target, bool longRange = false)
         {
             // Helpers
-            bool inRange = player.Distance(target) < E.Range;
+            bool inRange = Vector2.DistanceSquared(target.ServerPosition.To2D(), player.Position.To2D()) < E.Range * E.Range;
             Prediction.PredictionOutput prediction;
             bool spellCasted = false;
 
@@ -145,9 +168,9 @@ namespace ViktorSharp
             }
 
             // Minions
-            var nearMinions = (from minion in ObjectManager.Get<Obj_AI_Minion>() where minion.IsValidTarget(maxRangeE) select minion).ToList();
-            var innerMinions = new List<Obj_AI_Minion>();
-            var outerMinions = new List<Obj_AI_Minion>();
+            var nearMinions = MinionManager.GetMinions(player.Position, maxRangeE);
+            var innerMinions = new List<Obj_AI_Base>();
+            var outerMinions = new List<Obj_AI_Base>();
             foreach (var minion in nearMinions)
             {
                 if (Vector2.DistanceSquared(minion.ServerPosition.To2D(), player.Position.To2D()) < E.Range * E.Range)
@@ -177,6 +200,7 @@ namespace ViktorSharp
 
                 // Set new sourcePosition
                 E.From = pos1;
+                E.RangeCheckFrom = pos1;
 
                 // Set new range
                 E.Range = lengthE;
@@ -223,19 +247,20 @@ namespace ViktorSharp
                 E.Speed = speedE;
                 E.Range = rangeE;
                 E.From  = player.Position;
+                E.RangeCheckFrom = player.Position;
             }
 
             // Main target in extended range
-            else
+            else if (longRange)
             {
                 // Radius of the start point to search enemies in
                 float startPointRadius = 150;
 
                 // Get initial start point at the border of cast radius
-                Vector3 startPoint = player.Position + Vector3.Normalize(target.ServerPosition - player.Position) * E.Range;
+                Vector3 startPoint = player.Position + Vector3.Normalize(target.ServerPosition - player.Position) * rangeE;
 
                 // Potential start from postitions
-                var targets = (from champ in nearChamps where Vector2.DistanceSquared(champ.ServerPosition.To2D(), startPoint.To2D()) < startPointRadius * startPointRadius && Vector2.DistanceSquared(player.Position.To2D(), champ.ServerPosition.To2D()) < rangeE * rangeE select champ).ToList<Obj_AI_Hero>();
+                var targets = (from champ in nearChamps where Vector2.DistanceSquared(champ.ServerPosition.To2D(), startPoint.To2D()) < startPointRadius * startPointRadius && Vector2.DistanceSquared(player.Position.To2D(), champ.ServerPosition.To2D()) < rangeE * rangeE select champ).ToList();
                 if (targets.Count > 0)
                 {
                     // Sort table by health DEC
@@ -247,7 +272,7 @@ namespace ViktorSharp
                 }
                 else
                 {
-                    var minionTargets = (from minion in nearMinions where Vector2.DistanceSquared(minion.ServerPosition.To2D(), startPoint.To2D()) < startPointRadius * startPointRadius && Vector2.DistanceSquared(player.Position.To2D(), minion.ServerPosition.To2D()) < rangeE * rangeE select minion).ToList<Obj_AI_Minion>();
+                    var minionTargets = (from minion in nearMinions where Vector2.DistanceSquared(minion.ServerPosition.To2D(), startPoint.To2D()) < startPointRadius * startPointRadius && Vector2.DistanceSquared(player.Position.To2D(), minion.ServerPosition.To2D()) < rangeE * rangeE select minion).ToList();
                     if (minionTargets.Count > 0)
                     {
                         // Sort table by health DEC
@@ -265,15 +290,17 @@ namespace ViktorSharp
                 // Predict target position
                 E.From = pos1;
                 E.Range = lengthE;
+                E.RangeCheckFrom = pos1;
                 prediction = E.GetPrediction(target);
 
                 // Cast the E
                 if (prediction.HitChance == Prediction.HitChance.HighHitchance)
-                    castE(pos1, prediction.Position);
+                    castE(pos1, prediction.CastPosition);
 
                 // Reset spell
                 E.Range = rangeE;
                 E.From = player.Position;
+                E.RangeCheckFrom = player.Position;
             }
 
         }
@@ -313,7 +340,13 @@ namespace ViktorSharp
                 combo.AddItem(new MenuItem("extend",    "E extended range!").SetValue(new KeyBind('A', KeyBindType.Press)));
 
             // Drawings
-            //menu.AddSubMenu(new Menu("Drawings", "drawings"));
+            Menu drawings = new Menu("Drawings", "drawings");
+                menu.AddSubMenu(drawings);
+                drawings.AddItem(new MenuItem("rangeQ", "Q range").SetValue(new Circle(false, Color.FromArgb(150, Color.IndianRed))));
+                drawings.AddItem(new MenuItem("rangeW", "W range").SetValue(new Circle(false, Color.FromArgb(150, Color.IndianRed))));
+                drawings.AddItem(new MenuItem("rangeE", "E range").SetValue(new Circle(true, Color.FromArgb(150, Color.DarkRed))));
+                drawings.AddItem(new MenuItem("rangeEMax", "E max range").SetValue(new Circle(true, Color.FromArgb(150, Color.OrangeRed))));
+                drawings.AddItem(new MenuItem("rangeR", "R range").SetValue(new Circle(false, Color.FromArgb(150, Color.Red))));
 
             // Finalizing
             menu.AddToMainMenu();
