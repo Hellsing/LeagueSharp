@@ -97,6 +97,9 @@ namespace ViktorSharp
             // WaveClear
             if (menu.SubMenu("waveClear").Item("active").GetValue<KeyBind>().Active)
                 OnWaveClear();
+
+            // Ignite
+
         }
 
         private static void OnCombo()
@@ -146,7 +149,7 @@ namespace ViktorSharp
             {
                 foreach (var minion in MinionManager.GetMinions(player.Position, player.AttackRange))
                 {
-                    if (DamageLib.getDmg(minion, DamageLib.SpellType.Q) > minion.Health)
+                    if (DamageLib.getDmg(minion, DamageLib.SpellType.Q) > minion.Health && DamageLib.getDmg(minion, DamageLib.SpellType.AD) * 2 < minion.Health)
                     {
                         Q.Cast(minion);
                         break;
@@ -155,7 +158,7 @@ namespace ViktorSharp
             }
 
             if (useE)
-                predictCastMinionE();
+                predictCastMinionE(waveClearMenu.Item("numE").GetValue<Slider>().Value);
         }
 
         private static void Interrupter_OnPosibleToInterrupt(Obj_AI_Base unit, InterruptableSpell spell)
@@ -172,9 +175,14 @@ namespace ViktorSharp
 
         private static bool predictCastMinionE()
         {
+            return predictCastMinionE(-1);
+        }
+
+        private static bool predictCastMinionE(int requiredHitNumber)
+        {
             int hitNum = 0;
             Vector2 startPos = new Vector2(0, 0);
-            foreach(var minion in MinionManager.GetMinions(player.Position, rangeE))
+            foreach (var minion in MinionManager.GetMinions(player.Position, rangeE))
             {
                 var farmLocation = MinionManager.GetBestLineFarmLocation((from mnion in MinionManager.GetMinions(minion.Position, lengthE) select mnion.Position.To2D()).ToList<Vector2>(), E.Width, lengthE);
                 if (hitNum == 0 || farmLocation.MinionsHit > hitNum)
@@ -185,16 +193,21 @@ namespace ViktorSharp
             }
 
             if (startPos.X != 0 && startPos.Y != 0)
-                return predictCastMinionE(startPos);
+                return predictCastMinionE(startPos, requiredHitNumber);
 
             return false;
         }
 
         private static bool predictCastMinionE(Vector2 fromPosition)
         {
+            return predictCastMinionE(fromPosition, -1);
+        }
+
+        private static bool predictCastMinionE(Vector2 fromPosition, int requiredHitNumber)
+        {
             var farmLocation = MinionManager.GetBestLineFarmLocation(MinionManager.GetMinionsPredictedPositions(MinionManager.GetMinions(fromPosition.To3D(), lengthE), E.Delay, E.Width, speedE, fromPosition.To3D(), lengthE, false, Prediction.SkillshotType.SkillshotLine), E.Width, lengthE);
 
-            if (farmLocation.MinionsHit > 0)
+            if (farmLocation.MinionsHit >= requiredHitNumber)
             {
                 castE(fromPosition, farmLocation.Position);
                 return true;
@@ -408,6 +421,7 @@ namespace ViktorSharp
             menu.AddSubMenu(waveClear);
             waveClear.AddItem(new MenuItem("useQ", "Use Q").SetValue(false));
             waveClear.AddItem(new MenuItem("useE", "Use E").SetValue(true));
+            waveClear.AddItem(new MenuItem("numE", "Number of minions to hit with E").SetValue<Slider>(new Slider(3, 1, 10)));
             waveClear.AddItem(new MenuItem("active", "WaveClear active!").SetValue(new KeyBind('V', KeyBindType.Press)));
 
             // Misc
