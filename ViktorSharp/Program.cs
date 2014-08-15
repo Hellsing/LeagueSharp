@@ -71,13 +71,13 @@ namespace ViktorSharp
             foreach (var spell in spellList)
             {
                 // Regular spell ranges
-                var circleEntry = menu.Item("range" + spell.Slot).GetValue<Circle>();
+                var circleEntry = menu.Item("drawRange" + spell.Slot).GetValue<Circle>();
                 if (circleEntry.Active)
                     Utility.DrawCircle(player.Position, spell.Range, circleEntry.Color);
                 // Extended E range
                 if (spell.Slot == SpellSlot.E)
                 {
-                    circleEntry = menu.Item("rangeEMax").GetValue<Circle>();
+                    circleEntry = menu.Item("drawRangeEMax").GetValue<Circle>();
                     if (circleEntry.Active)
                         Utility.DrawCircle(player.Position, maxRangeE, circleEntry.Color);
                 }
@@ -87,24 +87,24 @@ namespace ViktorSharp
         private static void Game_OnGameUpdate(EventArgs args)
         {
             // Combo
-            if (menu.SubMenu("combo").Item("active").GetValue<KeyBind>().Active)
+            if (menu.SubMenu("combo").Item("comboActive").GetValue<KeyBind>().Active)
                 OnCombo();
 
             // Harass
-            if (menu.SubMenu("harass").Item("active").GetValue<KeyBind>().Active)
+            if (menu.SubMenu("harass").Item("harassActive").GetValue<KeyBind>().Active)
                 OnHarass();
 
             // WaveClear
-            if (menu.SubMenu("waveClear").Item("active").GetValue<KeyBind>().Active)
+            if (menu.SubMenu("waveClear").Item("waveActive").GetValue<KeyBind>().Active)
                 OnWaveClear();
         }
 
         private static void OnCombo()
         {
             Menu comboMenu = menu.SubMenu("combo");
-            bool useQ = comboMenu.Item("useQ").GetValue<bool>() && Q.IsReady();
-            bool useE = comboMenu.Item("useE").GetValue<bool>() && E.IsReady();
-            bool longRange = comboMenu.Item("extend").GetValue<KeyBind>().Active;
+            bool useQ = comboMenu.Item("comboUseQ").GetValue<bool>() && Q.IsReady();
+            bool useE = comboMenu.Item("comboUseE").GetValue<bool>() && E.IsReady();
+            bool longRange = comboMenu.Item("comboExtend").GetValue<KeyBind>().Active;
 
             if (useQ)
             {
@@ -124,7 +124,7 @@ namespace ViktorSharp
         private static void OnHarass()
         {
             Menu harassMenu = menu.SubMenu("harass");
-            bool useE = harassMenu.Item("useE").GetValue<bool>() && E.IsReady();
+            bool useE = harassMenu.Item("harassUseE").GetValue<bool>() && E.IsReady();
 
             if (useE)
             {
@@ -137,8 +137,8 @@ namespace ViktorSharp
         private static void OnWaveClear()
         {
             Menu waveClearMenu = menu.SubMenu("waveClear");
-            bool useQ = waveClearMenu.Item("useQ").GetValue<bool>() && Q.IsReady();
-            bool useE = waveClearMenu.Item("useE").GetValue<bool>() && E.IsReady();
+            bool useQ = waveClearMenu.Item("waveUseQ").GetValue<bool>() && Q.IsReady();
+            bool useE = waveClearMenu.Item("waveUseE").GetValue<bool>() && E.IsReady();
 
             if (useQ)
             {
@@ -153,18 +153,18 @@ namespace ViktorSharp
             }
 
             if (useE)
-                predictCastMinionE(waveClearMenu.Item("numE").GetValue<Slider>().Value + 1);
+                predictCastMinionE(waveClearMenu.Item("waveNumE").GetValue<Slider>().Value + 1);
         }
 
         private static void Interrupter_OnPosibleToInterrupt(Obj_AI_Base unit, InterruptableSpell spell)
         {
-            if (menu.SubMenu("misc").Item("interrupt").GetValue<bool>() && spell.DangerLevel == InterruptableDangerLevel.High && R.InRange(unit.ServerPosition))
+            if (menu.SubMenu("misc").Item("miscInterrupt").GetValue<bool>() && spell.DangerLevel == InterruptableDangerLevel.High && R.InRange(unit.ServerPosition))
                 R.Cast(unit.ServerPosition.To2D(), true);
         }
 
         private static void AntiGapcloser_OnEnemyGapcloser(ActiveGapcloser gapcloser)
         {
-            if (menu.SubMenu("misc").Item("gapcloser").GetValue<bool>() && W.InRange(gapcloser.End))
+            if (menu.SubMenu("misc").Item("miscGapcloser").GetValue<bool>() && W.InRange(gapcloser.End))
                 W.Cast(gapcloser.End.To2D(), true);
         }
 
@@ -398,41 +398,39 @@ namespace ViktorSharp
             // Combo
             Menu combo = new Menu("Combo", "combo");
             menu.AddSubMenu(combo);
-            combo.AddItem(new MenuItem("useQ",      "Use Q").SetValue(true));
-            //combo.AddItem(new MenuItem("useW",      "Use W").SetValue(true));
-            combo.AddItem(new MenuItem("useE",      "Use E").SetValue(true));
-            //combo.AddItem(new MenuItem("useR",      "Use R").SetValue(true));
-            combo.AddItem(new MenuItem("active",    "Combo active!").SetValue(new KeyBind(32, KeyBindType.Press)));
-            combo.AddItem(new MenuItem("extend",    "E extended range!").SetValue(new KeyBind('A', KeyBindType.Press)));
+            combo.AddItem(new MenuItem("comboUseQ",      "Use Q").SetValue(true));
+            combo.AddItem(new MenuItem("comboUseE",      "Use E").SetValue(true));
+            combo.AddItem(new MenuItem("comboActive",    "Combo active!").SetValue(new KeyBind(32, KeyBindType.Press)));
+            combo.AddItem(new MenuItem("comboExtend",    "E extended range!").SetValue(new KeyBind('A', KeyBindType.Press)));
 
             // Harass
             Menu harass = new Menu("Harass", "harass");
             menu.AddSubMenu(harass);
-            harass.AddItem(new MenuItem("useE", "Use E").SetValue(true));
-            harass.AddItem(new MenuItem("active", "Harass active!").SetValue(new KeyBind('X', KeyBindType.Press)));
+            harass.AddItem(new MenuItem("harassUseE",   "Use E").SetValue(true));
+            harass.AddItem(new MenuItem("harassActive", "Harass active!").SetValue(new KeyBind('X', KeyBindType.Press)));
 
             // WaveClear
             Menu waveClear = new Menu("WaveClear", "waveClear");
             menu.AddSubMenu(waveClear);
-            waveClear.AddItem(new MenuItem("useQ", "Use Q").SetValue(false));
-            waveClear.AddItem(new MenuItem("useE", "Use E").SetValue(true));
-            waveClear.AddItem(new MenuItem("numE", "Number of minions to hit with E").SetValue<Slider>(new Slider(3, 1, 10)));
-            waveClear.AddItem(new MenuItem("active", "WaveClear active!").SetValue(new KeyBind('V', KeyBindType.Press)));
+            waveClear.AddItem(new MenuItem("waveUseQ",    "Use Q").SetValue(false));
+            waveClear.AddItem(new MenuItem("waveUseE",    "Use E").SetValue(true));
+            waveClear.AddItem(new MenuItem("waveNumE",    "Minions to hit with E").SetValue<Slider>(new Slider(3, 1, 10)));
+            waveClear.AddItem(new MenuItem("waveActive",  "WaveClear active!").SetValue(new KeyBind('V', KeyBindType.Press)));
 
             // Misc
             Menu misc = new Menu("Misc", "misc");
             menu.AddSubMenu(misc);
-            misc.AddItem(new MenuItem("interrupt", "Use R to interrupt dangerous spells").SetValue(true));
-            misc.AddItem(new MenuItem("gapcloser", "Use W against gapclosers").SetValue(true));
+            misc.AddItem(new MenuItem("miscInterrupt", "Use R to interrupt dangerous spells").SetValue(true));
+            misc.AddItem(new MenuItem("miscGapcloser", "Use W against gapclosers").SetValue(true));
 
             // Drawings
             Menu drawings = new Menu("Drawings", "drawings");
             menu.AddSubMenu(drawings);
-            drawings.AddItem(new MenuItem("rangeQ",     "Q range").SetValue(new Circle(false, Color.FromArgb(150, Color.IndianRed))));
-            drawings.AddItem(new MenuItem("rangeW",     "W range").SetValue(new Circle(false, Color.FromArgb(150, Color.IndianRed))));
-            drawings.AddItem(new MenuItem("rangeE",     "E range").SetValue(new Circle(true, Color.FromArgb(150, Color.DarkRed))));
-            drawings.AddItem(new MenuItem("rangeEMax",  "E max range").SetValue(new Circle(true, Color.FromArgb(150, Color.OrangeRed))));
-            drawings.AddItem(new MenuItem("rangeR",     "R range").SetValue(new Circle(false, Color.FromArgb(150, Color.Red))));
+            drawings.AddItem(new MenuItem("drawRangeQ",     "Q range").SetValue(new Circle(false, Color.FromArgb(150, Color.IndianRed))));
+            drawings.AddItem(new MenuItem("drawRangeW",     "W range").SetValue(new Circle(false, Color.FromArgb(150, Color.IndianRed))));
+            drawings.AddItem(new MenuItem("drawRangeE",     "E range").SetValue(new Circle(true, Color.FromArgb(150, Color.DarkRed))));
+            drawings.AddItem(new MenuItem("drawRangeEMax",  "E max range").SetValue(new Circle(true, Color.FromArgb(150, Color.OrangeRed))));
+            drawings.AddItem(new MenuItem("drawRangeR",     "R range").SetValue(new Circle(false, Color.FromArgb(150, Color.Red))));
 
             // Finalizing
             menu.AddToMainMenu();
