@@ -97,18 +97,13 @@ namespace ViktorSharp
             // WaveClear
             if (menu.SubMenu("waveClear").Item("active").GetValue<KeyBind>().Active)
                 OnWaveClear();
-
-            // Ignite
-
         }
 
         private static void OnCombo()
         {
             Menu comboMenu = menu.SubMenu("combo");
             bool useQ = comboMenu.Item("useQ").GetValue<bool>() && Q.IsReady();
-            //bool useW = comboMenu.Item("useW").GetValue<bool>() && W.IsReady();
             bool useE = comboMenu.Item("useE").GetValue<bool>() && E.IsReady();
-            //bool useR = comboMenu.Item("useR").GetValue<bool>() && R.IsReady();
             bool longRange = comboMenu.Item("extend").GetValue<KeyBind>().Active;
 
             if (useQ)
@@ -158,19 +153,19 @@ namespace ViktorSharp
             }
 
             if (useE)
-                predictCastMinionE(waveClearMenu.Item("numE").GetValue<Slider>().Value);
+                predictCastMinionE(waveClearMenu.Item("numE").GetValue<Slider>().Value + 1);
         }
 
         private static void Interrupter_OnPosibleToInterrupt(Obj_AI_Base unit, InterruptableSpell spell)
         {
             if (menu.SubMenu("misc").Item("interrupt").GetValue<bool>() && spell.DangerLevel == InterruptableDangerLevel.High && R.InRange(unit.ServerPosition))
-                R.CastOnUnit(unit, true);
+                R.Cast(unit.ServerPosition.To2D(), true);
         }
 
         private static void AntiGapcloser_OnEnemyGapcloser(ActiveGapcloser gapcloser)
         {
-            if (menu.SubMenu("misc").Item("gapcloser").GetValue<bool>())
-                W.CastIfHitchanceEquals(gapcloser.Sender, Prediction.HitChance.HighHitchance, true);
+            if (menu.SubMenu("misc").Item("gapcloser").GetValue<bool>() && W.InRange(gapcloser.End))
+                W.Cast(gapcloser.End.To2D(), true);
         }
 
         private static bool predictCastMinionE()
@@ -310,7 +305,7 @@ namespace ViktorSharp
                 // Spell not casted
                 if (!spellCasted)
                     // Try casting on minion
-                    if (!predictCastMinionE(pos1.To2D()))
+                    if (!predictCastMinionE(pos1.To2D(), 1))
                         // Cast it directly
                         castE(pos1, E.GetPrediction(target).CastPosition);
 
