@@ -97,6 +97,51 @@ namespace ViktorSharp
             // WaveClear
             if (menu.SubMenu("waveClear").Item("waveActive").GetValue<KeyBind>().Active)
                 OnWaveClear();
+
+            // Auto W
+            if (W.IsReady() && menu.SubMenu("misc").Item("miscUseAutoW").GetValue<bool>())
+            {
+                int requiredHitNum = menu.SubMenu("misc").Item("miscNumAutoW").GetValue<Slider>().Value;
+                int hitNum = 0;
+                Vector2 castPosition = new Vector2();
+
+                foreach (var enemy in ObjectManager.Get<Obj_AI_Hero>())
+                {
+                    var prediction = W.GetPrediction(enemy);
+                    if (prediction.HitChance == Prediction.HitChance.HighHitchance && prediction.TargetsHit > hitNum)
+                    {
+                        hitNum = prediction.TargetsHit;
+                        castPosition = prediction.CastPosition.To2D();
+                    }
+                }
+
+                if (hitNum >= requiredHitNum)
+                    W.Cast(castPosition);
+            }
+            
+            // Auto R
+            if (R.IsReady() && menu.SubMenu("misc").Item("miscUseAutoR").GetValue<bool>())
+            {
+                int requiredHitNum = menu.SubMenu("misc").Item("miscNumAutoR").GetValue<Slider>().Value;
+                int hitNum = 0;
+                Vector2 castPosition = new Vector2();
+
+                foreach (var enemy in ObjectManager.Get<Obj_AI_Hero>())
+                {
+                    if (DamageLib.IsKillable(enemy, new []{ DamageLib.SpellType.R }))
+                    {
+                        var prediction = R.GetPrediction(enemy);
+                        if (prediction.HitChance == Prediction.HitChance.HighHitchance && prediction.TargetsHit > hitNum)
+                        {
+                            hitNum = prediction.TargetsHit;
+                            castPosition = prediction.CastPosition.To2D();
+                        }
+                    }
+                }
+
+                if (hitNum >= requiredHitNum)
+                    R.Cast(castPosition);
+            }
         }
 
         private static void OnCombo()
@@ -420,8 +465,12 @@ namespace ViktorSharp
             // Misc
             Menu misc = new Menu("Misc", "misc");
             menu.AddSubMenu(misc);
-            misc.AddItem(new MenuItem("miscInterrupt", "Use R to interrupt dangerous spells").SetValue(true));
-            misc.AddItem(new MenuItem("miscGapcloser", "Use W against gapclosers").SetValue(true));
+            misc.AddItem(new MenuItem("miscInterrupt",  "Use R to interrupt dangerous spells").SetValue(true));
+            misc.AddItem(new MenuItem("miscGapcloser",  "Use W against gapclosers").SetValue(true));
+            misc.AddItem(new MenuItem("miscUseAutoW",   "Use auto W with condition below").SetValue(true));
+            misc.AddItem(new MenuItem("miscNumAutoW",   "Minimum targets hit").SetValue<Slider>(new Slider(2, 1, 5)));
+            misc.AddItem(new MenuItem("miscUseAutoR",   "Use auto R with condition below").SetValue(true));
+            misc.AddItem(new MenuItem("miscNumAutoR",   "Minimum targets hit and min 1 dies").SetValue<Slider>(new Slider(1, 1, 5)));
 
             // Drawings
             Menu drawings = new Menu("Drawings", "drawings");
