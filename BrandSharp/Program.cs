@@ -24,6 +24,9 @@ namespace BrandSharp
         private static Orbwalking.Orbwalker OW;
         private static Menu menu;
 
+        private static readonly List<Tuple<DamageLib.SpellType, DamageLib.StageType>> mainCombo = new List<Tuple<DamageLib.SpellType,DamageLib.StageType>>();
+        private static readonly List<Tuple<DamageLib.SpellType, DamageLib.StageType>> bounceCombo = new List<Tuple<DamageLib.SpellType, DamageLib.StageType>>();
+
         static void Main(string[] args)
         {
             // Register load event
@@ -49,6 +52,17 @@ namespace BrandSharp
 
             // Add to spell list
             spellList.AddRange(new[] { Q, W, E, R });
+
+            // Define main combo
+            mainCombo.Add(Tuple.Create(DamageLib.SpellType.AD, DamageLib.StageType.Default));
+            mainCombo.Add(Tuple.Create(DamageLib.SpellType.Q, DamageLib.StageType.Default));
+            mainCombo.Add(Tuple.Create(DamageLib.SpellType.W, DamageLib.StageType.Default));
+            mainCombo.Add(Tuple.Create(DamageLib.SpellType.E, DamageLib.StageType.Default));
+            mainCombo.Add(Tuple.Create(DamageLib.SpellType.R, DamageLib.StageType.FirstDamage));
+
+            // Define bounce combo
+            bounceCombo.Add(Tuple.Create(DamageLib.SpellType.R, DamageLib.StageType.FirstDamage));
+            bounceCombo.Add(Tuple.Create(DamageLib.SpellType.R, DamageLib.StageType.FirstDamage));
 
             // Setup the menu
             SetupMenu();
@@ -97,10 +111,10 @@ namespace BrandSharp
                 if (spell.Slot == SpellSlot.Q && useQ)
                 {
                     if ((IsAblazed(target)) || // Ablazed
-                        (DamageLib.IsKillable(player, new[] { DamageLib.SpellType.Q })) || // Killable
+                        (IsKillable(player, new[] { DamageLib.SpellType.Q })) || // Killable
                         (!useW && !useE) || // Casting when not using W and E
-                        (useW && !W.IsReady() && player.Spellbook.GetSpell(SpellSlot.W).CooldownExpires > player.Spellbook.GetSpell(SpellSlot.Q).Cooldown) || // Cooldown substraction W ready
-                        (useE && !E.IsReady() && player.Spellbook.GetSpell(SpellSlot.E).CooldownExpires > player.Spellbook.GetSpell(SpellSlot.Q).Cooldown)) // Cooldown substraction E ready
+                        (useW && !useE && !W.IsReady() && player.Spellbook.GetSpell(SpellSlot.W).CooldownExpires - Game.Time > player.Spellbook.GetSpell(SpellSlot.Q).Cooldown) || // Cooldown substraction W ready, jodus please...
+                        ((useE && !useW || useW && useE) && !E.IsReady() && player.Spellbook.GetSpell(SpellSlot.E).CooldownExpires - Game.Time > player.Spellbook.GetSpell(SpellSlot.Q).Cooldown)) // Cooldown substraction E ready, jodus please...
                     {
                         // Cast Q on high hitchance
                         Q.CastIfHitchanceEquals(target, Prediction.HitChance.HighHitchance);
@@ -109,9 +123,10 @@ namespace BrandSharp
                 // W
                 else if (spell.Slot == SpellSlot.W && useW)
                 {
-                    if ((IsAblazed(target)) || // Ablazed
-                        (DamageLib.IsKillable(player, new[] { DamageLib.SpellType.W })) || // Killable
-                        (!useE) || // Casting when not using E
+                    if ((!useE) || // Casting when not using E
+                        (IsAblazed(target)) || // Ablazed
+                        (IsKillable(player, new[] { DamageLib.SpellType.W })) || // Killable
+                        (Vector2.DistanceSquared(target.ServerPosition.To2D(), player.Position.To2D()) > E.Range * E.Range) ||
                         (!E.IsReady() && player.Spellbook.GetSpell(SpellSlot.E).CooldownExpires > player.Spellbook.GetSpell(SpellSlot.W).Cooldown)) // Cooldown substraction E ready
                     {
                         // Cast W on high hitchance
@@ -121,23 +136,36 @@ namespace BrandSharp
                 // E
                 else if (spell.Slot == SpellSlot.E && useE)
                 {
-                    if (DamageLib.IsKillable(player, new[] { DamageLib.SpellType.E }) || (useQ && Q.IsReady()) || (useW && W.IsReady()))
-                        E.CastIfHitchanceEquals(target, Prediction.HitChance.HighHitchance);
+                    // Distance check
+                    if (Vector2.DistanceSquared(target.ServerPosition.To2D(), player.Position.To2D()) < E.Range * E.Range)
+                    {
+                        if ((!useQ && !useW) || // Casting when not using Q and W
+                            IsKillable(player, new[] { DamageLib.SpellType.E }) || // Killable
+                            (useQ && Q.IsReady()) || // Q ready
+                            (useW && W.IsReady())) // W ready
+                        {
+                            // Cast E on target
+                            E.CastOnUnit(target);
+                        }
+                    }
                 }
                 // R
                 else if (spell.Slot == SpellSlot.R && useR)
                 {
+                    // Distance check
                     if (Vector2.DistanceSquared(target.ServerPosition.To2D(), player.Position.To2D()) < R.Range * R.Range)
                     {
                         // Single hit
-                        if (DamageLib.IsKillable(player, new[] { Tuple.Create(DamageLib.SpellType.R, DamageLib.StageType.FirstDamage) }))
+                        if (IsKillable(target, mainCombo))
                         {
                             R.CastOnUnit(target);
                         }
                         // Double bounce combo
-                        else if (DamageLib.GetComboDamage(player, new[] { Tuple.Create(DamageLib.SpellType.R, DamageLib.StageType.FirstDamage) }) * 2 > target.Health)
-                            if (ObjectManager.Get<Obj_AI_Base>().Count(enemy => (enemy.Type == GameObjectType.obj_AI_Minion || enemy.Type == GameObjectType.obj_AI_Hero) && enemy.IsValidTarget() && Vector2.DistanceSquared(enemy.ServerPosition.To2D(), target.ServerPosition.To2D()) < bounceRadiusR * bounceRadiusR) > 0)
+                        else if (IsKillable(player, bounceCombo))
+                        {
+                            if (ObjectManager.Get<Obj_AI_Base>().Count(enemy => (enemy.Type == GameObjectType.obj_AI_Minion || enemy != target && enemy.Type == GameObjectType.obj_AI_Hero) && enemy.IsValidTarget() && Vector2.DistanceSquared(enemy.ServerPosition.To2D(), target.ServerPosition.To2D()) < bounceRadiusR * bounceRadiusR) > 0)
                                 R.CastOnUnit(target);
+                        }
                     }
                 }
             }
@@ -153,15 +181,49 @@ namespace BrandSharp
             ;
         }
 
+        private static bool IsKillable(Obj_AI_Base target, IEnumerable<DamageLib.SpellType> spellCombo)
+        {
+            return IsKillable(target, spellCombo.Select(spell => Tuple.Create(spell, DamageLib.StageType.Default)).ToArray());
+        }
+
+        private static bool IsKillable(Obj_AI_Base target, IEnumerable<Tuple<DamageLib.SpellType, DamageLib.StageType>> spellCombo)
+        {
+            bool spellIncluded = false;
+            double damage = 0;
+            foreach (var spell in spellCombo)
+            {
+                // Spell included for passive
+                if (spell.Item1 == DamageLib.SpellType.Q || spell.Item1 == DamageLib.SpellType.W || spell.Item1 == DamageLib.SpellType.E || spell.Item1 == DamageLib.SpellType.R)
+                    spellIncluded = true;
+
+                // Q damage
+                if (spell.Item1 == DamageLib.SpellType.Q && Q.IsReady())
+                    damage += DamageLib.getDmg(target, spell.Item1, spell.Item2);
+
+                // W damage respecting ablaze status
+                if (spell.Item1 == DamageLib.SpellType.W && W.IsReady())
+                    damage += DamageLib.getDmg(target, spell.Item1, IsAblazed(target) ? DamageLib.StageType.FirstDamage : DamageLib.StageType.Default);
+
+                // E damage
+                if (spell.Item1 == DamageLib.SpellType.E && E.IsReady())
+                    damage += DamageLib.getDmg(target, spell.Item1, spell.Item2);
+
+                // R damage
+                if (spell.Item1 == DamageLib.SpellType.R && R.IsReady())
+                    damage += DamageLib.getDmg(target, spell.Item1, spell.Item2);
+            }
+            return damage + (spellIncluded ? target.MaxHealth * 0.08 : 0) > target.Health;
+        }
+
         private static bool IsAblazed(Obj_AI_Base target)
         {
-            return target.HasBuff("brandablaze");
+            return target.HasBuff("brandablaze", true);
         }
 
         private static void SetupMenu()
         {
             // Initialize the menu
-            menu = new Menu("[Hellsing] " + champName, "hells" + champName);
+            menu = new Menu("[Hellsing] " + champName, "hells" + champName, true);
 
             // Target selector
             Menu targetSelector = new Menu("Target Selector", "ts");
