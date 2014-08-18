@@ -278,7 +278,7 @@ namespace BrandSharp
                         target = minion;
 
                         // Break if killlable
-                        if (minion.Health > DamageLib.getDmg(minion, DamageLib.SpellType.AD) && IsKillable(minion, new[] { DamageLib.SpellType.Q }))
+                        if (minion.Health > DamageLib.getDmg(minion, DamageLib.SpellType.AD) && IsKillable(minion, new[] { DamageLib.SpellType.Q }, false))
                             break;
                     }
                 }
@@ -307,7 +307,7 @@ namespace BrandSharp
                     if (Vector2.DistanceSquared(minion.ServerPosition.To2D(), player.Position.To2D()) < E.Range * E.Range)
                     {
                         // E only on targets that are ablaze or killable
-                        if (IsAblazed(minion) || minion.Health > DamageLib.getDmg(minion, DamageLib.SpellType.AD) && IsKillable(minion, new[] { DamageLib.SpellType.E }))
+                        if (IsAblazed(minion) || minion.Health > DamageLib.getDmg(minion, DamageLib.SpellType.AD) && IsKillable(minion, new[] { DamageLib.SpellType.E }, false))
                         {
                             E.CastOnUnit(minion);
                             break;
@@ -323,12 +323,12 @@ namespace BrandSharp
                 player.SummonerSpellbook.CastSpell(igniteSlot, target);
         }
 
-        private static bool IsKillable(Obj_AI_Base target, IEnumerable<DamageLib.SpellType> spellCombo)
+        private static bool IsKillable(Obj_AI_Base target, IEnumerable<DamageLib.SpellType> spellCombo, bool calculatePassive = true)
         {
-            return IsKillable(target, spellCombo.Select(spell => Tuple.Create(spell, DamageLib.StageType.Default)).ToArray());
+            return IsKillable(target, spellCombo.Select(spell => Tuple.Create(spell, DamageLib.StageType.Default)).ToArray(), calculatePassive);
         }
 
-        private static bool IsKillable(Obj_AI_Base target, IEnumerable<Tuple<DamageLib.SpellType, DamageLib.StageType>> spellCombo)
+        private static bool IsKillable(Obj_AI_Base target, IEnumerable<Tuple<DamageLib.SpellType, DamageLib.StageType>> spellCombo, bool calculatePassive = true)
         {
             bool spellIncluded = false;
             double damage = 0;
@@ -349,7 +349,7 @@ namespace BrandSharp
                         damage += DamageLib.getDmg(target, DamageLib.SpellType.IGNITE);
                 }
             }
-            return damage + (spellIncluded ? target.MaxHealth * 0.08 : 0) > target.Health;
+            return damage + (spellIncluded && calculatePassive ? target.MaxHealth * 0.08 : 0) > target.Health;
         }
 
         private static bool IsAblazed(Obj_AI_Base target)
