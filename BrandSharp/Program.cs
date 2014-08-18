@@ -141,7 +141,7 @@ namespace BrandSharp
                     {
                         if ((!useQ && !useW) || // Casting when not using Q and W
                             IsKillable(player, new[] { DamageLib.SpellType.E }) || // Killable
-                            (useQ && Q.IsReady()) || // Q ready
+                            (useQ && (Q.IsReady() || player.Spellbook.GetSpell(SpellSlot.Q).Cooldown < 5)) || // Q ready
                             (useW && W.IsReady())) // W ready
                         {
                             // Cast E on target
@@ -192,25 +192,15 @@ namespace BrandSharp
             double damage = 0;
             foreach (var spell in spellCombo)
             {
-                // Spell included for passive
                 if (spell.Item1 == DamageLib.SpellType.Q || spell.Item1 == DamageLib.SpellType.W || spell.Item1 == DamageLib.SpellType.E || spell.Item1 == DamageLib.SpellType.R)
-                    spellIncluded = true;
-
-                // Q damage
-                if (spell.Item1 == DamageLib.SpellType.Q && Q.IsReady())
-                    damage += DamageLib.getDmg(target, spell.Item1, spell.Item2);
-
-                // W damage respecting ablaze status
-                if (spell.Item1 == DamageLib.SpellType.W && W.IsReady())
-                    damage += DamageLib.getDmg(target, spell.Item1, IsAblazed(target) ? DamageLib.StageType.FirstDamage : DamageLib.StageType.Default);
-
-                // E damage
-                if (spell.Item1 == DamageLib.SpellType.E && E.IsReady())
-                    damage += DamageLib.getDmg(target, spell.Item1, spell.Item2);
-
-                // R damage
-                if (spell.Item1 == DamageLib.SpellType.R && R.IsReady())
-                    damage += DamageLib.getDmg(target, spell.Item1, spell.Item2);
+                {
+                    var spellType = (SpellSlot)spell.Item1;
+                    if (player.Spellbook.CanUseSpell(spellType) == SpellState.Ready)
+                    {
+                        damage += DamageLib.getDmg(target, spell.Item1, spellType == SpellSlot.W ? (IsAblazed(target) ? DamageLib.StageType.FirstDamage : DamageLib.StageType.Default) : spell.Item2);
+                        spellIncluded = true;
+                    }
+                }
             }
             return damage + (spellIncluded ? target.MaxHealth * 0.08 : 0) > target.Health;
         }
