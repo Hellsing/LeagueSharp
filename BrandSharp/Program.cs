@@ -75,7 +75,7 @@ namespace BrandSharp
             mainCombo.Add(Tuple.Create(DamageLib.SpellType.IGNITE, DamageLib.StageType.Default));
 
             // Define bounce combo
-            bounceCombo.Add(Tuple.Create(DamageLib.SpellType.R, DamageLib.StageType.FirstDamage));
+            bounceCombo.AddRange(mainCombo);
             bounceCombo.Add(Tuple.Create(DamageLib.SpellType.R, DamageLib.StageType.FirstDamage));
 
             // Setup the menu
@@ -99,6 +99,14 @@ namespace BrandSharp
             // Wave clear
             if (menu.SubMenu("waveClear").Item("waveActive").GetValue<KeyBind>().Active)
                 OnWaveClear();
+
+            // Toggles
+            if (menu.SubMenu("harass").Item("harassToggleW").GetValue<bool>() && W.IsReady())
+            {
+                var target = SimpleTs.GetTarget(W.Range, SimpleTs.DamageType.Magical);
+                if (target != null)
+                    W.CastIfHitchanceEquals(target, Prediction.HitChance.HighHitchance);
+            }
         }
 
         private static void OnCombo()
@@ -116,7 +124,12 @@ namespace BrandSharp
             bool useE = menu.SubMenu("combo").Item("comboUseE").GetValue<bool>();
             bool useR = menu.SubMenu("combo").Item("comboUseR").GetValue<bool>();
 
-            if (IsKillable(target, mainCombo))
+            // Killable status
+            bool mainComboKillable = IsKillable(target, mainCombo);
+            bool bounceComboKillable = IsKillable(target, bounceCombo);
+
+            // Ignite auto cast if killable
+            if (mainComboKillable)
                 CastIgnite(target);
 
             foreach (var spell in spellList)
@@ -128,11 +141,11 @@ namespace BrandSharp
                 // Q
                 if (spell.Slot == SpellSlot.Q && useQ)
                 {
-                    if ((IsAblazed(target)) || // Ablazed
-                        (IsKillable(player, new[] { DamageLib.SpellType.Q })) || // Killable
+                    if ((mainComboKillable) || // Main combo killable
                         (!useW && !useE) || // Casting when not using W and E
-                        (useW && !useE && !W.IsReady() && player.Spellbook.GetSpell(SpellSlot.W).CooldownExpires - Game.Time > player.Spellbook.GetSpell(SpellSlot.Q).Cooldown) || // Cooldown substraction W ready, jodus please...
-                        ((useE && !useW || useW && useE) && !E.IsReady() && player.Spellbook.GetSpell(SpellSlot.E).CooldownExpires - Game.Time > player.Spellbook.GetSpell(SpellSlot.Q).Cooldown)) // Cooldown substraction E ready, jodus please...
+                        (IsAblazed(target)) || // Ablazed
+                        (useW && !useE && !W.IsReady() && W.IsReady((int) (player.Spellbook.GetSpell(SpellSlot.Q).Cooldown * 1000))) || // Cooldown substraction W ready
+                        ((useE && !useW || useW && useE) && !E.IsReady() && E.IsReady((int) (player.Spellbook.GetSpell(SpellSlot.Q).Cooldown * 1000)))) // Cooldown substraction E ready
                     {
                         // Cast Q on high hitchance
                         Q.CastIfHitchanceEquals(target, Prediction.HitChance.HighHitchance);
@@ -141,11 +154,12 @@ namespace BrandSharp
                 // W
                 else if (spell.Slot == SpellSlot.W && useW)
                 {
-                    if ((!useE) || // Casting when not using E
+                    if ((mainComboKillable) || // Main combo killable
+                        (!useE) || // Casting when not using E
                         (IsAblazed(target)) || // Ablazed
                         (IsKillable(player, new[] { DamageLib.SpellType.W })) || // Killable
                         (Vector2.DistanceSquared(target.ServerPosition.To2D(), player.Position.To2D()) > E.Range * E.Range) ||
-                        (!E.IsReady() && player.Spellbook.GetSpell(SpellSlot.E).CooldownExpires - Game.Time > player.Spellbook.GetSpell(SpellSlot.W).Cooldown)) // Cooldown substraction E ready
+                        (!E.IsReady() && E.IsReady((int) (player.Spellbook.GetSpell(SpellSlot.W).Cooldown * 1000)))) // Cooldown substraction E ready
                     {
                         // Cast W on high hitchance
                         W.CastIfHitchanceEquals(target, Prediction.HitChance.HighHitchance);
@@ -157,8 +171,9 @@ namespace BrandSharp
                     // Distance check
                     if (Vector2.DistanceSquared(target.ServerPosition.To2D(), player.Position.To2D()) < E.Range * E.Range)
                     {
-                        if ((!useQ && !useW) || // Casting when not using Q and W
-                            IsKillable(player, new[] { DamageLib.SpellType.E }) || // Killable
+                        if ((mainComboKillable) || // Main combo killable
+                            (!useQ && !useW) || // Casting when not using Q and W
+                            (E.Level >= 4) || // E level high, damage output higher
                             (useQ && (Q.IsReady() || player.Spellbook.GetSpell(SpellSlot.Q).Cooldown < 5)) || // Q ready
                             (useW && W.IsReady())) // W ready
                         {
@@ -174,12 +189,10 @@ namespace BrandSharp
                     if (Vector2.DistanceSquared(target.ServerPosition.To2D(), player.Position.To2D()) < R.Range * R.Range)
                     {
                         // Single hit
-                        if (IsKillable(target, mainCombo))
-                        {
+                        if (mainComboKillable)
                             R.CastOnUnit(target);
-                        }
                         // Double bounce combo
-                        else if (IsKillable(player, bounceCombo))
+                        else if (bounceComboKillable)
                         {
                             if (ObjectManager.Get<Obj_AI_Base>().Count(enemy => (enemy.Type == GameObjectType.obj_AI_Minion || enemy != target && enemy.Type == GameObjectType.obj_AI_Hero) && enemy.IsValidTarget() && Vector2.DistanceSquared(enemy.ServerPosition.To2D(), target.ServerPosition.To2D()) < bounceRadiusR * bounceRadiusR) > 0)
                                 R.CastOnUnit(target);
@@ -200,7 +213,7 @@ namespace BrandSharp
 
             // Spell usage
             bool useQ = menu.SubMenu("harass").Item("harassUseQ").GetValue<bool>();
-            bool useW = menu.SubMenu("harass").Item("harassUseW").GetValue<bool>() || menu.SubMenu("harass").Item("harassToggleW").GetValue<bool>();
+            bool useW = menu.SubMenu("harass").Item("harassUseW").GetValue<bool>();
             bool useE = menu.SubMenu("harass").Item("harassUseE").GetValue<bool>();
 
             foreach (var spell in spellList)
@@ -225,8 +238,7 @@ namespace BrandSharp
                 // W
                 else if (spell.Slot == SpellSlot.W && useW)
                 {
-                    if ((menu.SubMenu("harass").Item("harassToggleW").GetValue<bool>()) || // Harass toggle
-                        (!useE) || // Casting when not using E
+                    if ((!useE) || // Casting when not using E
                         (IsAblazed(target)) || // Ablazed
                         (IsKillable(player, new[] { DamageLib.SpellType.W })) || // Killable
                         (Vector2.DistanceSquared(target.ServerPosition.To2D(), player.Position.To2D()) > E.Range * E.Range) ||
