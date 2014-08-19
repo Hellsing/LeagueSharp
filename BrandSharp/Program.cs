@@ -127,6 +127,7 @@ namespace BrandSharp
             // Killable status
             bool mainComboKillable = IsKillable(target, mainCombo);
             bool bounceComboKillable = IsKillable(target, bounceCombo);
+            bool inMinimumRange = Vector2.DistanceSquared(target.ServerPosition.To2D(), player.Position.To2D()) < E.Range * E.Range;
 
             // Ignite auto cast if killable
             if (mainComboKillable)
@@ -141,10 +142,11 @@ namespace BrandSharp
                 // Q
                 if (spell.Slot == SpellSlot.Q && useQ)
                 {
-                    if ((mainComboKillable) || // Main combo killable
+                    if ((mainComboKillable && inMinimumRange) || // Main combo killable
                         (!useW && !useE) || // Casting when not using W and E
                         (IsAblazed(target)) || // Ablazed
-                        (useW && !useE && !W.IsReady() && W.IsReady((int) (player.Spellbook.GetSpell(SpellSlot.Q).Cooldown * 1000))) || // Cooldown substraction W ready
+                        (IsKillable(target, new[] { DamageLib.SpellType.Q })) || // Killable
+                        (useW && !useE && !W.IsReady() && W.IsReady((int)(player.Spellbook.GetSpell(SpellSlot.Q).Cooldown * 1000))) || // Cooldown substraction W ready
                         ((useE && !useW || useW && useE) && !E.IsReady() && E.IsReady((int) (player.Spellbook.GetSpell(SpellSlot.Q).Cooldown * 1000)))) // Cooldown substraction E ready
                     {
                         // Cast Q on high hitchance
@@ -154,7 +156,7 @@ namespace BrandSharp
                 // W
                 else if (spell.Slot == SpellSlot.W && useW)
                 {
-                    if ((mainComboKillable) || // Main combo killable
+                    if ((mainComboKillable && inMinimumRange) || // Main combo killable
                         (!useE) || // Casting when not using E
                         (IsAblazed(target)) || // Ablazed
                         (IsKillable(player, new[] { DamageLib.SpellType.W })) || // Killable
@@ -188,13 +190,17 @@ namespace BrandSharp
                     // Distance check
                     if (Vector2.DistanceSquared(target.ServerPosition.To2D(), player.Position.To2D()) < R.Range * R.Range)
                     {
+                        // Logic prechecks
+                        if ((useQ && Q.IsReady() && Q.GetPrediction(target).HitChance == Prediction.HitChance.HighHitchance || useW && W.IsReady()) && player.Health / player.MaxHealth > 0.4)
+                            continue;
+
                         // Single hit
-                        if (mainComboKillable)
+                        if (mainComboKillable && inMinimumRange || IsKillable(target, new[] { Tuple.Create(DamageLib.SpellType.R, DamageLib.StageType.FirstDamage) }))
                             R.CastOnUnit(target);
                         // Double bounce combo
-                        else if (bounceComboKillable)
+                        else if (bounceComboKillable && inMinimumRange || IsKillable(target, new[] { Tuple.Create(DamageLib.SpellType.R, DamageLib.StageType.FirstDamage), Tuple.Create(DamageLib.SpellType.R, DamageLib.StageType.FirstDamage) }))
                         {
-                            if (ObjectManager.Get<Obj_AI_Base>().Count(enemy => (enemy.Type == GameObjectType.obj_AI_Minion || enemy != target && enemy.Type == GameObjectType.obj_AI_Hero) && enemy.IsValidTarget() && Vector2.DistanceSquared(enemy.ServerPosition.To2D(), target.ServerPosition.To2D()) < bounceRadiusR * bounceRadiusR) > 0)
+                            if (ObjectManager.Get<Obj_AI_Base>().Count(enemy => (enemy.Type == GameObjectType.obj_AI_Minion || enemy.NetworkId != target.NetworkId && enemy.Type == GameObjectType.obj_AI_Hero) && enemy.IsValidTarget() && Vector2.DistanceSquared(enemy.ServerPosition.To2D(), target.ServerPosition.To2D()) < bounceRadiusR * bounceRadiusR) > 0)
                                 R.CastOnUnit(target);
                         }
                     }
