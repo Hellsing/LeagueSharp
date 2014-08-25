@@ -50,8 +50,8 @@ namespace BrandSharp
             R = new Spell(SpellSlot.R, 750);
 
             // Finetune spells
-            Q.SetSkillshot(0.25f, 60, 1600, true, Prediction.SkillshotType.SkillshotLine);
-            W.SetSkillshot(1, 240, float.MaxValue, false, Prediction.SkillshotType.SkillshotCircle);
+            Q.SetSkillshot(0.25f, 60, 1600, true, SkillshotType.SkillshotLine);
+            W.SetSkillshot(1, 240, float.MaxValue, false, SkillshotType.SkillshotCircle);
             E.SetTargetted(0.25f, float.MaxValue);
             R.SetTargetted(0.25f, 1000);
 
@@ -105,7 +105,7 @@ namespace BrandSharp
             {
                 var target = SimpleTs.GetTarget(W.Range, SimpleTs.DamageType.Magical);
                 if (target != null)
-                    W.CastIfHitchanceEquals(target, Prediction.HitChance.HighHitchance);
+                    W.CastIfHitchanceEquals(target, HitChance.High);
             }
         }
 
@@ -150,7 +150,7 @@ namespace BrandSharp
                         ((useE && !useW || useW && useE) && !E.IsReady() && E.IsReady((int) (player.Spellbook.GetSpell(SpellSlot.Q).Cooldown * 1000)))) // Cooldown substraction E ready
                     {
                         // Cast Q on high hitchance
-                        Q.CastIfHitchanceEquals(target, Prediction.HitChance.HighHitchance);
+                        Q.CastIfHitchanceEquals(target, HitChance.High);
                     }
                 }
                 // W
@@ -164,7 +164,7 @@ namespace BrandSharp
                         (!E.IsReady() && E.IsReady((int) (player.Spellbook.GetSpell(SpellSlot.W).Cooldown * 1000)))) // Cooldown substraction E ready
                     {
                         // Cast W on high hitchance
-                        W.CastIfHitchanceEquals(target, Prediction.HitChance.HighHitchance);
+                        W.CastIfHitchanceEquals(target, HitChance.High);
                     }
                 }
                 // E
@@ -191,7 +191,7 @@ namespace BrandSharp
                     if (Vector2.DistanceSquared(target.ServerPosition.To2D(), player.Position.To2D()) < R.Range * R.Range)
                     {
                         // Logic prechecks
-                        if ((useQ && Q.IsReady() && Q.GetPrediction(target).HitChance == Prediction.HitChance.HighHitchance || useW && W.IsReady()) && player.Health / player.MaxHealth > 0.4)
+                        if ((useQ && Q.IsReady() && Q.GetPrediction(target).Hitchance == HitChance.High || useW && W.IsReady()) && player.Health / player.MaxHealth > 0.4f)
                             continue;
 
                         // Single hit
@@ -238,7 +238,7 @@ namespace BrandSharp
                         ((useE && !useW || useW && useE) && !E.IsReady() && player.Spellbook.GetSpell(SpellSlot.E).CooldownExpires - Game.Time > player.Spellbook.GetSpell(SpellSlot.Q).Cooldown)) // Cooldown substraction E ready, jodus please...
                     {
                         // Cast Q on high hitchance
-                        Q.CastIfHitchanceEquals(target, Prediction.HitChance.HighHitchance);
+                        Q.CastIfHitchanceEquals(target, HitChance.High);
                     }
                 }
                 // W
@@ -251,7 +251,7 @@ namespace BrandSharp
                         (!E.IsReady() && player.Spellbook.GetSpell(SpellSlot.E).CooldownExpires - Game.Time > player.Spellbook.GetSpell(SpellSlot.W).Cooldown)) // Cooldown substraction E ready
                     {
                         // Cast W on high hitchance
-                        W.CastIfHitchanceEquals(target, Prediction.HitChance.HighHitchance);
+                        W.CastIfHitchanceEquals(target, HitChance.High);
                     }
                 }
                 // E
@@ -290,7 +290,7 @@ namespace BrandSharp
                 foreach (var minion in minions)
                 {
                     var prediction = Q.GetPrediction(minion);
-                    if (prediction.HitChance == Prediction.HitChance.HighHitchance)
+                    if (prediction.Hitchance == HitChance.High)
                     {
                         // Set target
                         target = minion;

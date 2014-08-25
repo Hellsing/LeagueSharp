@@ -12,7 +12,7 @@ namespace ViktorSharp
     class Program
     {
         // Generic
-        private static readonly string champName = "Viktor";
+        public static readonly string champName = "Viktor";
         private static readonly Obj_AI_Hero player = ObjectManager.Player;
 
         // Spells
@@ -23,8 +23,13 @@ namespace ViktorSharp
         private static readonly int speedE    = 780;
         private static readonly int rangeE    = 540;
 
+        private static readonly string nameNormalR = "ViktorChaosStorm";
+        private static readonly string nameControlR = "viktorchaosstormguide";
+        private static readonly float targetChangeTime = 0.5f;
+        private static float targetLastChangeTime = -1f;
+
         // Menu
-        private static Menu menu;
+        public static Menu menu;
 
         private static Orbwalking.Orbwalker OW;
 
@@ -48,9 +53,9 @@ namespace ViktorSharp
 
             // Finetune spells
             Q.SetTargetted(0.25f, 1400f);
-            W.SetSkillshot(0.25f, 300f, float.MaxValue, false, Prediction.SkillshotType.SkillshotCircle);
-            E.SetSkillshot(0f,    80f,  speedE,         false, Prediction.SkillshotType.SkillshotLine);
-            R.SetSkillshot(0f,    450f, float.MaxValue, false, Prediction.SkillshotType.SkillshotCircle);
+            W.SetSkillshot(0.25f, 300f, float.MaxValue, false, SkillshotType.SkillshotCircle);
+            E.SetSkillshot(0f,    80f,  speedE,         false, SkillshotType.SkillshotLine);
+            R.SetSkillshot(0f,    450f, float.MaxValue, false, SkillshotType.SkillshotCircle);
 
             // Create menu
             createMenu();
@@ -60,6 +65,9 @@ namespace ViktorSharp
             Drawing.OnDraw += Drawing_OnDraw;
             Interrupter.OnPosibleToInterrupt += Interrupter_OnPosibleToInterrupt;
             AntiGapcloser.OnEnemyGapcloser += AntiGapcloser_OnEnemyGapcloser;
+
+            // Setup ult handler
+            UltHandler.Setup();
 
             // Print shit
             Game.PrintChat("ViktorSharp has been loaded.");
@@ -97,51 +105,6 @@ namespace ViktorSharp
             // WaveClear
             if (menu.SubMenu("waveClear").Item("waveActive").GetValue<KeyBind>().Active)
                 OnWaveClear();
-
-            // Auto W
-            if (W.IsReady() && menu.SubMenu("misc").Item("miscUseAutoW").GetValue<bool>())
-            {
-                int requiredHitNum = menu.SubMenu("misc").Item("miscNumAutoW").GetValue<Slider>().Value;
-                int hitNum = 0;
-                Vector2 castPosition = new Vector2();
-
-                foreach (var enemy in ObjectManager.Get<Obj_AI_Hero>())
-                {
-                    var prediction = W.GetPrediction(enemy);
-                    if (prediction.HitChance == Prediction.HitChance.HighHitchance && prediction.TargetsHit > hitNum)
-                    {
-                        hitNum = prediction.TargetsHit;
-                        castPosition = prediction.CastPosition.To2D();
-                    }
-                }
-
-                if (hitNum >= requiredHitNum)
-                    W.Cast(castPosition);
-            }
-            
-            // Auto R
-            if (R.IsReady() && menu.SubMenu("misc").Item("miscUseAutoR").GetValue<bool>())
-            {
-                int requiredHitNum = menu.SubMenu("misc").Item("miscNumAutoR").GetValue<Slider>().Value;
-                int hitNum = 0;
-                Vector2 castPosition = new Vector2();
-
-                foreach (var enemy in ObjectManager.Get<Obj_AI_Hero>())
-                {
-                    if (DamageLib.IsKillable(enemy, new []{ DamageLib.SpellType.R }))
-                    {
-                        var prediction = R.GetPrediction(enemy);
-                        if (prediction.HitChance == Prediction.HitChance.HighHitchance && prediction.TargetsHit > hitNum)
-                        {
-                            hitNum = prediction.TargetsHit;
-                            castPosition = prediction.CastPosition.To2D();
-                        }
-                    }
-                }
-
-                if (hitNum >= requiredHitNum)
-                    R.Cast(castPosition);
-            }
         }
 
         private static void OnCombo()
@@ -149,6 +112,7 @@ namespace ViktorSharp
             Menu comboMenu = menu.SubMenu("combo");
             bool useQ = comboMenu.Item("comboUseQ").GetValue<bool>() && Q.IsReady();
             bool useE = comboMenu.Item("comboUseE").GetValue<bool>() && E.IsReady();
+            bool useIgnite = comboMenu.Item("comboUseIgnite").GetValue<bool>();
             bool longRange = comboMenu.Item("comboExtend").GetValue<KeyBind>().Active;
 
             if (useQ)
@@ -225,7 +189,7 @@ namespace ViktorSharp
             foreach (var minion in MinionManager.GetMinions(player.Position, rangeE))
             {
                 var farmLocation = MinionManager.GetBestLineFarmLocation((from mnion in MinionManager.GetMinions(minion.Position, lengthE) select mnion.Position.To2D()).ToList<Vector2>(), E.Width, lengthE);
-                if (hitNum == 0 || farmLocation.MinionsHit > hitNum)
+                if (farmLocation.MinionsHit > hitNum)
                 {
                     hitNum = farmLocation.MinionsHit;
                     startPos = minion.Position.To2D();
@@ -240,12 +204,12 @@ namespace ViktorSharp
 
         private static bool predictCastMinionE(Vector2 fromPosition)
         {
-            return predictCastMinionE(fromPosition, -1);
+            return predictCastMinionE(fromPosition, 1);
         }
 
         private static bool predictCastMinionE(Vector2 fromPosition, int requiredHitNumber)
         {
-            var farmLocation = MinionManager.GetBestLineFarmLocation(MinionManager.GetMinionsPredictedPositions(MinionManager.GetMinions(fromPosition.To3D(), lengthE), E.Delay, E.Width, speedE, fromPosition.To3D(), lengthE, false, Prediction.SkillshotType.SkillshotLine), E.Width, lengthE);
+            var farmLocation = MinionManager.GetBestLineFarmLocation(MinionManager.GetMinionsPredictedPositions(MinionManager.GetMinions(fromPosition.To3D(), lengthE), E.Delay, E.Width, speedE, fromPosition.To3D(), lengthE, false, SkillshotType.SkillshotLine), E.Width, lengthE);
 
             if (farmLocation.MinionsHit >= requiredHitNumber)
             {
@@ -260,7 +224,7 @@ namespace ViktorSharp
         {
             // Helpers
             bool inRange = Vector2.DistanceSquared(target.ServerPosition.To2D(), player.Position.To2D()) < E.Range * E.Range;
-            Prediction.PredictionOutput prediction;
+            PredictionOutput prediction;
             bool spellCasted = false;
 
             // Positions
@@ -326,7 +290,7 @@ namespace ViktorSharp
                         // Get prediction
                         prediction = E.GetPrediction(enemy);
                         // Validate target
-                        if (prediction.HitChance == Prediction.HitChance.HighHitchance && Vector2.DistanceSquared(pos1.To2D(), prediction.CastPosition.To2D()) < (E.Range * E.Range) * 0.8)
+                        if (prediction.Hitchance == HitChance.High && Vector2.DistanceSquared(pos1.To2D(), prediction.CastPosition.To2D()) < (E.Range * E.Range) * 0.8)
                             closeToPrediction.Add(enemy);
                     }
 
@@ -350,7 +314,7 @@ namespace ViktorSharp
                 // Spell not casted
                 if (!spellCasted)
                     // Try casting on minion
-                    if (!predictCastMinionE(pos1.To2D(), 1))
+                    if (!predictCastMinionE(pos1.To2D()))
                         // Cast it directly
                         castE(pos1, E.GetPrediction(target).CastPosition);
 
@@ -405,7 +369,7 @@ namespace ViktorSharp
                 prediction = E.GetPrediction(target);
 
                 // Cast the E
-                if (prediction.HitChance == Prediction.HitChance.HighHitchance)
+                if (prediction.Hitchance == HitChance.High)
                     castE(pos1, prediction.CastPosition);
 
                 // Reset spell
@@ -443,10 +407,11 @@ namespace ViktorSharp
             // Combo
             Menu combo = new Menu("Combo", "combo");
             menu.AddSubMenu(combo);
-            combo.AddItem(new MenuItem("comboUseQ",      "Use Q").SetValue(true));
-            combo.AddItem(new MenuItem("comboUseE",      "Use E").SetValue(true));
-            combo.AddItem(new MenuItem("comboActive",    "Combo active!").SetValue(new KeyBind(32, KeyBindType.Press)));
-            combo.AddItem(new MenuItem("comboExtend",    "E extended range!").SetValue(new KeyBind('A', KeyBindType.Press)));
+            combo.AddItem(new MenuItem("comboUseQ",         "Use Q").SetValue(true));
+            combo.AddItem(new MenuItem("comboUseE",         "Use E").SetValue(true));
+            combo.AddItem(new MenuItem("comboUseIgnite",    "Use ignite").SetValue(true));
+            combo.AddItem(new MenuItem("comboActive",       "Combo active!").SetValue(new KeyBind(32, KeyBindType.Press)));
+            combo.AddItem(new MenuItem("comboExtend",       "E extended range!").SetValue(new KeyBind('A', KeyBindType.Press)));
 
             // Harass
             Menu harass = new Menu("Harass", "harass");
@@ -467,10 +432,11 @@ namespace ViktorSharp
             menu.AddSubMenu(misc);
             misc.AddItem(new MenuItem("miscInterrupt",  "Use R to interrupt dangerous spells").SetValue(true));
             misc.AddItem(new MenuItem("miscGapcloser",  "Use W against gapclosers").SetValue(true));
-            misc.AddItem(new MenuItem("miscUseAutoW",   "Use auto W with condition below").SetValue(true));
-            misc.AddItem(new MenuItem("miscNumAutoW",   "Minimum targets hit").SetValue<Slider>(new Slider(2, 1, 5)));
-            misc.AddItem(new MenuItem("miscUseAutoR",   "Use auto R with condition below").SetValue(true));
-            misc.AddItem(new MenuItem("miscNumAutoR",   "Minimum targets hit and min 1 dies").SetValue<Slider>(new Slider(1, 1, 5)));
+            //misc.AddItem(new MenuItem("miscUseAutoW",   "Use auto W with condition below").SetValue(true));
+            //misc.AddItem(new MenuItem("miscNumAutoW",   "Minimum targets hit").SetValue<Slider>(new Slider(2, 1, 5)));
+            //misc.AddItem(new MenuItem("miscUseAutoR",   "Use auto R with condition below").SetValue(true));
+            //misc.AddItem(new MenuItem("miscNumAutoR",   "Minimum targets hit and min 1 dies").SetValue<Slider>(new Slider(1, 1, 5)));
+            //misc.AddItem(new MenuItem("miscTargetR", "Auto change target R").SetValue(true));
 
             // Drawings
             Menu drawings = new Menu("Drawings", "drawings");
