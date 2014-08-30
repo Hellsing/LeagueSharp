@@ -57,7 +57,7 @@ namespace ViktorSharp
                 {
                     ;
                 }
-                Game.PrintChat(args.SData.Name);
+                //Game.PrintChat(args.SData.Name);
             }
         }
     }
