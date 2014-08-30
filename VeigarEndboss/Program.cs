@@ -20,9 +20,6 @@ namespace VeigarEndboss
         private static Spell Q, W, E, R;
         private static readonly List<Spell> spellList = new List<Spell>();
 
-        private static Items.Item DFG;
-        private static Items.Item BF;
-
         private static Menu menu;
         private static Orbwalking.Orbwalker OW;
 
@@ -48,10 +45,6 @@ namespace VeigarEndboss
 
             // Add to spell list
             spellList.AddRange(new[] { Q, W, E, R });
-
-            // Initialize DFG
-            DFG = new Items.Item(3128, 750);
-            BF = new Items.Item(3188, 750);
 
             // Finetune spells
             Q.SetTargetted(0.25f, 1500);
