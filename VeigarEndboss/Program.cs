@@ -59,7 +59,8 @@ namespace VeigarEndboss
 
             // Setup menu
             SetuptMenu();
-
+            
+            // Initialize classes
             DarkMatter.Initialize(W);
 
             // Register additional events
