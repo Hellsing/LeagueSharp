@@ -71,7 +71,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="BalefulStrike.cs" />
     <Compile Include="Combo.cs" />
     <Compile Include="DarkMatter.cs" />
     <Compile Include="EventHorizon.cs" />
