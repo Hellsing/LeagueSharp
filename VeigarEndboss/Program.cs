@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -60,8 +60,6 @@ namespace VeigarEndboss
             // Setup menu
             SetuptMenu();
 
-            // Initialize classes
-            BalefulStrike.Initialize(Q, OW);
             DarkMatter.Initialize(W);
 
             // Register additional events
@@ -71,8 +69,6 @@ namespace VeigarEndboss
 
         private static void Game_OnGameUpdate(EventArgs args)
         {
-            // Auto stack Q
-            BalefulStrike.AutoFarmMinions = menu.SubMenu("misc").Item("miscStackQ").GetValue<bool>() && !menu.SubMenu("combo").Item("comboActive").GetValue<KeyBind>().Active;
             // Auto W on stunned
             DarkMatter.AutoCastStunned = menu.SubMenu("misc").Item("miscAutoW").GetValue<bool>();
 
@@ -85,6 +81,10 @@ namespace VeigarEndboss
             // WaveClear
             if (menu.SubMenu("waveClear").Item("waveActive").GetValue<KeyBind>().Active)
                 OnWaveClear();
+            if (menu.SubMenu("lasthit").Item("lastUseQ").GetValue<KeyBind>().Active)
+            {
+                OnLastHit();
+            }
         }
 
         private static void OnCombo()
@@ -196,6 +196,26 @@ namespace VeigarEndboss
             }
         }
 
+        private static void OnLastHit()
+        {
+            var allMinions = MinionManager.GetMinions(ObjectManager.Player.ServerPosition, Q.Range);
+
+
+            if (Q.IsReady())
+            {
+                foreach (var minion in allMinions)
+                {
+                    if (minion.IsValidTarget() &&
+                        HealthPrediction.GetHealthPrediction(minion,
+                            (int)(ObjectManager.Player.Distance(minion) * 1000 / 1500)) <
+                        0.75 * DamageLib.getDmg(minion, DamageLib.SpellType.Q))
+                    {
+                        Q.CastOnUnit(minion);
+                        return;
+                    }
+                }
+            }
+        }
         private static void Drawing_OnDraw(EventArgs args)
         {
             // Spell ranges
@@ -246,9 +266,13 @@ namespace VeigarEndboss
             waveClear.AddItem(new MenuItem("waveActive", "WaveClear active").SetValue(new KeyBind('V', KeyBindType.Press)));
             menu.AddSubMenu(waveClear);
 
+            // LastHit
+            Menu lasthit = new Menu("Last Hit", "lasthit");
+            lasthit.AddItem(new MenuItem("lastUseQ", "Use Q").SetValue(new KeyBind('T', KeyBindType.Press)));
+            menu.AddSubMenu(lasthit);
+
             // Misc
             Menu misc = new Menu("Misc", "misc");
-            misc.AddItem(new MenuItem("miscStackQ", "Auto stack Q").SetValue(true));
             misc.AddItem(new MenuItem("miscAutoW", "Auto W on stunned").SetValue(true));
             menu.AddSubMenu(misc);
 
