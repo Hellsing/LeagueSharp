@@ -199,6 +199,7 @@ namespace VeigarEndboss
 
         private static void OnLastHit()
         {
+            if (!Orbwalking.CanMove(40)) return;
             var allMinions = MinionManager.GetMinions(ObjectManager.Player.ServerPosition, Q.Range);
 
             // Execute
