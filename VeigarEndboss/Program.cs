@@ -200,7 +200,7 @@ namespace VeigarEndboss
         {
             var allMinions = MinionManager.GetMinions(ObjectManager.Player.ServerPosition, Q.Range);
 
-
+            // Execute
             if (Q.IsReady())
             {
                 foreach (var minion in allMinions)
