@@ -51,17 +51,7 @@ namespace Kalista
             // Register additional events
             Game.OnGameUpdate += Game_OnGameUpdate;
             Drawing.OnDraw += Drawing_OnDraw;
-        }
-
-        internal static void Drawing_OnDraw(EventArgs args)
-        {
-            // Spell ranges
-            foreach (var spell in spellList)
-            {
-                var circleEntry = menu.SubMenu("drawings").Item("drawRange" + spell.Slot.ToString()).GetValue<Circle>();
-                if (circleEntry.Active)
-                    Utility.DrawCircle(player.Position, spell.Range, circleEntry.Color);
-            }
+            Obj_AI_Hero.OnProcessSpellCast += Obj_AI_Hero_OnProcessSpellCast;
         }
 
         internal static void Game_OnGameUpdate(EventArgs args)
@@ -174,6 +164,26 @@ namespace Kalista
             }
 
             return 0;
+        }
+
+        internal static void Obj_AI_Hero_OnProcessSpellCast(Obj_AI_Base sender, GameObjectProcessSpellCastEventArgs args)
+        {
+            if (sender.IsMe)
+            {
+                if (args.SData.Name == "KalistaExpungeWrapper")
+                    Utility.DelayAction.Add(250, Orbwalking.ResetAutoAttackTimer);
+            }
+        }
+
+        internal static void Drawing_OnDraw(EventArgs args)
+        {
+            // Spell ranges
+            foreach (var spell in spellList)
+            {
+                var circleEntry = menu.SubMenu("drawings").Item("drawRange" + spell.Slot.ToString()).GetValue<Circle>();
+                if (circleEntry.Active)
+                    Utility.DrawCircle(player.Position, spell.Range, circleEntry.Color);
+            }
         }
 
         internal static void SetuptMenu()
