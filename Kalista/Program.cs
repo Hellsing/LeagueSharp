@@ -98,6 +98,23 @@ namespace Kalista
             if (target == null)
                 return;
 
+            // Item usage
+            if (menu.SubMenu("combo").Item("comboUseItems").GetValue<bool>())
+            {
+                if (menu.SubMenu("items").Item("itemsBotrk").GetValue<bool>())
+                {
+                    bool foundCutglass = Items.HasItem(3144);
+                    bool foundBotrk = Items.HasItem(3153);
+
+                    if (foundCutglass || foundBotrk)
+                    {
+                        if (foundCutglass || player.Health + player.GetItemDamage(target, Damage.DamageItems.Botrk) < player.MaxHealth)
+                            Items.UseItem(foundCutglass ? 3144 : 3153, target);
+                    }
+                }
+            }
+
+            // Spell usage
             if (useQ && Q.IsReady())
                 Q.Cast(target);
 
@@ -228,7 +245,8 @@ namespace Kalista
             Menu combo = new Menu("Combo", "combo");
             combo.AddItem(new MenuItem("comboUseQ", "Use Q").SetValue(true));
             combo.AddItem(new MenuItem("comboUseE", "Use E").SetValue(true));
-            combo.AddItem(new MenuItem("comboNumE", "Stacks for E").SetValue(new Slider(3, 1, 20)));
+            combo.AddItem(new MenuItem("comboNumE", "Stacks for E").SetValue(new Slider(5, 1, 20)));
+            combo.AddItem(new MenuItem("comboUseItems", "Use items").SetValue(true));
             combo.AddItem(new MenuItem("comboUseIgnite", "Use Ignite").SetValue(true));
             combo.AddItem(new MenuItem("comboActive", "Combo active").SetValue(new KeyBind(32, KeyBindType.Press)));
             menu.AddSubMenu(combo);
@@ -243,7 +261,7 @@ namespace Kalista
             // WaveClear
             Menu waveClear = new Menu("WaveClear", "waveClear");
             waveClear.AddItem(new MenuItem("waveUseE", "Use E").SetValue(true));
-            waveClear.AddItem(new MenuItem("waveNumE", "Minion kill number for E").SetValue(new Slider(1, 1, 10)));
+            waveClear.AddItem(new MenuItem("waveNumE", "Minion kill number for E").SetValue(new Slider(2, 1, 10)));
             waveClear.AddItem(new MenuItem("waveActive", "WaveClear active").SetValue(new KeyBind('V', KeyBindType.Press)));
             menu.AddSubMenu(waveClear);
 
@@ -257,6 +275,11 @@ namespace Kalista
             Menu misc = new Menu("Misc", "misc");
             misc.AddItem(new MenuItem("miscKillstealE", "Killsteal with E").SetValue(true));
             menu.AddSubMenu(misc);
+
+            // Items
+            Menu items = new Menu("Items", "items");
+            items.AddItem(new MenuItem("itemsBotrk", "Use BotRK").SetValue(true));
+            menu.AddSubMenu(items);
 
             // Drawings
             Menu drawings = new Menu("Drawings", "drawings");
