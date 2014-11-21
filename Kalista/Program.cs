@@ -65,6 +65,9 @@ namespace Kalista
             // WaveClear
             if (menu.SubMenu("waveClear").Item("waveActive").GetValue<KeyBind>().Active)
                 OnWaveClear();
+            // JungleClear
+            if (menu.SubMenu("jungleClear").Item("jungleActive").GetValue<KeyBind>().Active)
+                OnJungleClear();
 
             // Check killsteal
             if (E.IsReady() && menu.SubMenu("misc").Item("miscKillstealE").GetValue<bool>())
@@ -131,8 +134,8 @@ namespace Kalista
             {
                 int hitNumber = menu.SubMenu("waveClear").Item("waveNumE").GetValue<Slider>().Value;
 
-                // Get all minions with E buff
-                var minions = MinionManager.GetMinions(player.Position, E.Range, MinionTypes.All, MinionTeam.NotAlly);
+                // Get surrounding
+                var minions = MinionManager.GetMinions(player.Position, E.Range);
 
                 // Check if enough minions die with E
                 int conditionMet = 0;
@@ -145,6 +148,26 @@ namespace Kalista
                 // Cast on condition met
                 if (conditionMet >= hitNumber)
                     E.Cast();
+            }
+        }
+
+        internal static void OnJungleClear()
+        {
+            bool useE = menu.SubMenu("jungleClear").Item("jungleUseE").GetValue<bool>();
+
+            if (useE && E.IsReady())
+            {
+                var minions = MinionManager.GetMinions(player.Position, E.Range, MinionTypes.All, MinionTeam.Neutral);
+
+                // Check if a jungle mob can die with E
+                foreach (var minion in minions)
+                {
+                    if (GetRendDamage(minion) > minion.Health)
+                    {
+                        E.Cast();
+                        break;
+                    }
+                }
             }
         }
 
@@ -223,6 +246,12 @@ namespace Kalista
             waveClear.AddItem(new MenuItem("waveNumE", "Minion kill number for E").SetValue(new Slider(1, 1, 10)));
             waveClear.AddItem(new MenuItem("waveActive", "WaveClear active").SetValue(new KeyBind('V', KeyBindType.Press)));
             menu.AddSubMenu(waveClear);
+
+            // JungleClear
+            Menu jungleClear = new Menu("JungleClear", "jungleClear");
+            jungleClear.AddItem(new MenuItem("jungleUseE", "Use E").SetValue(true));
+            jungleClear.AddItem(new MenuItem("jungleActive", "JungleClear active").SetValue(new KeyBind('V', KeyBindType.Press)));
+            menu.AddSubMenu(jungleClear);
 
             // Misc
             Menu misc = new Menu("Misc", "misc");
