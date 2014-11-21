@@ -1,0 +1,214 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+using LeagueSharp;
+using LeagueSharp.Common;
+
+using Color = System.Drawing.Color;
+
+namespace Kalista
+{
+    internal class Program
+    {
+        internal const string CHAMP_NAME = "Kalista";
+        internal static Obj_AI_Hero player = ObjectManager.Player;
+
+        private static Spell Q, W, E, R;
+        private static readonly List<Spell> spellList = new List<Spell>();
+
+        private static Menu menu;
+        private static Orbwalking.Orbwalker OW;
+
+        internal static void Main(string[] args)
+        {
+            CustomEvents.Game.OnGameLoad += Game_OnGameLoad;
+        }
+
+        internal static void Game_OnGameLoad(EventArgs args)
+        {
+            // Validate Champion
+            if (player.ChampionName != CHAMP_NAME)
+                return;
+
+            // Initialize spells
+            Q = new Spell(SpellSlot.Q, 1150);
+            W = new Spell(SpellSlot.W, 5000);
+            E = new Spell(SpellSlot.E, 1000);
+            R = new Spell(SpellSlot.R, 1500);
+
+            // Add to spell list
+            spellList.AddRange(new[] { Q, W, E, R });
+
+            // Finetune spells
+            Q.SetSkillshot(0.25f, 40, 1200, true, SkillshotType.SkillshotLine);
+
+            // Setup menu
+            SetuptMenu();
+
+            // Register additional events
+            Game.OnGameUpdate += Game_OnGameUpdate;
+            Drawing.OnDraw += Drawing_OnDraw;
+        }
+
+        internal static void Drawing_OnDraw(EventArgs args)
+        {
+            // Spell ranges
+            foreach (var spell in spellList)
+            {
+                var circleEntry = menu.SubMenu("drawings").Item("drawRange" + spell.Slot.ToString()).GetValue<Circle>();
+                if (circleEntry.Active)
+                    Utility.DrawCircle(player.Position, spell.Range, circleEntry.Color);
+            }
+        }
+
+        internal static void Game_OnGameUpdate(EventArgs args)
+        {
+            // Combo
+            if (menu.SubMenu("combo").Item("comboActive").GetValue<KeyBind>().Active)
+                OnCombo();
+            // Harass
+            if (menu.SubMenu("harass").Item("harassActive").GetValue<KeyBind>().Active)
+                OnHarass();
+            // WaveClear
+            if (menu.SubMenu("waveClear").Item("waveActive").GetValue<KeyBind>().Active)
+                OnWaveClear();
+
+            // Check killsteal
+            if (menu.SubMenu("misc").Item("miscKillstealE").GetValue<bool>())
+            {
+                foreach (var enemy in ObjectManager.Get<Obj_AI_Hero>().Where(h => h.IsValidTarget(E.Range)))
+                {
+                    if (player.GetSpellDamage(enemy, SpellSlot.E) >= enemy.Health)
+                    {
+                        E.Cast();
+                        break;
+                    }
+                }
+            }
+        }
+
+        internal static void OnCombo()
+        {
+            var target = SimpleTs.GetTarget(Q.Range, SimpleTs.DamageType.Physical);
+            if (target == null)
+                return;
+
+            bool useQ = menu.SubMenu("combo").Item("comboUseQ").GetValue<bool>();
+            bool useE = menu.SubMenu("combo").Item("comboUseE").GetValue<bool>();
+
+            if (useQ && Q.IsReady())
+                Q.Cast(target);
+
+            if (useE && E.IsReady())
+            {
+                var buff = target.Buffs.FirstOrDefault(b => b.DisplayName.ToLower() == "kalistaexpungemarker");
+
+                if (buff != null && buff.Count >= menu.SubMenu("combo").Item("comboNumE").GetValue<Slider>().Value)
+                    E.Cast();
+            }
+        }
+
+        internal static void OnHarass()
+        {
+            // Mana check
+            if ((player.Mana / player.MaxMana) * 100 < menu.SubMenu("harass").Item("harassMana").GetValue<Slider>().Value)
+                return;
+
+            var target = SimpleTs.GetTarget(Q.Range, SimpleTs.DamageType.Physical);
+            if (target == null)
+                return;
+
+            bool useQ = menu.SubMenu("harass").Item("harassUseQ").GetValue<bool>();
+
+            if (useQ && Q.IsReady())
+                Q.Cast(target);
+        }
+
+        internal static void OnWaveClear()
+        {
+            bool useE = menu.SubMenu("waveClear").Item("waveUseE").GetValue<bool>();
+
+            if (useE && E.IsReady())
+            {
+                int hitNumber = menu.SubMenu("waveClear").Item("waveNumE").GetValue<Slider>().Value;
+
+                // Get all minions with E buff
+                var minions = MinionManager.GetMinions(player.Position, E.Range, MinionTypes.All, MinionTeam.NotAlly).Where(m => m.Buffs.FirstOrDefault(b => b.DisplayName.ToLower() == "kalistaexpungemarker") != null);
+
+                // Check if enough minions die with E
+                int conditionMet = 0;
+                foreach (var minion in minions)
+                {
+                    var buff = minion.Buffs.FirstOrDefault(b => b.DisplayName == "kalistaexpungemarker");
+
+                    if (buff != null)
+                        if (buff.Count >= 1)
+                            if (player.GetSpellDamage(minion, SpellSlot.E) >= minion.Health)
+                                conditionMet++;
+                }
+
+                // Cast on condition met
+                if (conditionMet >= hitNumber)
+                    E.Cast();
+            }
+        }
+
+        internal static void SetuptMenu()
+        {
+            // Create menu
+            menu = new Menu("[Hellsing] " + CHAMP_NAME, "hells" + CHAMP_NAME, true);
+
+            // Target selector
+            Menu targetSelector = new Menu("Target Selector", "ts");
+            SimpleTs.AddToMenu(targetSelector);
+            menu.AddSubMenu(targetSelector);
+
+            // Orbwalker
+            Menu orbwalker = new Menu("Orbwalker", "orbwalker");
+            OW = new Orbwalking.Orbwalker(orbwalker);
+            menu.AddSubMenu(orbwalker);
+
+            // Combo
+            Menu combo = new Menu("Combo", "combo");
+            combo.AddItem(new MenuItem("comboUseQ", "Use Q").SetValue(true));
+            combo.AddItem(new MenuItem("comboUseE", "Use E").SetValue(true));
+            combo.AddItem(new MenuItem("comboNumE", "Stacks for E").SetValue(new Slider(3, 1, 20)));
+            combo.AddItem(new MenuItem("comboUseIgnite", "Use Ignite").SetValue(true));
+            combo.AddItem(new MenuItem("comboActive", "Combo active").SetValue(new KeyBind(32, KeyBindType.Press)));
+            menu.AddSubMenu(combo);
+
+            // Harass
+            Menu harass = new Menu("Harass", "harass");
+            harass.AddItem(new MenuItem("harassUseQ", "Use Q").SetValue(true));
+            harass.AddItem(new MenuItem("harassMana", "Mana usage in percent (%)").SetValue(new Slider(30)));
+            harass.AddItem(new MenuItem("harassActive", "Harass active").SetValue(new KeyBind('C', KeyBindType.Press)));
+            menu.AddSubMenu(harass);
+
+            // WaveClear
+            Menu waveClear = new Menu("WaveClear", "waveClear");
+            waveClear.AddItem(new MenuItem("waveUseE", "Use E").SetValue(true));
+            waveClear.AddItem(new MenuItem("waveNumE", "Minion kill number for E").SetValue(new Slider(1, 1, 10)));
+            waveClear.AddItem(new MenuItem("waveActive", "WaveClear active").SetValue(new KeyBind('V', KeyBindType.Press)));
+            menu.AddSubMenu(waveClear);
+
+            // Misc
+            Menu misc = new Menu("Misc", "misc");
+            misc.AddItem(new MenuItem("miscKillstealE", "Killsteal with E").SetValue(true));
+            menu.AddSubMenu(misc);
+
+            // Drawings
+            Menu drawings = new Menu("Drawings", "drawings");
+            drawings.AddItem(new MenuItem("drawRangeQ", "Q range").SetValue(new Circle(true, Color.FromArgb(150, Color.IndianRed))));
+            drawings.AddItem(new MenuItem("drawRangeW", "W range").SetValue(new Circle(false, Color.FromArgb(150, Color.MediumPurple))));
+            drawings.AddItem(new MenuItem("drawRangeE", "E range").SetValue(new Circle(true, Color.FromArgb(150, Color.DarkRed))));
+            drawings.AddItem(new MenuItem("drawRangeR", "R range").SetValue(new Circle(false, Color.FromArgb(150, Color.Red))));
+            menu.AddSubMenu(drawings);
+
+            // Finalize menu
+            menu.AddToMainMenu();
+        }
+    }
+}
