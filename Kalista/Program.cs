@@ -167,7 +167,7 @@ namespace Kalista
                 double damage = (10 + 10 * player.Spellbook.GetSpell(SpellSlot.E).Level) + 0.6 * player.FlatPhysicalDamageMod;
 
                 // Add damage per spear
-                damage += buff.Count * (new double[] { 5, 9, 14, 20, 27 }[player.Spellbook.GetSpell(SpellSlot.E).Level] + (0.12 + 0.03 * player.Spellbook.GetSpell(SpellSlot.E).Level) * player.FlatPhysicalDamageMod);
+                damage += buff.Count * (new double[] { 0, 5, 9, 14, 20, 27 }[player.Spellbook.GetSpell(SpellSlot.E).Level] + (0.12 + 0.03 * player.Spellbook.GetSpell(SpellSlot.E).Level) * player.FlatPhysicalDamageMod);
 
                 // Calculate damage to target
                 return player.CalcDamage(target, Damage.DamageType.Physical, damage);
