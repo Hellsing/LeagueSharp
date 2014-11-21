@@ -77,11 +77,11 @@ namespace Kalista
                 OnWaveClear();
 
             // Check killsteal
-            if (menu.SubMenu("misc").Item("miscKillstealE").GetValue<bool>())
+            if (E.IsReady() && menu.SubMenu("misc").Item("miscKillstealE").GetValue<bool>())
             {
                 foreach (var enemy in ObjectManager.Get<Obj_AI_Hero>().Where(h => h.IsValidTarget(E.Range)))
                 {
-                    if (player.GetSpellDamage(enemy, SpellSlot.E) >= enemy.Health)
+                    if (GetRendDamage(enemy) > enemy.Health)
                     {
                         E.Cast();
                         break;
@@ -92,12 +92,18 @@ namespace Kalista
 
         internal static void OnCombo()
         {
-            var target = SimpleTs.GetTarget(Q.Range, SimpleTs.DamageType.Physical);
-            if (target == null)
-                return;
-
             bool useQ = menu.SubMenu("combo").Item("comboUseQ").GetValue<bool>();
             bool useE = menu.SubMenu("combo").Item("comboUseE").GetValue<bool>();
+
+            Obj_AI_Hero target;
+
+            if (useQ && Q.IsReady())
+                target = SimpleTs.GetTarget(Q.Range, SimpleTs.DamageType.Physical);
+            else
+                target = SimpleTs.GetTarget(player.AttackRange, SimpleTs.DamageType.Physical);
+
+            if (target == null)
+                return;
 
             if (useQ && Q.IsReady())
                 Q.Cast(target);
@@ -136,24 +142,38 @@ namespace Kalista
                 int hitNumber = menu.SubMenu("waveClear").Item("waveNumE").GetValue<Slider>().Value;
 
                 // Get all minions with E buff
-                var minions = MinionManager.GetMinions(player.Position, E.Range, MinionTypes.All, MinionTeam.NotAlly).Where(m => m.Buffs.FirstOrDefault(b => b.DisplayName.ToLower() == "kalistaexpungemarker") != null);
+                var minions = MinionManager.GetMinions(player.Position, E.Range, MinionTypes.All, MinionTeam.NotAlly);
 
                 // Check if enough minions die with E
                 int conditionMet = 0;
                 foreach (var minion in minions)
                 {
-                    var buff = minion.Buffs.FirstOrDefault(b => b.DisplayName == "kalistaexpungemarker");
-
-                    if (buff != null)
-                        if (buff.Count >= 1)
-                            if (player.GetSpellDamage(minion, SpellSlot.E) >= minion.Health)
-                                conditionMet++;
+                    if (GetRendDamage(minion) > minion.Health)
+                        conditionMet++;
                 }
 
                 // Cast on condition met
                 if (conditionMet >= hitNumber)
                     E.Cast();
             }
+        }
+
+        internal static double GetRendDamage(Obj_AI_Base target)
+        {
+            var buff = target.Buffs.FirstOrDefault(b => b.DisplayName.ToLower() == "kalistaexpungemarker");
+            if (buff != null)
+            {
+                // Basedamage
+                double damage = (10 + 10 * player.Spellbook.GetSpell(SpellSlot.E).Level) + 0.6 * player.FlatPhysicalDamageMod;
+
+                // Add damage per spear
+                damage += buff.Count * (new double[] { 5, 9, 14, 20, 27 }[player.Spellbook.GetSpell(SpellSlot.E).Level] + (0.12 + 0.03 * player.Spellbook.GetSpell(SpellSlot.E).Level) * player.FlatPhysicalDamageMod);
+
+                // Calculate damage to target
+                return player.CalcDamage(target, Damage.DamageType.Physical, damage);
+            }
+
+            return 0;
         }
 
         internal static void SetuptMenu()
