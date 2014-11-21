@@ -103,13 +103,13 @@ namespace Kalista
             {
                 if (menu.SubMenu("items").Item("itemsBotrk").GetValue<bool>())
                 {
-                    bool foundCutglass = Items.HasItem(3144);
+                    bool foundCutlass = Items.HasItem(3144);
                     bool foundBotrk = Items.HasItem(3153);
 
-                    if (foundCutglass || foundBotrk)
+                    if (foundCutlass || foundBotrk)
                     {
-                        if (foundCutglass || player.Health + player.GetItemDamage(target, Damage.DamageItems.Botrk) < player.MaxHealth)
-                            Items.UseItem(foundCutglass ? 3144 : 3153, target);
+                        if (foundCutlass || player.Health + player.GetItemDamage(target, Damage.DamageItems.Botrk) < player.MaxHealth)
+                            Items.UseItem(foundCutlass ? 3144 : 3153, target);
                     }
                 }
             }
