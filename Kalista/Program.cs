@@ -154,6 +154,10 @@ namespace Kalista
 
         internal static void OnWaveClear()
         {
+            // Mana check
+            if ((player.Mana / player.MaxMana) * 100 < menu.SubMenu("waveClear").Item("waveMana").GetValue<Slider>().Value)
+                return;
+
             bool useE = menu.SubMenu("waveClear").Item("waveUseE").GetValue<bool>();
 
             if (useE && E.IsReady())
@@ -323,6 +327,7 @@ namespace Kalista
             Menu waveClear = new Menu("WaveClear", "waveClear");
             waveClear.AddItem(new MenuItem("waveUseE", "Use E").SetValue(true));
             waveClear.AddItem(new MenuItem("waveNumE", "Minion kill number for E").SetValue(new Slider(2, 1, 10)));
+            waveClear.AddItem(new MenuItem("waveMana", "Mana usage in percent (%)").SetValue(new Slider(30)));
             waveClear.AddItem(new MenuItem("waveActive", "WaveClear active").SetValue(new KeyBind('V', KeyBindType.Press)));
             menu.AddSubMenu(waveClear);
 
