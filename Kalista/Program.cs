@@ -83,7 +83,7 @@ namespace Kalista
             {
                 foreach (var enemy in ObjectManager.Get<Obj_AI_Hero>().Where(h => h.IsValidTarget(E.Range)))
                 {
-                    if (GetRendDamage(enemy) > enemy.Health)
+                    if (player.GetSpellDamage(enemy, SpellSlot.E) > enemy.Health)
                     {
                         E.Cast();
                         break;
@@ -171,7 +171,7 @@ namespace Kalista
                 int conditionMet = 0;
                 foreach (var minion in minions)
                 {
-                    if (GetRendDamage(minion) > minion.Health)
+                    if (player.GetSpellDamage(minion, SpellSlot.E) > minion.Health)
                         conditionMet++;
                 }
 
@@ -192,7 +192,7 @@ namespace Kalista
                 // Check if a jungle mob can die with E
                 foreach (var minion in minions)
                 {
-                    if (GetRendDamage(minion) > minion.Health)
+                    if (player.GetSpellDamage(minion, SpellSlot.E) > minion.Health)
                     {
                         E.Cast();
                         break;
@@ -237,24 +237,6 @@ namespace Kalista
             return target;
         }
 
-        internal static double GetRendDamage(Obj_AI_Base target)
-        {
-            var buff = target.Buffs.FirstOrDefault(b => b.DisplayName.ToLower() == "kalistaexpungemarker");
-            if (buff != null)
-            {
-                // Basedamage
-                double damage = (10 + 10 * player.Spellbook.GetSpell(SpellSlot.E).Level) + 0.6 * player.FlatPhysicalDamageMod;
-
-                // Add damage per spear
-                damage += buff.Count * (new double[] { 0, 5, 9, 14, 20, 27 }[player.Spellbook.GetSpell(SpellSlot.E).Level] + (0.12 + 0.03 * player.Spellbook.GetSpell(SpellSlot.E).Level) * player.FlatPhysicalDamageMod);
-
-                // Calculate damage to target
-                return player.CalcDamage(target, Damage.DamageType.Physical, damage);
-            }
-
-            return 0;
-        }
-
         internal static float GetTotalDamage(Obj_AI_Hero target)
         {
             // Auto attack damage
@@ -266,7 +248,7 @@ namespace Kalista
 
             // E stack damage
             if (E.IsReady())
-                damage += GetRendDamage(target);
+                damage += player.GetSpellDamage(target, SpellSlot.E);
 
             return (float)damage;
         }
