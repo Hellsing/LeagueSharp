@@ -7,6 +7,8 @@ using System.Threading.Tasks;
 using LeagueSharp;
 using LeagueSharp.Common;
 
+using SharpDX;
+
 using Color = System.Drawing.Color;
 
 namespace Kalista
@@ -16,11 +18,11 @@ namespace Kalista
         internal const string CHAMP_NAME = "Kalista";
         internal static Obj_AI_Hero player = ObjectManager.Player;
 
-        private static Spell Q, W, E, R;
-        private static readonly List<Spell> spellList = new List<Spell>();
+        internal static Spell Q, W, E, R;
+        internal static readonly List<Spell> spellList = new List<Spell>();
 
-        private static Menu menu;
-        private static Orbwalking.Orbwalker OW;
+        internal static Menu menu;
+        internal static Orbwalking.Orbwalker OW;
 
         internal static void Main(string[] args)
         {
@@ -48,6 +50,10 @@ namespace Kalista
             // Setup menu
             SetuptMenu();
 
+            // Enable damage indicators
+            Utility.HpBarDamageIndicator.DamageToUnit = GetTotalDamage;
+            Utility.HpBarDamageIndicator.Enabled = true;
+
             // Register additional events
             Game.OnGameUpdate += Game_OnGameUpdate;
             Drawing.OnDraw += Drawing_OnDraw;
@@ -68,6 +74,9 @@ namespace Kalista
             // JungleClear
             if (menu.SubMenu("jungleClear").Item("jungleActive").GetValue<KeyBind>().Active)
                 OnJungleClear();
+            // Flee
+            if (menu.SubMenu("flee").Item("fleeActive").GetValue<KeyBind>().Active)
+                OnFlee();
 
             // Check killsteal
             if (E.IsReady() && menu.SubMenu("misc").Item("miscKillstealE").GetValue<bool>())
@@ -93,7 +102,7 @@ namespace Kalista
             if (useQ && Q.IsReady())
                 target = SimpleTs.GetTarget(Q.Range, SimpleTs.DamageType.Physical);
             else
-                target = SimpleTs.GetTarget(player.AttackRange, SimpleTs.DamageType.Physical);
+                target = SimpleTs.GetTarget(Orbwalking.GetRealAutoAttackRange(player), SimpleTs.DamageType.Physical);
 
             if (target == null)
                 return;
@@ -188,6 +197,42 @@ namespace Kalista
             }
         }
 
+        internal static void OnFlee()
+        {
+            //bool useWalljump = menu.SubMenu("flee").Item("fleeWalljump").GetValue<bool>();
+            bool useAA = menu.SubMenu("flee").Item("fleeAA").GetValue<bool>();
+
+            if (useAA)
+            {
+                var dashObject = GetDashObject();
+                if (dashObject != null)
+                    Orbwalking.Orbwalk(dashObject, Game.CursorPos);
+                else
+                    Orbwalking.Orbwalk(null, Game.CursorPos);
+            }
+        }
+
+        internal static Obj_AI_Base GetDashObject()
+        {
+            float realAArange = Orbwalking.GetRealAutoAttackRange(player);
+
+            var objects = ObjectManager.Get<Obj_AI_Base>().Where(o => o.IsValidTarget(realAArange));
+            Vector2 apexPoint = player.ServerPosition.To2D() + (player.ServerPosition.To2D() - Game.CursorPos.To2D()).Normalized() * realAArange;
+
+            Obj_AI_Base target = null;
+
+            foreach (var obj in objects)
+            {
+                if (VectorHelper.IsLyingInCone(obj.ServerPosition.To2D(), apexPoint, player.ServerPosition.To2D(), realAArange))
+                {
+                    if (target == null || target.Distance(apexPoint, true) > obj.Distance(apexPoint, true))
+                        target = obj;
+                }
+            }
+
+            return target;
+        }
+
         internal static double GetRendDamage(Obj_AI_Base target)
         {
             var buff = target.Buffs.FirstOrDefault(b => b.DisplayName.ToLower() == "kalistaexpungemarker");
@@ -204,6 +249,22 @@ namespace Kalista
             }
 
             return 0;
+        }
+
+        internal static float GetTotalDamage(Obj_AI_Hero target)
+        {
+            // Auto attack damage
+            double damage = player.GetAutoAttackDamage(target);
+
+            // Q damage
+            if (Q.IsReady())
+                damage += player.GetSpellDamage(target, SpellSlot.Q);
+
+            // E stack damage
+            if (E.IsReady())
+                damage += GetRendDamage(target);
+
+            return (float)damage;
         }
 
         internal static void Obj_AI_Hero_OnProcessSpellCast(Obj_AI_Base sender, GameObjectProcessSpellCastEventArgs args)
@@ -270,6 +331,13 @@ namespace Kalista
             jungleClear.AddItem(new MenuItem("jungleUseE", "Use E").SetValue(true));
             jungleClear.AddItem(new MenuItem("jungleActive", "JungleClear active").SetValue(new KeyBind('V', KeyBindType.Press)));
             menu.AddSubMenu(jungleClear);
+
+            // Flee
+            Menu flee = new Menu("Flee", "flee");
+            //flee.AddItem(new MenuItem("fleeWalljump", "Try to jump over walls").SetValue(true));
+            flee.AddItem(new MenuItem("fleeAA", "Smart usage of AA").SetValue(true));
+            flee.AddItem(new MenuItem("fleeActive", "Flee active").SetValue(new KeyBind('T', KeyBindType.Press)));
+            menu.AddSubMenu(flee);
 
             // Misc
             Menu misc = new Menu("Misc", "misc");
