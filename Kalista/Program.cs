@@ -129,10 +129,8 @@ namespace Kalista
 
             if (useE && E.IsReady())
             {
-                var buff = target.Buffs.FirstOrDefault(b => b.DisplayName.ToLower() == "kalistaexpungemarker");
-
-                if (buff != null && buff.Count >= menu.SubMenu("combo").Item("comboNumE").GetValue<Slider>().Value)
-                    E.Cast();
+                if (target.HasBuff("KalistaExpungeMarker") && target.Buffs.FirstOrDefault(b => b.DisplayName == "KalistaExpungeMarker").Count >= menu.SubMenu("combo").Item("comboNumE").GetValue<Slider>().Value)
+                    E.Cast(true);
             }
         }
 
@@ -158,8 +156,65 @@ namespace Kalista
             if ((player.Mana / player.MaxMana) * 100 < menu.SubMenu("waveClear").Item("waveMana").GetValue<Slider>().Value)
                 return;
 
+            bool useQ = menu.SubMenu("waveClear").Item("waveUseQ").GetValue<bool>();
             bool useE = menu.SubMenu("waveClear").Item("waveUseE").GetValue<bool>();
+            bool bigE = menu.SubMenu("waveClear").Item("waveBigE").GetValue<bool>();
 
+            // Q usage
+            if (useQ && Q.IsReady())
+            {
+                int hitNumber = menu.SubMenu("waveClear").Item("waveNumQ").GetValue<Slider>().Value;
+
+                // Get minions in range
+                var minions = ObjectManager.Get<Obj_AI_Minion>().Where(m => m.IsValidTarget(Q.Range)).ToList();
+
+                if (minions.Count >= hitNumber)
+                {
+                    // Sort by distance
+                    minions.Sort((m1, m2) => m2.Distance(player, true).CompareTo(m1.Distance(player, true)));
+
+                    // Helpers
+                    int bestHitCount = 0;
+                    PredictionOutput bestResult = null;
+
+                    foreach (var minion in minions)
+                    {
+                        var prediction = Q.GetPrediction(minion);
+
+                        // Get targets being hit with colliding Q
+                        var targets = prediction.CollisionObjects;
+                        // Sort them by distance
+                        targets.Sort((t1, t2) => t1.Distance(player, true).CompareTo(t2.Distance(player, true)));
+
+                        // Validate
+                        if (targets.Count > 0)
+                        {
+                            // Loop through the next targets to see if they will die with the Q hitting
+                            for (int i = 0; i < targets.Count; i++)
+                            {
+                                if (player.GetSpellDamage(targets[i], SpellSlot.Q) < targets[i].Health || i == targets.Count)
+                                {
+                                    // Can't kill this minion, check result so far
+                                    if (i >= hitNumber && (bestResult == null || bestHitCount < i))
+                                    {
+                                        bestHitCount = i;
+                                        bestResult = prediction;
+                                    }
+
+                                    // Break the loop cuz can't kill target
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
+                    // Check if we have a valid target with enough targets being hit
+                    if (bestResult != null)
+                        Q.Cast(bestResult.CastPosition);
+                }
+            }
+
+            // General E usage
             if (useE && E.IsReady())
             {
                 int hitNumber = menu.SubMenu("waveClear").Item("waveNumE").GetValue<Slider>().Value;
@@ -167,17 +222,37 @@ namespace Kalista
                 // Get surrounding
                 var minions = MinionManager.GetMinions(player.Position, E.Range);
 
-                // Check if enough minions die with E
-                int conditionMet = 0;
+                if (minions.Count >= hitNumber)
+                {
+                    // Check if enough minions die with E
+                    int conditionMet = 0;
+                    foreach (var minion in minions)
+                    {
+                        if (player.GetSpellDamage(minion, SpellSlot.E) > minion.Health)
+                            conditionMet++;
+                    }
+
+                    // Cast on condition met
+                    if (conditionMet >= hitNumber)
+                        E.Cast(true);
+                }
+            }
+
+            // Always E on big minions
+            if (bigE && E.IsReady())
+            {
+                // Get big minions
+                var minions = MinionManager.GetMinions(player.Position, E.Range).Where(m => m.BaseSkinName.Contains("MinionSiege"));
+
                 foreach (var minion in minions)
                 {
                     if (player.GetSpellDamage(minion, SpellSlot.E) > minion.Health)
-                        conditionMet++;
+                    {
+                        // On first big minion which can die with E, use E
+                        E.Cast(true);
+                        break;
+                    }
                 }
-
-                // Cast on condition met
-                if (conditionMet >= hitNumber)
-                    E.Cast();
             }
         }
 
@@ -194,7 +269,7 @@ namespace Kalista
                 {
                     if (player.GetSpellDamage(minion, SpellSlot.E) > minion.Health)
                     {
-                        E.Cast();
+                        E.Cast(true);
                         break;
                     }
                 }
@@ -236,6 +311,28 @@ namespace Kalista
 
             return target;
         }
+
+        /*
+        internal static double GetCustomRendDamage(Obj_AI_Base target)
+        {
+            // Get buff
+            var buff = target.Buffs.FirstOrDefault(b => b.DisplayName == "KalistaExpungeMarker" && b.SourceName == player.ChampionName);
+
+            if (buff != null)
+            {
+                // Base damage
+                double damage = (10 + 10 * player.Spellbook.GetSpell(SpellSlot.E).Level) + 0.6 * player.FlatPhysicalDamageMod;
+
+                // Damage per spear
+                damage += buff.Count * (damage * new double[] { 0, 0.25, 0.30, 0.35, 0.40, 0.45 }[player.Spellbook.GetSpell(SpellSlot.E).Level]);
+
+                // Calculate the damage and return
+                return player.CalcDamage(target, Damage.DamageType.Physical, damage);
+            }
+
+            return 0;
+        }
+        */
 
         internal static float GetTotalDamage(Obj_AI_Hero target)
         {
@@ -307,8 +404,11 @@ namespace Kalista
 
             // WaveClear
             Menu waveClear = new Menu("WaveClear", "waveClear");
+            waveClear.AddItem(new MenuItem("waveUseQ", "Use Q").SetValue(true));
+            waveClear.AddItem(new MenuItem("waveNumQ", "Minion kill number for Q").SetValue(new Slider(3, 1, 10)));
             waveClear.AddItem(new MenuItem("waveUseE", "Use E").SetValue(true));
             waveClear.AddItem(new MenuItem("waveNumE", "Minion kill number for E").SetValue(new Slider(2, 1, 10)));
+            waveClear.AddItem(new MenuItem("waveBigE", "Always E big minions").SetValue(true));
             waveClear.AddItem(new MenuItem("waveMana", "Mana usage in percent (%)").SetValue(new Slider(30)));
             waveClear.AddItem(new MenuItem("waveActive", "WaveClear active").SetValue(new KeyBind('V', KeyBindType.Press)));
             menu.AddSubMenu(waveClear);
@@ -339,7 +439,7 @@ namespace Kalista
             // Drawings
             Menu drawings = new Menu("Drawings", "drawings");
             drawings.AddItem(new MenuItem("drawRangeQ", "Q range").SetValue(new Circle(true, Color.FromArgb(150, Color.IndianRed))));
-            drawings.AddItem(new MenuItem("drawRangeW", "W range").SetValue(new Circle(false, Color.FromArgb(150, Color.MediumPurple))));
+            drawings.AddItem(new MenuItem("drawRangeW", "W range").SetValue(new Circle(true, Color.FromArgb(150, Color.MediumPurple))));
             drawings.AddItem(new MenuItem("drawRangeE", "E range").SetValue(new Circle(true, Color.FromArgb(150, Color.DarkRed))));
             drawings.AddItem(new MenuItem("drawRangeR", "R range").SetValue(new Circle(false, Color.FromArgb(150, Color.Red))));
             menu.AddSubMenu(drawings);
