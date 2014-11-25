@@ -166,7 +166,7 @@ namespace Kalista
                 int hitNumber = menu.SubMenu("waveClear").Item("waveNumQ").GetValue<Slider>().Value;
 
                 // Get minions in range
-                var minions = ObjectManager.Get<Obj_AI_Minion>().Where(m => m.IsValidTarget(Q.Range)).ToList();
+                var minions = ObjectManager.Get<Obj_AI_Minion>().Where(m => m.BaseSkinName.Contains("Minion") && m.IsValidTarget(Q.Range)).ToList();
 
                 if (minions.Count >= hitNumber)
                 {
