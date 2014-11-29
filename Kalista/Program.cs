@@ -400,7 +400,7 @@ namespace Kalista
                                 if (player.GetPath(wallPositionOpposite).ToList().To2D().PathLength() - player.Distance(wallPositionOpposite) > 200)
                                 {
                                     // Check the distance to the opposite side of the wall
-                                    if (player.Distance(wallPositionOpposite, true) < 275 * 275)
+                                    if (player.Distance(wallPositionOpposite, true) < Math.Pow(300 - player.BoundingRadius * 2, 2))
                                     {
                                         // Make the jump happen
                                         wallJumpInitTime = Environment.TickCount;
