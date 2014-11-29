@@ -100,7 +100,7 @@ namespace Kalista
             {
                 foreach (var enemy in ObjectManager.Get<Obj_AI_Hero>().Where(h => h.IsValidTarget(E.Range)))
                 {
-                    if (player.GetSpellDamage(enemy, SpellSlot.E) > enemy.Health)
+                    if (player.GetSpellDamage(enemy, SpellSlot.E) * 0.9 > enemy.Health)
                     {
                         E.Cast();
                         break;
@@ -209,7 +209,7 @@ namespace Kalista
                         // Loop through the next targets to see if they will die with the Q hitting
                         for (int i = 0; i < targets.Count; i++)
                         {
-                            if (player.GetSpellDamage(targets[i], SpellSlot.Q) < targets[i].Health || i == targets.Count)
+                            if (player.GetSpellDamage(targets[i], SpellSlot.Q) * 0.9 < targets[i].Health || i == targets.Count)
                             {
                                 // Can't kill this minion, check result so far
                                 if (i >= hitNumber && (bestResult == null || bestHitCount < i))
@@ -244,7 +244,7 @@ namespace Kalista
                     int conditionMet = 0;
                     foreach (var minion in minions)
                     {
-                        if (player.GetSpellDamage(minion, SpellSlot.E) > minion.Health)
+                        if (player.GetSpellDamage(minion, SpellSlot.E) * 0.9 > minion.Health)
                             conditionMet++;
                     }
 
@@ -262,7 +262,7 @@ namespace Kalista
 
                 foreach (var minion in minions)
                 {
-                    if (player.GetSpellDamage(minion, SpellSlot.E) > minion.Health)
+                    if (player.GetSpellDamage(minion, SpellSlot.E) * 0.9 > minion.Health)
                     {
                         // On first big minion which can die with E, use E
                         E.Cast(true);
@@ -283,7 +283,7 @@ namespace Kalista
                 // Check if a jungle mob can die with E
                 foreach (var minion in minions)
                 {
-                    if (player.GetSpellDamage(minion, SpellSlot.E) > minion.Health)
+                    if (player.GetSpellDamage(minion, SpellSlot.E) * 0.9 > minion.Health)
                     {
                         E.Cast(true);
                         break;
@@ -498,7 +498,7 @@ namespace Kalista
 
             // E stack damage
             if (E.IsReady())
-                damage += player.GetSpellDamage(target, SpellSlot.E);
+                damage += player.GetSpellDamage(target, SpellSlot.E) * 0.9;
 
             return (float)damage;
         }
