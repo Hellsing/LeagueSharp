@@ -4,6 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+using LeagueSharp;
+using LeagueSharp.Common;
+
 using SharpDX;
 
 namespace Kalista
@@ -52,6 +55,37 @@ namespace Kalista
         internal static float Magn(Vector2 a)
         {
             return (float)(Math.Sqrt(a.X * a.X + a.Y * a.Y));
+        }
+
+        internal static Vector2? GetFirstWallPoint(Vector3 from, Vector3 to, float step = 25)
+        {
+            return GetFirstWallPoint(from.To2D(), to.To2D(), step);
+        }
+
+        internal static Vector2? GetFirstWallPoint(Vector2 from, Vector2 to, float step = 25)
+        {
+            var direction = (to - from).Normalized();
+
+            for (float d = 0; d < from.Distance(to); d = d + step)
+            {
+                var testPoint = from + d * direction;
+                if (NavMesh.GetCollisionFlags(testPoint.X, testPoint.Y).HasFlag(CollisionFlags.Wall))
+                {
+                    return from + (d - step) * direction;
+                }
+            }
+
+            return null;
+        }
+
+        internal static bool IsWall(Vector3 position)
+        {
+            return IsWall(position.To2D());
+        }
+
+        internal static bool IsWall(Vector2 position)
+        {
+            return NavMesh.GetCollisionFlags(position.X, position.Y).HasFlag(CollisionFlags.Wall);
         }
     }
 }

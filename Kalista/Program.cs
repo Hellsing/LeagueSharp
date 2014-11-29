@@ -21,8 +21,18 @@ namespace Kalista
         internal static Spell Q, W, E, R;
         internal static readonly List<Spell> spellList = new List<Spell>();
 
-        internal static Menu menu;
-        internal static Orbwalking.Orbwalker OW;
+        internal static int? wallJumpInitTime;
+        internal static Vector3? wallJumpTarget;
+        internal static bool wallJumpPossible = false;
+        internal static Vector3? fleeTargetPosition;
+
+        internal static MenuWrapper menu;
+
+        // Menu links
+        internal static Dictionary<string, MenuWrapper.BoolLink> boolLinks = new Dictionary<string, MenuWrapper.BoolLink>();
+        internal static Dictionary<string, MenuWrapper.CircleLink> circleLinks = new Dictionary<string, MenuWrapper.CircleLink>();
+        internal static Dictionary<string, MenuWrapper.KeyBindLink> keyLinks = new Dictionary<string, MenuWrapper.KeyBindLink>();
+        internal static Dictionary<string, MenuWrapper.SliderLink> sliderLinks = new Dictionary<string, MenuWrapper.SliderLink>();
 
         internal static void Main(string[] args)
         {
@@ -58,28 +68,35 @@ namespace Kalista
             Game.OnGameUpdate += Game_OnGameUpdate;
             Drawing.OnDraw += Drawing_OnDraw;
             Obj_AI_Hero.OnProcessSpellCast += Obj_AI_Hero_OnProcessSpellCast;
+            CustomEvents.Unit.OnDash += Unit_OnDash; 
+            //delegate(Obj_AI_Base sender, Dash.DashItem item) { Game.PrintChat(item.EndPos.Distance(item.StartPos).ToString()); };
+
+            // Cuz we are officially private
+            Game.PrintChat("Totally private Kalista version loaded :^)");
         }
 
         internal static void Game_OnGameUpdate(EventArgs args)
         {
             // Combo
-            if (menu.SubMenu("combo").Item("comboActive").GetValue<KeyBind>().Active)
+            if (keyLinks["comboActive"].Value.Active)
                 OnCombo();
             // Harass
-            if (menu.SubMenu("harass").Item("harassActive").GetValue<KeyBind>().Active)
+            if (keyLinks["harassActive"].Value.Active)
                 OnHarass();
             // WaveClear
-            if (menu.SubMenu("waveClear").Item("waveActive").GetValue<KeyBind>().Active)
+            if (keyLinks["waveActive"].Value.Active)
                 OnWaveClear();
             // JungleClear
-            if (menu.SubMenu("jungleClear").Item("jungleActive").GetValue<KeyBind>().Active)
+            if (keyLinks["jungleActive"].Value.Active)
                 OnJungleClear();
             // Flee
-            if (menu.SubMenu("flee").Item("fleeActive").GetValue<KeyBind>().Active)
+            if (keyLinks["fleeActive"].Value.Active)
                 OnFlee();
+            else
+                fleeTargetPosition = null;
 
             // Check killsteal
-            if (E.IsReady() && menu.SubMenu("misc").Item("miscKillstealE").GetValue<bool>())
+            if (E.IsReady() && boolLinks["miscKillsteal"].Value)
             {
                 foreach (var enemy in ObjectManager.Get<Obj_AI_Hero>().Where(h => h.IsValidTarget(E.Range)))
                 {
@@ -94,8 +111,8 @@ namespace Kalista
 
         internal static void OnCombo()
         {
-            bool useQ = menu.SubMenu("combo").Item("comboUseQ").GetValue<bool>();
-            bool useE = menu.SubMenu("combo").Item("comboUseE").GetValue<bool>();
+            bool useQ = boolLinks["comboUseQ"].Value;
+            bool useE = boolLinks["comboUseE"].Value;
 
             Obj_AI_Hero target;
 
@@ -108,9 +125,9 @@ namespace Kalista
                 return;
 
             // Item usage
-            if (menu.SubMenu("combo").Item("comboUseItems").GetValue<bool>())
+            if (boolLinks["comboUseItems"].Value)
             {
-                if (menu.SubMenu("items").Item("itemsBotrk").GetValue<bool>())
+                if (boolLinks["itemsBotrk"].Value)
                 {
                     bool foundCutlass = Items.HasItem(3144);
                     bool foundBotrk = Items.HasItem(3153);
@@ -129,7 +146,8 @@ namespace Kalista
 
             if (useE && E.IsReady())
             {
-                if (target.HasBuff("KalistaExpungeMarker") && target.Buffs.FirstOrDefault(b => b.DisplayName == "KalistaExpungeMarker").Count >= menu.SubMenu("combo").Item("comboNumE").GetValue<Slider>().Value)
+                // TODO: check if target can die with 2 more stacks, if so, wait for it
+                if (target.HasBuff("KalistaExpungeMarker") && target.Buffs.FirstOrDefault(b => b.DisplayName == "KalistaExpungeMarker").Count >= sliderLinks["comboNumE"].Value.Value)
                     E.Cast(true);
             }
         }
@@ -137,14 +155,14 @@ namespace Kalista
         internal static void OnHarass()
         {
             // Mana check
-            if ((player.Mana / player.MaxMana) * 100 < menu.SubMenu("harass").Item("harassMana").GetValue<Slider>().Value)
+            if ((player.Mana / player.MaxMana) * 100 < sliderLinks["harassMana"].Value.Value)
                 return;
 
             var target = SimpleTs.GetTarget(Q.Range, SimpleTs.DamageType.Physical);
             if (target == null)
                 return;
 
-            bool useQ = menu.SubMenu("harass").Item("harassUseQ").GetValue<bool>();
+            bool useQ = boolLinks["harassUseQ"].Value;
 
             if (useQ && Q.IsReady())
                 Q.Cast(target);
@@ -153,17 +171,17 @@ namespace Kalista
         internal static void OnWaveClear()
         {
             // Mana check
-            if ((player.Mana / player.MaxMana) * 100 < menu.SubMenu("waveClear").Item("waveMana").GetValue<Slider>().Value)
+            if ((player.Mana / player.MaxMana) * 100 < sliderLinks["waveMana"].Value.Value)
                 return;
 
-            bool useQ = menu.SubMenu("waveClear").Item("waveUseQ").GetValue<bool>();
-            bool useE = menu.SubMenu("waveClear").Item("waveUseE").GetValue<bool>();
-            bool bigE = menu.SubMenu("waveClear").Item("waveBigE").GetValue<bool>();
+            bool useQ = boolLinks["waveUseQ"].Value;
+            bool useE = boolLinks["waveUseE"].Value;
+            bool bigE = boolLinks["waveBigE"].Value;
 
             // Q usage
             if (useQ && Q.IsReady())
             {
-                int hitNumber = menu.SubMenu("waveClear").Item("waveNumQ").GetValue<Slider>().Value;
+                int hitNumber = sliderLinks["waveNumQ"].Value.Value;
 
                 // Get minions in range
                 var minions = ObjectManager.Get<Obj_AI_Minion>().Where(m => m.BaseSkinName.Contains("Minion") && m.IsValidTarget(Q.Range)).ToList();
@@ -185,25 +203,23 @@ namespace Kalista
                         var targets = prediction.CollisionObjects;
                         // Sort them by distance
                         targets.Sort((t1, t2) => t1.Distance(player, true).CompareTo(t2.Distance(player, true)));
+                        // Add the initial minion as it won't be in the list
+                        targets.Add(minion);
 
-                        // Validate
-                        if (targets.Count > 0)
+                        // Loop through the next targets to see if they will die with the Q hitting
+                        for (int i = 0; i < targets.Count; i++)
                         {
-                            // Loop through the next targets to see if they will die with the Q hitting
-                            for (int i = 0; i < targets.Count; i++)
+                            if (player.GetSpellDamage(targets[i], SpellSlot.Q) < targets[i].Health || i == targets.Count)
                             {
-                                if (player.GetSpellDamage(targets[i], SpellSlot.Q) < targets[i].Health || i == targets.Count)
+                                // Can't kill this minion, check result so far
+                                if (i >= hitNumber && (bestResult == null || bestHitCount < i))
                                 {
-                                    // Can't kill this minion, check result so far
-                                    if (i >= hitNumber && (bestResult == null || bestHitCount < i))
-                                    {
-                                        bestHitCount = i;
-                                        bestResult = prediction;
-                                    }
-
-                                    // Break the loop cuz can't kill target
-                                    break;
+                                    bestHitCount = i;
+                                    bestResult = prediction;
                                 }
+
+                                // Break the loop cuz can't kill target
+                                break;
                             }
                         }
                     }
@@ -217,7 +233,7 @@ namespace Kalista
             // General E usage
             if (useE && E.IsReady())
             {
-                int hitNumber = menu.SubMenu("waveClear").Item("waveNumE").GetValue<Slider>().Value;
+                int hitNumber = sliderLinks["waveNumE"].Value.Value;
 
                 // Get surrounding
                 var minions = MinionManager.GetMinions(player.Position, E.Range);
@@ -258,7 +274,7 @@ namespace Kalista
 
         internal static void OnJungleClear()
         {
-            bool useE = menu.SubMenu("jungleClear").Item("jungleUseE").GetValue<bool>();
+            bool useE = boolLinks["jungleUseE"].Value;
 
             if (useE && E.IsReady())
             {
@@ -278,16 +294,153 @@ namespace Kalista
 
         internal static void OnFlee()
         {
-            //bool useWalljump = menu.SubMenu("flee").Item("fleeWalljump").GetValue<bool>();
-            bool useAA = menu.SubMenu("flee").Item("fleeAA").GetValue<bool>();
+            bool useWalljump = boolLinks["fleeWalljump"].Value;
+            bool useAA = boolLinks["fleeAA"].Value;
 
-            if (useAA)
+            // A jump has been triggered, move into the set direction and
+            // return the function to stop further calculations in the flee code
+            if (wallJumpTarget != null)
             {
-                var dashObject = GetDashObject();
-                if (dashObject != null)
-                    Orbwalking.Orbwalk(dashObject, Game.CursorPos);
+                // Move to the target
+                player.IssueOrder(GameObjectOrder.MoveTo, (Vector3)wallJumpTarget);
+
+                // This is only to validate when the jump get aborted by, for example, stuns
+                if (Environment.TickCount - wallJumpInitTime > 500)
+                {
+                    wallJumpTarget = null;
+                    wallJumpInitTime = null;
+                }
                 else
-                    Orbwalking.Orbwalk(null, Game.CursorPos);
+                    return;
+            }
+
+            // Quick AAing without jumping over walls
+            if (useAA && !useWalljump)
+                Orbwalking.Orbwalk(GetDashObject(), Game.CursorPos);
+
+            // Wall jumping with possible AAing aswell
+            if (useWalljump)
+            {
+                // We need to define a new move position since jumping over walls
+                // requires you to be close to the specified wall. Therefore we set the move
+                // point to be that specific piont. People will need to get used to it,
+                // but this is how it works.
+                var wallCheck = VectorHelper.GetFirstWallPoint(player.Position, Game.CursorPos);
+
+                // Be more precise
+                if (wallCheck != null)
+                    wallCheck = VectorHelper.GetFirstWallPoint((Vector3)wallCheck, Game.CursorPos, 5);
+
+                // Define more position point
+                Vector3 movePosition = wallCheck != null ? (Vector3)wallCheck : Game.CursorPos;
+
+                // Update fleeTargetPosition
+                var tempGrid = NavMesh.WorldToGrid(movePosition.X, movePosition.Y);
+                fleeTargetPosition = NavMesh.GridToWorld((short)tempGrid.X, (short)tempGrid.Y);
+
+                // Also check if we want to AA aswell
+                Obj_AI_Base target = null;
+                if (useAA)
+                    target = GetDashObject();
+
+                // Reset walljump indicators
+                wallJumpPossible = false;
+
+                // Only calculate stuff when our Q is up and there is a wall inbetween
+                if (Q.IsReady() && wallCheck != null)
+                {
+                    // Get our wall position to calculate from
+                    Vector3 wallPosition = movePosition;
+
+                    // Check 300 units to the cursor position in a 160 degree cone for a valid non-wall spot
+                    Vector2 direction = (Game.CursorPos.To2D() - wallPosition.To2D()).Normalized();
+                    float maxAngle = 80;
+                    float step = maxAngle / 20;
+                    float currentAngle = 0;
+                    float currentStep = 0;
+                    bool jumpTriggered = false;
+                    while (true)
+                    {
+                        // Validate the counter, break if no valid stop was found in previous loops
+                        if (currentStep > maxAngle && currentAngle < 0)
+                            break;
+
+                        // Check next angle
+                        if ((currentAngle == 0 || currentAngle < 0) && currentStep != 0)
+                        {
+                            currentAngle = (currentStep) * (float)Math.PI / 180;
+                            currentStep += step;
+                        }
+                        else if (currentAngle > 0)
+                            currentAngle = -currentAngle;
+
+                        Vector3 checkPoint;
+
+                        // One time only check for direct line of sight without rotating
+                        if (currentStep == 0)
+                        {
+                            currentStep = step;
+                            checkPoint = wallPosition + 300 * direction.To3D();
+                        }
+                        // Rotated check
+                        else
+                            checkPoint = wallPosition + 300 * direction.Rotated(currentAngle).To3D();
+
+                        // Check if the point is not a wall
+                        if (!VectorHelper.IsWall(checkPoint))
+                        {
+                            // Check if there is a wall between the checkPoint and wallPosition
+                            wallCheck = VectorHelper.GetFirstWallPoint(checkPoint, wallPosition);
+                            if (wallCheck != null)
+                            {
+                                // There is a wall inbetween, get the closes point to the wall, as precise as possible
+                                Vector3 wallPositionOpposite = (Vector3)VectorHelper.GetFirstWallPoint((Vector3)wallCheck, wallPosition, 5);
+
+                                // Check if it's worth to jump considering the path length
+                                if (player.GetPath(wallPositionOpposite).ToList().To2D().PathLength() - player.Distance(wallPositionOpposite) > 200)
+                                {
+                                    // Check the distance to the opposite side of the wall
+                                    if (player.Distance(wallPositionOpposite, true) < 275 * 275)
+                                    {
+                                        // Make the jump happen
+                                        wallJumpInitTime = Environment.TickCount;
+                                        wallJumpTarget = wallPositionOpposite;
+                                        Q.Cast(wallPositionOpposite);
+
+                                        // Update jumpTriggered value to not orbwalk now since we want to jump
+                                        jumpTriggered = true;
+
+                                        // Break the loop
+                                        break;
+                                    }
+                                    // If we are not able to jump due to the distance, draw the spot to
+                                    // make the user notice the possibliy
+                                    else
+                                    {
+                                        // Update indicator values
+                                        wallJumpPossible = true;
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // Check if the loop triggered the jump, if not just orbwalk
+                    if (!jumpTriggered)
+                        Orbwalking.Orbwalk(target, movePosition);
+                }
+                // Either no wall or Q on cooldown, just move towards to wall then
+                else
+                    Orbwalking.Orbwalk(target, movePosition);
+            }
+        }
+
+        internal static void Unit_OnDash(Obj_AI_Base sender, Dash.DashItem args)
+        {
+            if (sender.IsMe)
+            {
+                wallJumpInitTime = null;
+                wallJumpTarget = null;
             }
         }
 
@@ -361,91 +514,73 @@ namespace Kalista
 
         internal static void Drawing_OnDraw(EventArgs args)
         {
-            // Spell ranges
-            foreach (var spell in spellList)
+            // All circles
+            foreach (var circle in circleLinks.Values.Select(link => link.Value))
             {
-                var circleEntry = menu.SubMenu("drawings").Item("drawRange" + spell.Slot.ToString()).GetValue<Circle>();
-                if (circleEntry.Active)
-                    Utility.DrawCircle(player.Position, spell.Range, circleEntry.Color);
+                if (circle.Active)
+                    Utility.DrawCircle(player.Position, circle.Radius, circle.Color);
             }
+
+            // Flee position the player moves to
+            if (fleeTargetPosition != null)
+                Utility.DrawCircle((Vector3)fleeTargetPosition, 50, wallJumpPossible ? Color.Green : Q.IsReady() ? Color.Red : Color.Teal, 10);
         }
 
         internal static void SetuptMenu()
         {
             // Create menu
-            menu = new Menu("[Hellsing] " + CHAMP_NAME, "hells" + CHAMP_NAME, true);
-
-            // Target selector
-            Menu targetSelector = new Menu("Target Selector", "ts");
-            SimpleTs.AddToMenu(targetSelector);
-            menu.AddSubMenu(targetSelector);
-
-            // Orbwalker
-            Menu orbwalker = new Menu("Orbwalker", "orbwalker");
-            OW = new Orbwalking.Orbwalker(orbwalker);
-            menu.AddSubMenu(orbwalker);
+            menu = new MenuWrapper("[Hellsing] " + CHAMP_NAME);
 
             // Combo
-            Menu combo = new Menu("Combo", "combo");
-            combo.AddItem(new MenuItem("comboUseQ", "Use Q").SetValue(true));
-            combo.AddItem(new MenuItem("comboUseE", "Use E").SetValue(true));
-            combo.AddItem(new MenuItem("comboNumE", "Stacks for E").SetValue(new Slider(5, 1, 20)));
-            combo.AddItem(new MenuItem("comboUseItems", "Use items").SetValue(true));
-            combo.AddItem(new MenuItem("comboUseIgnite", "Use Ignite").SetValue(true));
-            combo.AddItem(new MenuItem("comboActive", "Combo active").SetValue(new KeyBind(32, KeyBindType.Press)));
-            menu.AddSubMenu(combo);
+            var combo = menu.MainMenu.AddSubMenu("Combo");
+            boolLinks.Add("comboUseQ", combo.AddLinkedBool("Use Q"));
+            boolLinks.Add("comboUseE", combo.AddLinkedBool("Use E"));
+            sliderLinks.Add("comboNumE", combo.AddLinkedSlider("Stacks for E", 5, 1, 20));
+            boolLinks.Add("comboUseItems", combo.AddLinkedBool("Use items"));
+            boolLinks.Add("comboUseIgnite", combo.AddLinkedBool("Use Ignite"));
+            keyLinks.Add("comboActive", combo.AddLinkedKeyBind("Combo active", 32, KeyBindType.Press));
 
             // Harass
-            Menu harass = new Menu("Harass", "harass");
-            harass.AddItem(new MenuItem("harassUseQ", "Use Q").SetValue(true));
-            harass.AddItem(new MenuItem("harassMana", "Mana usage in percent (%)").SetValue(new Slider(30)));
-            harass.AddItem(new MenuItem("harassActive", "Harass active").SetValue(new KeyBind('C', KeyBindType.Press)));
-            menu.AddSubMenu(harass);
+            var harass = menu.MainMenu.AddSubMenu("Harass");
+            boolLinks.Add("harassUseQ", harass.AddLinkedBool("Use Q"));
+            sliderLinks.Add("harassMana", harass.AddLinkedSlider("Mana usage in percent (%)", 30));
+            keyLinks.Add("harassActive", harass.AddLinkedKeyBind("Harass active", 'C', KeyBindType.Press));
 
             // WaveClear
-            Menu waveClear = new Menu("WaveClear", "waveClear");
-            waveClear.AddItem(new MenuItem("waveUseQ", "Use Q").SetValue(true));
-            waveClear.AddItem(new MenuItem("waveNumQ", "Minion kill number for Q").SetValue(new Slider(3, 1, 10)));
-            waveClear.AddItem(new MenuItem("waveUseE", "Use E").SetValue(true));
-            waveClear.AddItem(new MenuItem("waveNumE", "Minion kill number for E").SetValue(new Slider(2, 1, 10)));
-            waveClear.AddItem(new MenuItem("waveBigE", "Always E big minions").SetValue(true));
-            waveClear.AddItem(new MenuItem("waveMana", "Mana usage in percent (%)").SetValue(new Slider(30)));
-            waveClear.AddItem(new MenuItem("waveActive", "WaveClear active").SetValue(new KeyBind('V', KeyBindType.Press)));
-            menu.AddSubMenu(waveClear);
+            var waveClear = menu.MainMenu.AddSubMenu("WaveClear");
+            boolLinks.Add("waveUseQ", waveClear.AddLinkedBool("Use Q"));
+            sliderLinks.Add("waveNumQ", waveClear.AddLinkedSlider("Minion kill number for Q", 3, 1, 10));
+            boolLinks.Add("waveUseE", waveClear.AddLinkedBool("Use E"));
+            sliderLinks.Add("waveNumE", waveClear.AddLinkedSlider("Minion kill number for E", 2, 1, 10));
+            boolLinks.Add("waveBigE", waveClear.AddLinkedBool("Always E big minions"));
+            sliderLinks.Add("waveMana", waveClear.AddLinkedSlider("Mana usage in percent (%)", 30));
+            keyLinks.Add("waveActive", waveClear.AddLinkedKeyBind("WaveClear active", 'V', KeyBindType.Press));
 
             // JungleClear
-            Menu jungleClear = new Menu("JungleClear", "jungleClear");
-            jungleClear.AddItem(new MenuItem("jungleUseE", "Use E").SetValue(true));
-            jungleClear.AddItem(new MenuItem("jungleActive", "JungleClear active").SetValue(new KeyBind('V', KeyBindType.Press)));
-            menu.AddSubMenu(jungleClear);
+            var jungleClear = menu.MainMenu.AddSubMenu("JungleClear");
+            boolLinks.Add("jungleUseE", jungleClear.AddLinkedBool("Use E"));
+            keyLinks.Add("jungleActive", jungleClear.AddLinkedKeyBind("JungleClear active", 'V', KeyBindType.Press));
 
             // Flee
-            Menu flee = new Menu("Flee", "flee");
-            //flee.AddItem(new MenuItem("fleeWalljump", "Try to jump over walls").SetValue(true));
-            flee.AddItem(new MenuItem("fleeAA", "Smart usage of AA").SetValue(true));
-            flee.AddItem(new MenuItem("fleeActive", "Flee active").SetValue(new KeyBind('T', KeyBindType.Press)));
-            menu.AddSubMenu(flee);
+            var flee = menu.MainMenu.AddSubMenu("Flee");
+            boolLinks.Add("fleeWalljump", flee.AddLinkedBool("Try to jump over walls"));
+            boolLinks.Add("fleeAA", flee.AddLinkedBool("Smart usage of AA"));
+            keyLinks.Add("fleeActive", flee.AddLinkedKeyBind("Flee active", 'T', KeyBindType.Press));
 
             // Misc
-            Menu misc = new Menu("Misc", "misc");
-            misc.AddItem(new MenuItem("miscKillstealE", "Killsteal with E").SetValue(true));
-            menu.AddSubMenu(misc);
+            var misc = menu.MainMenu.AddSubMenu("Misc");
+            boolLinks.Add("miscKillstealE", misc.AddLinkedBool("Killsteal with E"));
 
             // Items
-            Menu items = new Menu("Items", "items");
-            items.AddItem(new MenuItem("itemsBotrk", "Use BotRK").SetValue(true));
-            menu.AddSubMenu(items);
+            var items = menu.MainMenu.AddSubMenu("Items");
+            boolLinks.Add("itemsBotrk", items.AddLinkedBool("Use BotRK"));
 
             // Drawings
-            Menu drawings = new Menu("Drawings", "drawings");
-            drawings.AddItem(new MenuItem("drawRangeQ", "Q range").SetValue(new Circle(true, Color.FromArgb(150, Color.IndianRed))));
-            drawings.AddItem(new MenuItem("drawRangeW", "W range").SetValue(new Circle(true, Color.FromArgb(150, Color.MediumPurple))));
-            drawings.AddItem(new MenuItem("drawRangeE", "E range").SetValue(new Circle(true, Color.FromArgb(150, Color.DarkRed))));
-            drawings.AddItem(new MenuItem("drawRangeR", "R range").SetValue(new Circle(false, Color.FromArgb(150, Color.Red))));
-            menu.AddSubMenu(drawings);
-
-            // Finalize menu
-            menu.AddToMainMenu();
+            var drawings = menu.MainMenu.AddSubMenu("Drawings");
+            circleLinks.Add("drawRangeQ", drawings.AddLinkedCircle("Q range", true, Color.FromArgb(150, Color.IndianRed), Q.Range));
+            circleLinks.Add("drawRangeW", drawings.AddLinkedCircle("W range", true, Color.FromArgb(150, Color.MediumPurple), W.Range));
+            circleLinks.Add("drawRangeE", drawings.AddLinkedCircle("E range", true, Color.FromArgb(150, Color.DarkRed), E.Range));
+            circleLinks.Add("drawRangeR", drawings.AddLinkedCircle("R range", false, Color.FromArgb(150, Color.Red), R.Range));
         }
     }
 }
