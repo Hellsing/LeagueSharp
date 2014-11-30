@@ -96,7 +96,7 @@ namespace Kalista
                 fleeTargetPosition = null;
 
             // Check killsteal
-            if (E.IsReady() && boolLinks["miscKillsteal"].Value)
+            if (E.IsReady() && boolLinks["miscKillstealE"].Value)
             {
                 foreach (var enemy in ObjectManager.Get<Obj_AI_Hero>().Where(h => h.IsValidTarget(E.Range)))
                 {
@@ -146,9 +146,15 @@ namespace Kalista
 
             if (useE && E.IsReady())
             {
-                // TODO: check if target can die with 2 more stacks, if so, wait for it
-                if (target.HasBuff("KalistaExpungeMarker") && target.Buffs.FirstOrDefault(b => b.DisplayName == "KalistaExpungeMarker").Count >= sliderLinks["comboNumE"].Value.Value)
-                    E.Cast(true);
+                if (player.GetSpellDamage(target, SpellSlot.E) * 0.9 > target.Health || target.HasBuff("KalistaExpungeMarker") && target.Buffs.FirstOrDefault(b => b.DisplayName == "KalistaExpungeMarker").Count >= sliderLinks["comboNumE"].Value.Value)
+                {
+                    // Check if the target would die from E
+                    if (player.GetSpellDamage(target, SpellSlot.E) * 0.9 > target.Health)
+                        E.Cast(true);
+                    // Check if the target would die with 2 more stacks, useless to waste E then
+                    else if (GetRendDamage(target, target.Buffs.FirstOrDefault(b => b.DisplayName == "KalistaExpungeMarker").Count + 2) * 0.9 < target.Health)
+                        E.Cast(true);
+                }
             }
         }
 
@@ -361,7 +367,7 @@ namespace Kalista
                     bool jumpTriggered = false;
                     while (true)
                     {
-                        // Validate the counter, break if no valid stop was found in previous loops
+                        // Validate the counter, break if no valid spot was found in previous loops
                         if (currentStep > maxAngle && currentAngle < 0)
                             break;
 
@@ -465,8 +471,7 @@ namespace Kalista
             return target;
         }
 
-        /*
-        internal static double GetCustomRendDamage(Obj_AI_Base target)
+        internal static double GetRendDamage(Obj_AI_Base target, int customStacks = -1)
         {
             // Get buff
             var buff = target.Buffs.FirstOrDefault(b => b.DisplayName == "KalistaExpungeMarker" && b.SourceName == player.ChampionName);
@@ -474,10 +479,10 @@ namespace Kalista
             if (buff != null)
             {
                 // Base damage
-                double damage = (10 + 10 * player.Spellbook.GetSpell(SpellSlot.E).Level) + 0.6 * player.FlatPhysicalDamageMod;
+                double damage = (10 + 10 * player.Spellbook.GetSpell(SpellSlot.E).Level) + 0.6 * (player.BaseAttackDamage + player.FlatPhysicalDamageMod);
 
                 // Damage per spear
-                damage += buff.Count * (damage * new double[] { 0, 0.25, 0.30, 0.35, 0.40, 0.45 }[player.Spellbook.GetSpell(SpellSlot.E).Level]);
+                damage += (customStacks == -1 ? buff.Count : customStacks) * (damage * new double[] { 0, 0.25, 0.30, 0.35, 0.40, 0.45 }[player.Spellbook.GetSpell(SpellSlot.E).Level]);
 
                 // Calculate the damage and return
                 return player.CalcDamage(target, Damage.DamageType.Physical, damage);
@@ -485,7 +490,6 @@ namespace Kalista
 
             return 0;
         }
-        */
 
         internal static float GetTotalDamage(Obj_AI_Hero target)
         {
