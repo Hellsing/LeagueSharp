@@ -64,15 +64,14 @@ namespace Kalista
             Utility.HpBarDamageIndicator.DamageToUnit = GetTotalDamage;
             Utility.HpBarDamageIndicator.Enabled = true;
 
+            // Enable E damage indicators
+            CustomDamageIndicator.Initialize(GetEDamage);
+
             // Register additional events
             Game.OnGameUpdate += Game_OnGameUpdate;
             Drawing.OnDraw += Drawing_OnDraw;
             Obj_AI_Hero.OnProcessSpellCast += Obj_AI_Hero_OnProcessSpellCast;
-            CustomEvents.Unit.OnDash += Unit_OnDash; 
-            //delegate(Obj_AI_Base sender, Dash.DashItem item) { Game.PrintChat(item.EndPos.Distance(item.StartPos).ToString()); };
-
-            // Cuz we are officially private
-            Game.PrintChat("Totally private Kalista version loaded :^)");
+            CustomEvents.Unit.OnDash += Unit_OnDash;
         }
 
         internal static void Game_OnGameUpdate(EventArgs args)
@@ -489,6 +488,11 @@ namespace Kalista
             }
 
             return 0;
+        }
+
+        internal static float GetEDamage(Obj_AI_Hero target)
+        {
+            return (float)player.GetSpellDamage(target, SpellSlot.E) * 0.9f;
         }
 
         internal static float GetTotalDamage(Obj_AI_Hero target)
