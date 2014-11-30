@@ -43,7 +43,7 @@ namespace Brand
                 return;
 
             // Initialize spells
-            Q = new Spell(SpellSlot.Q, 1100);
+            Q = new Spell(SpellSlot.Q, 1050);
             W = new Spell(SpellSlot.W, 900);
             E = new Spell(SpellSlot.E, 625);
             R = new Spell(SpellSlot.R, 750);
@@ -52,7 +52,7 @@ namespace Brand
             spellList.AddRange(new[] { Q, W, E, R });
 
             // Finetune spells
-            Q.SetSkillshot(0.25f, 60, 1600, true, SkillshotType.SkillshotLine);
+            Q.SetSkillshot(0.25f, 80, 1200, true, SkillshotType.SkillshotLine);
             W.SetSkillshot(1, 240, float.MaxValue, false, SkillshotType.SkillshotCircle);
             E.SetTargetted(0.25f, float.MaxValue);
             R.SetTargetted(0.25f, 1000);
