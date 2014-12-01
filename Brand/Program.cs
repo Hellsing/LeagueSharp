@@ -62,6 +62,7 @@ namespace Brand
 
             // Initialize DamageIndicator
             CustomDamageIndicator.Initialize(GetHPBarComboDamage);
+            CustomDamageIndicator.Color = Color.Black;
 
             // Register event handlers
             Game.OnGameUpdate += Game_OnGameUpdate;

@@ -53,7 +53,7 @@ namespace Brand
         private static void Drawing_OnDraw(EventArgs args)
         {
             // Get ColorBGRA color
-            var barColor = new ColorBGRA(Color.R, Color.G, Color.B, 90);
+            var barColor = new ColorBGRA(Color.R, Color.G, Color.B, 155);
 
             foreach (var unit in ObjectManager.Get<Obj_AI_Hero>().Where(u => u.IsValidTarget()))
             {
