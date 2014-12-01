@@ -157,8 +157,8 @@ namespace Brand
                         if ((mainComboKillable) || // Main combo killable
                             (!useQ && !useW) || // Casting when not using Q and W
                             (E.Level >= 4) || // E level high, damage output higher
-                            (useQ && (Q.IsReady(250) || Q.Cooldown() > E.Cooldown())) || // Q ready
-                            (useW && (W.IsReady(250) || W.Cooldown() > E.Cooldown()))) // W ready
+                            (useQ && (Q.IsReady(250) || Q.Cooldown() < 5)) || // Q ready
+                            (useW && W.IsReady(250))) // W ready
                         {
                             // Cast E on target
                             E.CastOnUnit(target, true);
