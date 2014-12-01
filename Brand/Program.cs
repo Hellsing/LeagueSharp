@@ -60,6 +60,9 @@ namespace Brand
             // Setup menu
             SetuptMenu();
 
+            // Initialize DamageIndicator
+            CustomDamageIndicator.Initialize(GetHPBarComboDamage);
+
             // Register event handlers
             Game.OnGameUpdate += Game_OnGameUpdate;
             Drawing.OnDraw += Drawing_OnDraw;
@@ -89,7 +92,7 @@ namespace Brand
         private static void OnCombo()
         {
             // Target aquireing
-            var target = SimpleTs.GetTarget(W.Range + W.Width, SimpleTs.DamageType.Magical);
+            var target = SimpleTs.GetTarget(W.Range + W.Width / 2, SimpleTs.DamageType.Magical);
 
             // Target validation
             if (target == null)
@@ -188,7 +191,7 @@ namespace Brand
         private static void OnHarass()
         {
             // Target aquireing
-            var target = SimpleTs.GetTarget(W.Range + W.Width, SimpleTs.DamageType.Magical);
+            var target = SimpleTs.GetTarget(W.Range + W.Width / 2, SimpleTs.DamageType.Magical);
 
             // Target validation
             if (target == null)
@@ -209,7 +212,7 @@ namespace Brand
                 if (spell.Slot == SpellSlot.Q && useQ)
                 {
                     if (target.IsAblazed() || // Ablazed
-                        (target.IsSpellKillable(SpellSlot.Q)) || // Killable
+                        (Q.IsKillable(target)) || // Killable
                         (!useW && !useE) || // Casting when not using W and E
                         (useW && !useE && !W.IsReady() && player.Spellbook.GetSpell(SpellSlot.W).CooldownExpires - Game.Time > player.Spellbook.GetSpell(SpellSlot.Q).Cooldown) || // Cooldown substraction W ready, jodus please...
                         ((useE && !useW || useW && useE) && !E.IsReady() && player.Spellbook.GetSpell(SpellSlot.E).CooldownExpires - Game.Time > player.Spellbook.GetSpell(SpellSlot.Q).Cooldown)) // Cooldown substraction E ready, jodus please...
@@ -223,7 +226,7 @@ namespace Brand
                 {
                     if ((!useE) || // Casting when not using E
                         (target.IsAblazed()) || // Ablazed
-                        (target.IsSpellKillable(SpellSlot.W)) || // Killable
+                        (W.IsKillable(target)) || // Killable
                         (target.ServerPosition.Distance(player.Position, true) > E.Range * E.Range) ||
                         (!E.IsReady() && player.Spellbook.GetSpell(SpellSlot.E).CooldownExpires - Game.Time > player.Spellbook.GetSpell(SpellSlot.W).Cooldown)) // Cooldown substraction E ready
                     {
@@ -238,7 +241,7 @@ namespace Brand
                     if (Vector2.DistanceSquared(target.ServerPosition.To2D(), player.Position.To2D()) < E.Range * E.Range)
                     {
                         if ((!useQ && !useW) || // Casting when not using Q and W
-                            target.IsSpellKillable(SpellSlot.E) || // Killable
+                            E.IsKillable(target) || // Killable
                             (useQ && (Q.IsReady() || player.Spellbook.GetSpell(SpellSlot.Q).Cooldown < 5)) || // Q ready
                             (useW && W.IsReady())) // W ready
                         {
@@ -273,7 +276,7 @@ namespace Brand
                         target = minion;
 
                         // Break if killlable
-                        if (minion.Health > player.GetAutoAttackDamage(minion) && minion.IsSpellKillable(SpellSlot.Q))
+                        if (minion.Health > player.GetAutoAttackDamage(minion) && Q.IsKillable(minion))
                             break;
                     }
                 }
@@ -302,7 +305,7 @@ namespace Brand
                     if (minion.ServerPosition.Distance(player.Position, true) < E.Range * E.Range)
                     {
                         // E only on targets that are ablaze or killable
-                        if (minion.IsAblazed() || minion.Health > player.GetAutoAttackDamage(minion) && minion.IsSpellKillable(SpellSlot.E))
+                        if (minion.IsAblazed() || minion.Health > player.GetAutoAttackDamage(minion) && E.IsKillable(minion))
                         {
                             E.CastOnUnit(minion);
                             break;
@@ -321,7 +324,7 @@ namespace Brand
                 damage += player.GetSpellDamage(target, SpellSlot.Q);
 
             if (W.IsReady())
-                damage += player.GetSpellDamage(target, SpellSlot.W) * (target.IsAblazed() ? 2 : 1);
+                damage += player.GetSpellDamage(target, SpellSlot.W) * (target.IsAblazed() ? 1.25 : 1);
 
             if (E.IsReady())
                 damage += player.GetSpellDamage(target, SpellSlot.E);
@@ -355,14 +358,14 @@ namespace Brand
             return GetBounceComboDamage(target) > target.Health;
         }
 
+        public static float GetHPBarComboDamage(Obj_AI_Hero target)
+        {
+            return (float)GetMainComboDamage(target);
+        }
+
         public static bool IsAblazed(this Obj_AI_Base target)
         {
             return target.HasBuff("brandablaze", true);
-        }
-
-        public static bool IsSpellKillable(this Obj_AI_Base target, SpellSlot spellSlot)
-        {
-            return player.GetSpellDamage(target, spellSlot) > target.Health;
         }
 
         public static bool HasIgnite(this Obj_AI_Hero target, bool checkReady = true)
@@ -370,7 +373,7 @@ namespace Brand
             if (target.IsMe)
             {
                 var ignite = player.Spellbook.GetSpell(player.GetSpellSlot("SummonerDot"));
-                return ignite != null && ignite.Slot != SpellSlot.Unknown && (checkReady ? player.Spellbook.CanUseSpell(ignite.Slot) == SpellState.Ready && player.Distance(target, true) < 400 * 400 : true);
+                return ignite != null && ignite.Slot != SpellSlot.Unknown && (checkReady ? player.SummonerSpellbook.CanUseSpell(ignite.Slot) == SpellState.Ready && player.Distance(target, true) < 400 * 400 : true);
             }
             return false;
         }
