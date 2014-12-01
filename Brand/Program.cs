@@ -93,7 +93,7 @@ namespace Brand
         private static void OnCombo()
         {
             // Target aquireing
-            var target = SimpleTs.GetTarget(W.Range + W.Width / 2, SimpleTs.DamageType.Magical);
+            var target = SimpleTs.GetTarget(W.Range, SimpleTs.DamageType.Magical);
 
             // Target validation
             if (target == null)
@@ -108,7 +108,7 @@ namespace Brand
             // Killable status
             bool mainComboKillable = target.IsMainComboKillable();
             bool bounceComboKillable = target.IsBounceComboKillable();
-            bool inMinimumRange = target.ServerPosition.Distance(player.Position, true) < E.Range * E.Range;
+            bool inMinimumRange = E.InRange(target.ServerPosition);
 
             // Ignite auto cast if killable, bitch please
             if (mainComboKillable && player.HasIgnite())
@@ -126,9 +126,9 @@ namespace Brand
                     if ((mainComboKillable && inMinimumRange) || // Main combo killable
                         (!useW && !useE) || // Casting when not using W and E
                         (target.IsAblazed()) || // Ablazed
-                        (player.GetSpellDamage(target, SpellSlot.Q) > target.Health) || // Killable
-                        (useW && !useE && !W.IsReady() && W.IsReady((int)(player.Spellbook.GetSpell(SpellSlot.Q).Cooldown * 1000))) || // Cooldown substraction W ready
-                        ((useE && !useW || useW && useE) && !E.IsReady() && E.IsReady((int)(player.Spellbook.GetSpell(SpellSlot.Q).Cooldown * 1000)))) // Cooldown substraction E ready
+                        (Q.IsKillable(target)) || // Killable
+                        (useW && !useE && !W.IsReady(250) && W.IsReady((int)(Q.Cooldown() * 1000))) || // Cooldown substraction W ready
+                        ((useE && !useW || useW && useE) && !E.IsReady(250) && E.IsReady((int)(Q.Cooldown() * 1000)))) // Cooldown substraction E ready
                     {
                         // Cast Q on high hitchance
                         Q.CastIfHitchanceEquals(target, HitChance.High);
@@ -140,9 +140,9 @@ namespace Brand
                     if ((mainComboKillable && inMinimumRange) || // Main combo killable
                         (!useE) || // Casting when not using E
                         (target.IsAblazed()) || // Ablazed
-                        (player.GetSpellDamage(target, SpellSlot.W) > target.Health) || // Killable
-                        (target.ServerPosition.Distance(player.Position, true) > E.Range * E.Range) ||
-                        (!E.IsReady() && E.IsReady((int)(player.Spellbook.GetSpell(SpellSlot.W).Cooldown * 1000)))) // Cooldown substraction E ready
+                        (W.IsKillable(target)) || // Killable
+                        (target.ServerPosition.Distance(player.Position, true) > Math.Pow(E.Range + 100, 2)) ||
+                        (!E.IsReady() && E.IsReady((int)(W.Cooldown() * 1000)))) // Cooldown substraction E ready
                     {
                         // Cast W on high hitchance
                         W.CastIfHitchanceEquals(target, HitChance.High);
@@ -152,16 +152,16 @@ namespace Brand
                 else if (spell.Slot == SpellSlot.E && useE)
                 {
                     // Distance check
-                    if (Vector2.DistanceSquared(target.ServerPosition.To2D(), player.Position.To2D()) < E.Range * E.Range)
+                    if (E.InRange(target.ServerPosition))
                     {
                         if ((mainComboKillable) || // Main combo killable
                             (!useQ && !useW) || // Casting when not using Q and W
                             (E.Level >= 4) || // E level high, damage output higher
-                            (useQ && (Q.IsReady() || player.Spellbook.GetSpell(SpellSlot.Q).Cooldown < 5)) || // Q ready
-                            (useW && W.IsReady())) // W ready
+                            (useQ && (Q.IsReady(250) || Q.Cooldown() > E.Cooldown())) || // Q ready
+                            (useW && (W.IsReady(250) || W.Cooldown() > E.Cooldown()))) // W ready
                         {
                             // Cast E on target
-                            E.CastOnUnit(target);
+                            E.CastOnUnit(target, true);
                         }
                     }
                 }
@@ -169,17 +169,17 @@ namespace Brand
                 else if (spell.Slot == SpellSlot.R && useR)
                 {
                     // Distance check
-                    if (target.ServerPosition.Distance(player.Position, true) < R.Range * R.Range)
+                    if (R.InRange(target.ServerPosition))
                     {
                         // Logic prechecks
-                        if ((useQ && Q.IsReady() && Q.GetPrediction(target).Hitchance == HitChance.High || useW && W.IsReady()) && player.Health / player.MaxHealth > 0.4f)
+                        if ((useQ && Q.IsReady() && Q.GetPrediction(target).Hitchance == HitChance.High || useW && W.IsReady()) && player.Health / player.MaxHealth > 0.25f)
                             continue;
 
                         // Single hit
-                        if (mainComboKillable && inMinimumRange || player.GetSpellDamage(target, SpellSlot.R) > target.Health)
+                        if (mainComboKillable && inMinimumRange || R.IsKillable(target))
                             R.CastOnUnit(target);
                         // Double bounce combo
-                        else if (bounceComboKillable && inMinimumRange || player.GetSpellDamage(target, SpellSlot.R) * 2 > target.Health)
+                        else if (bounceComboKillable && inMinimumRange || R.GetDamage(target) * 2 > target.Health)
                         {
                             if (ObjectManager.Get<Obj_AI_Base>().Count(enemy => (enemy.Type == GameObjectType.obj_AI_Minion || enemy.NetworkId != target.NetworkId && enemy.Type == GameObjectType.obj_AI_Hero) && enemy.IsValidTarget() && enemy.ServerPosition.Distance(target.ServerPosition, true) < BOUNCE_RADIUS * BOUNCE_RADIUS) > 0)
                                 R.CastOnUnit(target);
@@ -192,7 +192,7 @@ namespace Brand
         private static void OnHarass()
         {
             // Target aquireing
-            var target = SimpleTs.GetTarget(W.Range + W.Width / 2, SimpleTs.DamageType.Magical);
+            var target = SimpleTs.GetTarget(W.Range, SimpleTs.DamageType.Magical);
 
             // Target validation
             if (target == null)
@@ -215,8 +215,8 @@ namespace Brand
                     if (target.IsAblazed() || // Ablazed
                         (Q.IsKillable(target)) || // Killable
                         (!useW && !useE) || // Casting when not using W and E
-                        (useW && !useE && !W.IsReady() && player.Spellbook.GetSpell(SpellSlot.W).CooldownExpires - Game.Time > player.Spellbook.GetSpell(SpellSlot.Q).Cooldown) || // Cooldown substraction W ready, jodus please...
-                        ((useE && !useW || useW && useE) && !E.IsReady() && player.Spellbook.GetSpell(SpellSlot.E).CooldownExpires - Game.Time > player.Spellbook.GetSpell(SpellSlot.Q).Cooldown)) // Cooldown substraction E ready, jodus please...
+                        (useW && !useE && !W.IsReady(250) && W.IsReady((int)(Q.Cooldown() * 1000))) || // Cooldown substraction W ready
+                        ((useE && !useW || useW && useE) && !E.IsReady(250) && E.IsReady((int)(Q.Cooldown() * 1000)))) // Cooldown substraction E ready
                     {
                         // Cast Q on high hitchance
                         Q.CastIfHitchanceEquals(target, HitChance.High);
@@ -228,8 +228,8 @@ namespace Brand
                     if ((!useE) || // Casting when not using E
                         (target.IsAblazed()) || // Ablazed
                         (W.IsKillable(target)) || // Killable
-                        (target.ServerPosition.Distance(player.Position, true) > E.Range * E.Range) ||
-                        (!E.IsReady() && player.Spellbook.GetSpell(SpellSlot.E).CooldownExpires - Game.Time > player.Spellbook.GetSpell(SpellSlot.W).Cooldown)) // Cooldown substraction E ready
+                        (E.InRange(target.ServerPosition)) ||
+                        (!E.IsReady(250) && E.IsReady((int)(W.Cooldown() * 1000)))) // Cooldown substraction E ready
                     {
                         // Cast W on high hitchance
                         W.CastIfHitchanceEquals(target, HitChance.High);
@@ -239,12 +239,12 @@ namespace Brand
                 else if (spell.Slot == SpellSlot.E && useE)
                 {
                     // Distance check
-                    if (Vector2.DistanceSquared(target.ServerPosition.To2D(), player.Position.To2D()) < E.Range * E.Range)
+                    if (E.InRange(target.ServerPosition))
                     {
                         if ((!useQ && !useW) || // Casting when not using Q and W
                             E.IsKillable(target) || // Killable
-                            (useQ && (Q.IsReady() || player.Spellbook.GetSpell(SpellSlot.Q).Cooldown < 5)) || // Q ready
-                            (useW && W.IsReady())) // W ready
+                            (useQ && (Q.IsReady(250) || Q.Cooldown() < 5)) || // Q ready
+                            (useW && W.IsReady(250))) // W ready
                         {
                             // Cast E on target
                             E.CastOnUnit(target);
@@ -303,7 +303,7 @@ namespace Brand
                 foreach (var minion in minions)
                 {
                     // Distance check
-                    if (minion.ServerPosition.Distance(player.Position, true) < E.Range * E.Range)
+                    if (E.InRange(minion.ServerPosition))
                     {
                         // E only on targets that are ablaze or killable
                         if (minion.IsAblazed() || minion.Health > player.GetAutoAttackDamage(minion) && E.IsKillable(minion))
@@ -367,6 +367,11 @@ namespace Brand
         public static bool IsAblazed(this Obj_AI_Base target)
         {
             return target.HasBuff("brandablaze", true);
+        }
+
+        public static float Cooldown(this Spell spell)
+        {
+            return player.Spellbook.GetSpell(spell.Slot).Cooldown;
         }
 
         public static bool HasIgnite(this Obj_AI_Hero target, bool checkReady = true)
