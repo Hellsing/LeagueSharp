@@ -432,11 +432,11 @@ namespace Kalista
 
                     // Check if the loop triggered the jump, if not just orbwalk
                     if (!jumpTriggered)
-                        Orbwalking.Orbwalk(target, movePosition);
+                        Orbwalking.Orbwalk(target, movePosition, 90f, 0f, false, false);
                 }
                 // Either no wall or Q on cooldown, just move towards to wall then
                 else
-                    Orbwalking.Orbwalk(target, movePosition);
+                    Orbwalking.Orbwalk(target, movePosition, 90f, 0f, false, false);
             }
         }
 
