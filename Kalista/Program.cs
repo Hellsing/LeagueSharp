@@ -166,11 +166,13 @@ namespace Kalista
             {
                 if (target.IsRendKillable() || target.HasBuff("KalistaExpungeMarker") && target.Buffs.FirstOrDefault(b => b.DisplayName == "KalistaExpungeMarker").Count >= sliderLinks["comboNumE"].Value.Value)
                 {
+                    var buff = target.Buffs.FirstOrDefault(b => b.DisplayName == "KalistaExpungeMarker");
+
                     // Check if the target would die from E
                     if (target.IsRendKillable())
                         E.Cast(true);
                     // Check if the target would die with 2 more stacks, useless to waste E then
-                    else if (GetRendDamage(target, target.Buffs.FirstOrDefault(b => b.DisplayName == "KalistaExpungeMarker").Count + 2) * 0.9 < target.Health)
+                    else if (GetRendDamage(target, buff.Count + 2) < target.Health || target.ServerPosition.Distance(player.Position, true) > 800 * 800 || buff.EndTime - Game.Time <= 250)
                         E.Cast(true);
                 }
             }
@@ -481,7 +483,7 @@ namespace Kalista
         internal static double GetRendDamage(Obj_AI_Base target, int customStacks = -1)
         {
             // Calculate the damage and return
-            return player.CalculatePhysicalDamage(target, (float)GetRawRendDamage(target, customStacks)) - sliderLinks["spellReductionE"].Value.Value;
+            return player.CalcDamage(target, Damage.DamageType.Physical, GetRawRendDamage(target, customStacks)) - sliderLinks["spellReductionE"].Value.Value;
         }
 
         internal static double GetRawRendDamage(Obj_AI_Base target, int customStacks = -1)
@@ -526,114 +528,6 @@ namespace Kalista
             return (float)damage;
         }
 
-        internal static float CalculatePhysicalDamageMultiplier(this Obj_AI_Hero source, Obj_AI_Base target, float tweak = 0)
-        {
-            float armor = target.Armor;
-
-            // Armor penetration percent
-            if (armor > 0 && source.PercentArmorPenetrationMod > 0)
-                armor *= source.PercentArmorPenetrationMod;
-
-            // Armor penetration flat
-            if (source.FlatArmorPenetrationMod > 0)
-                armor -= source.FlatArmorPenetrationMod;
-
-            // Target has positive armor
-            if (armor <= 0)
-                return (100f / (100f + armor)) + tweak;
-            // Target has negative armor
-            else
-                return (2f - (100f / (100f - armor))) + tweak;
-        }
-
-        internal static float CalculatePhysicalDamage(this Obj_AI_Hero source, Obj_AI_Base target, float rawDamage)
-        {
-            return (float)source.CalcDamage(target, Damage.DamageType.Physical, rawDamage);
-            //return CalculatePhysicalDamageMultiplier(source, target) * rawDamage;
-        }
-
-        internal static bool castedE = false;
-        internal static int stacksE = 0;
-
-        internal static void Game_OnGameProcessPacket(GamePacketEventArgs args)
-        {
-            // Damage packet
-            if (args.PacketData[0] == 0x65)
-            {
-                var packet = Packet.S2C.Damage.Decoded(args.PacketData);
-
-                if (packet.SourceNetworkId == player.NetworkId)
-                {
-                    if (castedE)
-                    {
-                        Console.WriteLine("E has been casted!");
-                        Game.PrintChat("E has been casted!");
-
-                        castedE = false;
-
-                        var target = ObjectManager.GetUnitByNetworkId<Obj_AI_Base>(packet.TargetNetworkIdCopy);
-                        var rawDamage = (float)GetRawRendDamage(target, stacksE);
-                        var calcedDamage = CalculatePhysicalDamage(player, target, rawDamage);
-                        var trueDamage = packet.DamageAmount;
-
-                        Console.WriteLine("Raw damage: " + rawDamage);
-                        Console.WriteLine("Calc damage: " + calcedDamage);
-                        Console.WriteLine("True damage: " + trueDamage);
-
-                        // Find the tweak
-                        float tweakedDamage = calcedDamage;
-                        double currentTweak = 0.1;
-                        double totalTweak = 0;
-
-                        for (int i = 0; i < 10; i ++ )
-                            Console.WriteLine(Math.Pow(0.1, i + 1));
-
-                        try
-                        {
-                            Console.WriteLine("Before loop");
-                            while (packet.DamageAmount != tweakedDamage && currentTweak >= 0.00001)
-                            {
-                                if (tweakedDamage > trueDamage)
-                                {
-                                    do
-                                    {
-                                        totalTweak -= currentTweak;
-                                        tweakedDamage = CalculatePhysicalDamageMultiplier(player, target, (float)totalTweak) * rawDamage;
-                                        //Console.WriteLine("Tweaked damage should decrease: " + tweakedDamage);
-                                    }
-                                    while (tweakedDamage > trueDamage);
-                                }
-                                else
-                                {
-                                    do
-                                    {
-                                        totalTweak += currentTweak;
-                                        tweakedDamage = CalculatePhysicalDamageMultiplier(player, target, (float)totalTweak) * rawDamage;
-                                        //Console.WriteLine("Tweaked damage should increase: " + tweakedDamage);
-                                    }
-                                    while (tweakedDamage < trueDamage);
-                                }
-
-                                Console.WriteLine("Current tweak: " + currentTweak);
-                                Console.WriteLine("Total tweak: " + totalTweak);
-
-                                currentTweak /= 10f;
-                            }
-                        }
-                        catch (Exception e)
-                        {
-                            Console.WriteLine(e.StackTrace);
-                        }
-
-                        Game.PrintChat("Packet damage = " + packet.DamageAmount);
-                        Game.PrintChat("Calculated damage = " + calcedDamage);
-                        Game.PrintChat("Tweaked damage = " + tweakedDamage);
-                        Game.PrintChat("Tweak = " + totalTweak);
-                    }
-                }
-            }
-        }
-
         internal static void Obj_AI_Hero_OnProcessSpellCast(Obj_AI_Base sender, GameObjectProcessSpellCastEventArgs args)
         {
             if (sender.IsMe)
@@ -643,10 +537,6 @@ namespace Kalista
                 {
                     // Make the orbwalker attack again, might get stuck after casting E
                     Utility.DelayAction.Add(250, Orbwalking.ResetAutoAttackTimer);
-
-                    // DEBUG
-                    castedE = true;
-                    stacksE = ObjectManager.Get<Obj_AI_Base>().FirstOrDefault(o => o.HasBuff("KalistaExpungeMarker")).Buffs.FirstOrDefault(b => b.DisplayName == "KalistaExpungeMarker").Count;
                 }
             }
         }
@@ -722,7 +612,8 @@ namespace Kalista
             var drawings = menu.MainMenu.AddSubMenu("Drawings");
             circleLinks.Add("drawRangeQ", drawings.AddLinkedCircle("Q range", true, Color.FromArgb(150, Color.IndianRed), Q.Range));
             circleLinks.Add("drawRangeW", drawings.AddLinkedCircle("W range", true, Color.FromArgb(150, Color.MediumPurple), W.Range));
-            circleLinks.Add("drawRangeE", drawings.AddLinkedCircle("E range", true, Color.FromArgb(150, Color.DarkRed), E.Range));
+            circleLinks.Add("drawRangeEsmall", drawings.AddLinkedCircle("E range (leaving)", false, Color.FromArgb(150, Color.DarkRed), E.Range - 200));
+            circleLinks.Add("drawRangeEactual", drawings.AddLinkedCircle("E range (actual)", true, Color.FromArgb(150, Color.DarkRed), E.Range));
             circleLinks.Add("drawRangeR", drawings.AddLinkedCircle("R range", false, Color.FromArgb(150, Color.Red), R.Range));
         }
     }

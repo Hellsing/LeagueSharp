@@ -29,8 +29,8 @@ namespace Kalista
             get { return new Vector2(10, 20); }
         }
 
-        private static ColorBGRA _colorBgra;
-        private static System.Drawing.Color _color;
+        private static ColorBGRA _colorBgra = new ColorBGRA(0x00, 0xFF, 0xFF, 90);
+        private static System.Drawing.Color _color = System.Drawing.Color.Aqua;
         public static System.Drawing.Color Color
         {
             get { return _color; }
