@@ -542,10 +542,10 @@ namespace Kalista
 
             // Target has positive armor
             if (armor <= 0)
-                return (100 / (100 + armor)) + tweak;
+                return (100f / (100f + armor)) + tweak;
             // Target has negative armor
             else
-                return (2 - (100 / (100 - armor))) + tweak;
+                return (2f - (100f / (100f - armor))) + tweak;
         }
 
         internal static float CalculatePhysicalDamage(this Obj_AI_Hero source, Obj_AI_Base target, float rawDamage)
