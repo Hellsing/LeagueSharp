@@ -13,7 +13,7 @@ using Color = System.Drawing.Color;
 
 namespace Kalista
 {
-    internal class Program
+    internal static class Program
     {
         internal const string CHAMP_NAME = "Kalista";
         internal static Obj_AI_Hero player = ObjectManager.Player;
@@ -72,7 +72,10 @@ namespace Kalista
             Drawing.OnDraw += Drawing_OnDraw;
             Obj_AI_Hero.OnProcessSpellCast += Obj_AI_Hero_OnProcessSpellCast;
             CustomEvents.Unit.OnDash += Unit_OnDash;
+            //Game.OnGameProcessPacket += Game_OnGameProcessPacket;
         }
+
+        #region OnTickOperations
 
         internal static void Game_OnGameUpdate(EventArgs args)
         {
@@ -99,9 +102,26 @@ namespace Kalista
             {
                 foreach (var enemy in ObjectManager.Get<Obj_AI_Hero>().Where(h => h.IsValidTarget(E.Range)))
                 {
-                    if (player.GetSpellDamage(enemy, SpellSlot.E) * 0.9 > enemy.Health)
+                    if (enemy.IsRendKillable())
                     {
-                        E.Cast();
+                        E.Cast(true);
+                        break;
+                    }
+                }
+            }
+
+            // Always E on big minions
+            if (E.IsReady() && boolLinks["miscBigE"].Value)
+            {
+                // Get big minions
+                var minions = MinionManager.GetMinions(player.Position, E.Range).Where(m => m.BaseSkinName.Contains("MinionSiege"));
+
+                foreach (var minion in minions)
+                {
+                    if (minion.IsRendKillable())
+                    {
+                        // On first big minion which can die with E, use E
+                        E.Cast(true);
                         break;
                     }
                 }
@@ -145,10 +165,10 @@ namespace Kalista
 
             if (useE && E.IsReady())
             {
-                if (player.GetSpellDamage(target, SpellSlot.E) * 0.9 > target.Health || target.HasBuff("KalistaExpungeMarker") && target.Buffs.FirstOrDefault(b => b.DisplayName == "KalistaExpungeMarker").Count >= sliderLinks["comboNumE"].Value.Value)
+                if (target.IsRendKillable() || target.HasBuff("KalistaExpungeMarker") && target.Buffs.FirstOrDefault(b => b.DisplayName == "KalistaExpungeMarker").Count >= sliderLinks["comboNumE"].Value.Value)
                 {
                     // Check if the target would die from E
-                    if (player.GetSpellDamage(target, SpellSlot.E) * 0.9 > target.Health)
+                    if (target.IsRendKillable())
                         E.Cast(true);
                     // Check if the target would die with 2 more stacks, useless to waste E then
                     else if (GetRendDamage(target, target.Buffs.FirstOrDefault(b => b.DisplayName == "KalistaExpungeMarker").Count + 2) * 0.9 < target.Health)
@@ -249,30 +269,13 @@ namespace Kalista
                     int conditionMet = 0;
                     foreach (var minion in minions)
                     {
-                        if (player.GetSpellDamage(minion, SpellSlot.E) * 0.9 > minion.Health)
+                        if (minion.IsRendKillable())
                             conditionMet++;
                     }
 
                     // Cast on condition met
                     if (conditionMet >= hitNumber)
                         E.Cast(true);
-                }
-            }
-
-            // Always E on big minions
-            if (bigE && E.IsReady())
-            {
-                // Get big minions
-                var minions = MinionManager.GetMinions(player.Position, E.Range).Where(m => m.BaseSkinName.Contains("MinionSiege"));
-
-                foreach (var minion in minions)
-                {
-                    if (player.GetSpellDamage(minion, SpellSlot.E) * 0.9 > minion.Health)
-                    {
-                        // On first big minion which can die with E, use E
-                        E.Cast(true);
-                        break;
-                    }
                 }
             }
         }
@@ -288,7 +291,7 @@ namespace Kalista
                 // Check if a jungle mob can die with E
                 foreach (var minion in minions)
                 {
-                    if (player.GetSpellDamage(minion, SpellSlot.E) * 0.9 > minion.Health)
+                    if (minion.IsRendKillable())
                     {
                         E.Cast(true);
                         break;
@@ -440,6 +443,8 @@ namespace Kalista
             }
         }
 
+        #endregion
+
         internal static void Unit_OnDash(Obj_AI_Base sender, Dash.DashItem args)
         {
             if (sender.IsMe)
@@ -470,21 +475,33 @@ namespace Kalista
             return target;
         }
 
+        internal static bool IsRendKillable(this Obj_AI_Base target)
+        {
+            return GetRendDamage(target) > target.Health;
+        }
+
         internal static double GetRendDamage(Obj_AI_Base target, int customStacks = -1)
+        {
+            // Calculate the damage and return
+            return player.CalculatePhysicalDamage(target, (float)GetRawRendDamage(target, customStacks));
+        }
+
+        internal static double GetRawRendDamage(Obj_AI_Base target, int customStacks = -1)
         {
             // Get buff
             var buff = target.Buffs.FirstOrDefault(b => b.DisplayName == "KalistaExpungeMarker" && b.SourceName == player.ChampionName);
 
-            if (buff != null)
+            if (buff != null || customStacks != -1)
             {
                 // Base damage
                 double damage = (10 + 10 * player.Spellbook.GetSpell(SpellSlot.E).Level) + 0.6 * (player.BaseAttackDamage + player.FlatPhysicalDamageMod);
 
                 // Damage per spear
-                damage += (customStacks == -1 ? buff.Count : customStacks) * (damage * new double[] { 0, 0.25, 0.30, 0.35, 0.40, 0.45 }[player.Spellbook.GetSpell(SpellSlot.E).Level]);
+                double singleSpearDamage = damage * new double[] { 0, 0.25, 0.30, 0.35, 0.40, 0.45 }[player.Spellbook.GetSpell(SpellSlot.E).Level];
+                damage += (((customStacks == -1 ? buff.Count : customStacks) - 1) * singleSpearDamage);
 
                 // Calculate the damage and return
-                return player.CalcDamage(target, Damage.DamageType.Physical, damage);
+                return damage;
             }
 
             return 0;
@@ -492,7 +509,7 @@ namespace Kalista
 
         internal static float GetEDamage(Obj_AI_Hero target)
         {
-            return (float)player.GetSpellDamage(target, SpellSlot.E) * 0.9f;
+            return (float)GetRendDamage(target);
         }
 
         internal static float GetTotalDamage(Obj_AI_Hero target)
@@ -506,17 +523,132 @@ namespace Kalista
 
             // E stack damage
             if (E.IsReady())
-                damage += player.GetSpellDamage(target, SpellSlot.E) * 0.9;
+                damage += GetRendDamage(target);
 
             return (float)damage;
+        }
+
+        internal static float CalculatePhysicalDamageMultiplier(this Obj_AI_Hero source, Obj_AI_Base target, float tweak = 0)
+        {
+            float armor = target.Armor + target.FlatArmorMod;
+
+            // Armor penetration percent
+            if (armor > 0 && source.PercentArmorPenetrationMod > 0)
+                armor *= source.PercentArmorPenetrationMod;
+
+            // Armor penetration flat
+            if (source.FlatArmorPenetrationMod > 0)
+                armor -= source.FlatArmorPenetrationMod;
+
+            // Target has positive armor
+            if (armor <= 0)
+                return (100 / (100 + armor)) + tweak;
+            // Target has negative armor
+            else
+                return (2 - (100 / (100 - armor))) + tweak;
+        }
+
+        internal static float CalculatePhysicalDamage(this Obj_AI_Hero source, Obj_AI_Base target, float rawDamage)
+        {
+            return CalculatePhysicalDamageMultiplier(source, target) * rawDamage;
+        }
+
+        internal static bool castedE = false;
+        internal static int stacksE = 0;
+
+        internal static void Game_OnGameProcessPacket(GamePacketEventArgs args)
+        {
+            // Damage packet
+            if (args.PacketData[0] == 0x65)
+            {
+                var packet = Packet.S2C.Damage.Decoded(args.PacketData);
+
+                if (packet.SourceNetworkId == player.NetworkId)
+                {
+                    if (castedE)
+                    {
+                        Console.WriteLine("E has been casted!");
+                        Game.PrintChat("E has been casted!");
+
+                        castedE = false;
+
+                        var target = ObjectManager.GetUnitByNetworkId<Obj_AI_Base>(packet.TargetNetworkIdCopy);
+                        var rawDamage = (float)GetRawRendDamage(target, stacksE);
+                        var calcedDamage = CalculatePhysicalDamage(player, target, rawDamage);
+                        var trueDamage = packet.DamageAmount;
+
+                        Console.WriteLine("Raw damage: " + rawDamage);
+                        Console.WriteLine("Calc damage: " + calcedDamage);
+                        Console.WriteLine("True damage: " + trueDamage);
+
+                        // Find the tweak
+                        float tweakedDamage = calcedDamage;
+                        double currentTweak = 0.1;
+                        double totalTweak = 0;
+
+                        for (int i = 0; i < 10; i ++ )
+                            Console.WriteLine(Math.Pow(0.1, i + 1));
+
+                        try
+                        {
+                            Console.WriteLine("Before loop");
+                            while (packet.DamageAmount != tweakedDamage && currentTweak >= 0.00001)
+                            {
+                                if (tweakedDamage > trueDamage)
+                                {
+                                    do
+                                    {
+                                        totalTweak -= currentTweak;
+                                        tweakedDamage = CalculatePhysicalDamageMultiplier(player, target, (float)totalTweak) * rawDamage;
+                                        //Console.WriteLine("Tweaked damage should decrease: " + tweakedDamage);
+                                    }
+                                    while (tweakedDamage > trueDamage);
+                                }
+                                else
+                                {
+                                    do
+                                    {
+                                        totalTweak += currentTweak;
+                                        tweakedDamage = CalculatePhysicalDamageMultiplier(player, target, (float)totalTweak) * rawDamage;
+                                        //Console.WriteLine("Tweaked damage should increase: " + tweakedDamage);
+                                    }
+                                    while (tweakedDamage < trueDamage);
+                                }
+
+                                Console.WriteLine("Current tweak: " + currentTweak);
+                                Console.WriteLine("Total tweak: " + totalTweak);
+
+                                currentTweak /= 10f;
+                            }
+                        }
+                        catch (Exception e)
+                        {
+                            Console.WriteLine(e.StackTrace);
+                        }
+
+                        Game.PrintChat("Packet damage = " + packet.DamageAmount);
+                        Game.PrintChat("Calculated damage = " + calcedDamage);
+                        Game.PrintChat("Tweaked damage = " + tweakedDamage);
+                        Game.PrintChat("Tweak = " + totalTweak);
+                    }
+                }
+            }
         }
 
         internal static void Obj_AI_Hero_OnProcessSpellCast(Obj_AI_Base sender, GameObjectProcessSpellCastEventArgs args)
         {
             if (sender.IsMe)
             {
+                // E - Expunge
                 if (args.SData.Name == "KalistaExpungeWrapper")
+                {
+                    // Make the orbwalker attack again, might get stuck after casting E
                     Utility.DelayAction.Add(250, Orbwalking.ResetAutoAttackTimer);
+
+                    // DEBUG
+                    castedE = true;
+                    stacksE = ObjectManager.Get<Obj_AI_Base>().FirstOrDefault(o => o.HasBuff("KalistaExpungeMarker")).Buffs.FirstOrDefault(b => b.DisplayName == "KalistaExpungeMarker").Count;
+                }
             }
         }
 
@@ -560,7 +692,6 @@ namespace Kalista
             sliderLinks.Add("waveNumQ", waveClear.AddLinkedSlider("Minion kill number for Q", 3, 1, 10));
             boolLinks.Add("waveUseE", waveClear.AddLinkedBool("Use E"));
             sliderLinks.Add("waveNumE", waveClear.AddLinkedSlider("Minion kill number for E", 2, 1, 10));
-            boolLinks.Add("waveBigE", waveClear.AddLinkedBool("Always E big minions"));
             sliderLinks.Add("waveMana", waveClear.AddLinkedSlider("Mana usage in percent (%)", 30));
             keyLinks.Add("waveActive", waveClear.AddLinkedKeyBind("WaveClear active", 'V', KeyBindType.Press));
 
@@ -578,6 +709,7 @@ namespace Kalista
             // Misc
             var misc = menu.MainMenu.AddSubMenu("Misc");
             boolLinks.Add("miscKillstealE", misc.AddLinkedBool("Killsteal with E"));
+            boolLinks.Add("miscBigE", misc.AddLinkedBool("Always E big minions"));
 
             // Items
             var items = menu.MainMenu.AddSubMenu("Items");
