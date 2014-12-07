@@ -482,7 +482,7 @@ namespace Kalista
         internal static double GetRendDamage(Obj_AI_Base target, int customStacks = -1)
         {
             // Calculate the damage and return
-            return player.CalculatePhysicalDamage(target, (float)GetRawRendDamage(target, customStacks));
+            return player.CalculatePhysicalDamage(target, (float)GetRawRendDamage(target, customStacks)) - sliderLinks["spellReductionE"].Value.Value;
         }
 
         internal static double GetRawRendDamage(Obj_AI_Base target, int customStacks = -1)
@@ -709,6 +709,10 @@ namespace Kalista
             var misc = menu.MainMenu.AddSubMenu("Misc");
             boolLinks.Add("miscKillstealE", misc.AddLinkedBool("Killsteal with E"));
             boolLinks.Add("miscBigE", misc.AddLinkedBool("Always E big minions"));
+
+            // Spell settings
+            var spellSettings = menu.MainMenu.AddSubMenu("SpellSettings");
+            sliderLinks.Add("spellReductionE", spellSettings.AddLinkedSlider("E damage reduction", 20));
 
             // Items
             var items = menu.MainMenu.AddSubMenu("Items");
