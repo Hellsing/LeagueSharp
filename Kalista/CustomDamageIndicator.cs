@@ -29,7 +29,17 @@ namespace Kalista
             get { return new Vector2(10, 20); }
         }
 
-        public static System.Drawing.Color Color { get; set; }
+        private static ColorBGRA _colorBgra;
+        private static System.Drawing.Color _color;
+        public static System.Drawing.Color Color
+        {
+            get { return _color; }
+            set
+            {
+                _color = value;
+                _colorBgra = new ColorBGRA(value.R, value.G, value.B, 90);
+            }
+        }
 
         public static void Initialize(Utility.HpBarDamageIndicator.DamageToUnitDelegate damageToUnit)
         {
@@ -52,9 +62,6 @@ namespace Kalista
 
         private static void Drawing_OnDraw(EventArgs args)
         {
-            // Get ColorBGRA color
-            var barColor = new ColorBGRA(Color.R, Color.G, Color.B, 90);
-
             foreach (var unit in ObjectManager.Get<Obj_AI_Hero>().Where(u => u.IsValidTarget()))
             {
                 // Get damage to unit
@@ -74,7 +81,7 @@ namespace Kalista
 
                 // Draw the DirectX line
                 line.Begin();
-                line.Draw(new[] { startPoint, endPoint }, barColor);
+                line.Draw(new[] { startPoint, endPoint }, _colorBgra);
                 line.End();
             }
         }
