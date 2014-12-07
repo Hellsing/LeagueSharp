@@ -548,7 +548,8 @@ namespace Kalista
 
         internal static float CalculatePhysicalDamage(this Obj_AI_Hero source, Obj_AI_Base target, float rawDamage)
         {
-            return CalculatePhysicalDamageMultiplier(source, target) * rawDamage;
+            return (float)source.CalcDamage(target, Damage.DamageType.Physical, rawDamage);
+            //return CalculatePhysicalDamageMultiplier(source, target) * rawDamage;
         }
 
         internal static bool castedE = false;
