@@ -201,7 +201,6 @@ namespace Kalista
 
             bool useQ = boolLinks["waveUseQ"].Value;
             bool useE = boolLinks["waveUseE"].Value;
-            bool bigE = boolLinks["waveBigE"].Value;
 
             // Q usage
             if (useQ && Q.IsReady())
@@ -530,7 +529,7 @@ namespace Kalista
 
         internal static float CalculatePhysicalDamageMultiplier(this Obj_AI_Hero source, Obj_AI_Base target, float tweak = 0)
         {
-            float armor = target.Armor + target.FlatArmorMod;
+            float armor = target.Armor;
 
             // Armor penetration percent
             if (armor > 0 && source.PercentArmorPenetrationMod > 0)
