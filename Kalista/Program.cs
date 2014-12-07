@@ -110,17 +110,16 @@ namespace Kalista
                 }
             }
 
-            // Always E on big minions
+            // Always E on big mobs
             if (E.IsReady() && boolLinks["miscBigE"].Value)
             {
-                // Get big minions
-                var minions = MinionManager.GetMinions(player.Position, E.Range).Where(m => m.BaseSkinName.Contains("MinionSiege"));
-
-                foreach (var minion in minions)
+                // Get big mobs
+                var mobs = ObjectManager.Get<Obj_AI_Minion>().Where(m => m.IsValidTarget(E.Range) && (m.BaseSkinName.Contains("MinionSiege") || m.BaseSkinName.Contains("Dragon") || m.BaseSkinName.Contains("Baron")));
+                foreach (var mob in mobs)
                 {
-                    if (minion.IsRendKillable())
+                    if (mob.IsRendKillable())
                     {
-                        // On first big minion which can die with E, use E
+                        // On first big mob which can die with E, use E
                         E.Cast(true);
                         break;
                     }
@@ -260,7 +259,7 @@ namespace Kalista
                 int hitNumber = sliderLinks["waveNumE"].Value.Value;
 
                 // Get surrounding
-                var minions = MinionManager.GetMinions(player.Position, E.Range);
+                var minions = ObjectManager.Get<Obj_AI_Minion>().Where(m => m.IsValidTarget(E.Range) && m.BaseSkinName.Contains("Minion")).ToList();
 
                 if (minions.Count >= hitNumber)
                 {
@@ -708,7 +707,7 @@ namespace Kalista
             // Misc
             var misc = menu.MainMenu.AddSubMenu("Misc");
             boolLinks.Add("miscKillstealE", misc.AddLinkedBool("Killsteal with E"));
-            boolLinks.Add("miscBigE", misc.AddLinkedBool("Always E big minions"));
+            boolLinks.Add("miscBigE", misc.AddLinkedBool("Always E big minions / monsters"));
 
             // Spell settings
             var spellSettings = menu.MainMenu.AddSubMenu("SpellSettings");
