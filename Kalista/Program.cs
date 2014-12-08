@@ -72,6 +72,7 @@ namespace Kalista
             Drawing.OnDraw += Drawing_OnDraw;
             Obj_AI_Hero.OnProcessSpellCast += Obj_AI_Hero_OnProcessSpellCast;
             CustomEvents.Unit.OnDash += Unit_OnDash;
+            Game.OnGameSendPacket += Game_OnGameSendPacket;
             //Game.OnGameProcessPacket += Game_OnGameProcessPacket;
         }
 
@@ -159,20 +160,20 @@ namespace Kalista
             }
 
             // Spell usage
-            if (useQ && Q.IsReady())
+            if (useQ && Q.IsReady() && !player.IsDashing())
                 Q.Cast(target);
 
             if (useE && E.IsReady())
             {
-                if (target.IsRendKillable() || target.HasBuff("KalistaExpungeMarker") && target.Buffs.FirstOrDefault(b => b.DisplayName == "KalistaExpungeMarker").Count >= sliderLinks["comboNumE"].Value.Value)
+                if (target.IsRendKillable() || target.HasBuff("KalistaExpungeMarker") && target.GetRendBuff().Count >= sliderLinks["comboNumE"].Value.Value)
                 {
-                    var buff = target.Buffs.FirstOrDefault(b => b.DisplayName == "KalistaExpungeMarker");
+                    var buff = target.GetRendBuff();
 
                     // Check if the target would die from E
                     if (target.IsRendKillable())
                         E.Cast(true);
                     // Check if the target would die with 2 more stacks, useless to waste E then
-                    else if (GetRendDamage(target, buff.Count + 2) < target.Health || target.ServerPosition.Distance(player.Position, true) > 800 * 800 || buff.EndTime - Game.Time <= 250)
+                    else if (GetRendDamage(target, buff.Count + 2) < target.Health || target.ServerPosition.Distance(player.Position, true) > 800 * 800 || buff.EndTime - Game.Time <= 0.25)
                         E.Cast(true);
                 }
             }
@@ -204,7 +205,7 @@ namespace Kalista
             bool useE = boolLinks["waveUseE"].Value;
 
             // Q usage
-            if (useQ && Q.IsReady())
+            if (useQ && Q.IsReady() && !player.IsDashing())
             {
                 int hitNumber = sliderLinks["waveNumQ"].Value.Value;
 
@@ -489,7 +490,7 @@ namespace Kalista
         internal static double GetRawRendDamage(Obj_AI_Base target, int customStacks = -1)
         {
             // Get buff
-            var buff = target.Buffs.FirstOrDefault(b => b.DisplayName == "KalistaExpungeMarker" && b.SourceName == player.ChampionName);
+            var buff = target.GetRendBuff();
 
             if (buff != null || customStacks != -1)
             {
@@ -528,6 +529,11 @@ namespace Kalista
             return (float)damage;
         }
 
+        internal static BuffInstance GetRendBuff(this Obj_AI_Base target)
+        {
+            return target.Buffs.FirstOrDefault(b => b.DisplayName == "KalistaExpungeMarker");
+        }
+
         internal static void Obj_AI_Hero_OnProcessSpellCast(Obj_AI_Base sender, GameObjectProcessSpellCastEventArgs args)
         {
             if (sender.IsMe)
@@ -538,6 +544,17 @@ namespace Kalista
                     // Make the orbwalker attack again, might get stuck after casting E
                     Utility.DelayAction.Add(250, Orbwalking.ResetAutoAttackTimer);
                 }
+            }
+        }
+
+        internal static void Game_OnGameSendPacket(GamePacketEventArgs args)
+        {
+            // Avoid stupic Q casts while jumping in mid air!
+            if (args.PacketData[0] == Packet.C2S.Cast.Header && player.IsDashing())
+            {
+                // Don't process the packet if we are jumping!
+                if (Packet.C2S.Cast.Decoded(args.PacketData).Slot == SpellSlot.Q)
+                    args.Process = false;
             }
         }
 
@@ -555,66 +572,78 @@ namespace Kalista
                 Utility.DrawCircle((Vector3)fleeTargetPosition, 50, wallJumpPossible ? Color.Green : Q.IsReady() ? Color.Red : Color.Teal, 10);
         }
 
+        internal static void ProcessLink(string key, object value)
+        {
+            if (value is MenuWrapper.BoolLink)
+                boolLinks.Add(key, value as MenuWrapper.BoolLink);
+            else if (value is MenuWrapper.CircleLink)
+                circleLinks.Add(key, value as MenuWrapper.CircleLink);
+            else if (value is MenuWrapper.KeyBindLink)
+                keyLinks.Add(key, value as MenuWrapper.KeyBindLink);
+            else if (value is MenuWrapper.SliderLink)
+                sliderLinks.Add(key, value as MenuWrapper.SliderLink);
+        }
+
         internal static void SetuptMenu()
         {
             // Create menu
             menu = new MenuWrapper("[Hellsing] " + CHAMP_NAME);
 
             // Combo
-            var combo = menu.MainMenu.AddSubMenu("Combo");
-            boolLinks.Add("comboUseQ", combo.AddLinkedBool("Use Q"));
-            boolLinks.Add("comboUseE", combo.AddLinkedBool("Use E"));
-            sliderLinks.Add("comboNumE", combo.AddLinkedSlider("Stacks for E", 5, 1, 20));
-            boolLinks.Add("comboUseItems", combo.AddLinkedBool("Use items"));
-            boolLinks.Add("comboUseIgnite", combo.AddLinkedBool("Use Ignite"));
-            keyLinks.Add("comboActive", combo.AddLinkedKeyBind("Combo active", 32, KeyBindType.Press));
+            var subMenu = menu.MainMenu.AddSubMenu("Combo");
+            ProcessLink("comboUseQ", subMenu.AddLinkedBool("Use Q"));
+            ProcessLink("comboUseE", subMenu.AddLinkedBool("Use E"));
+            ProcessLink("comboNumE", subMenu.AddLinkedSlider("Stacks for E", 5, 1, 20));
+            ProcessLink("comboUseItems", subMenu.AddLinkedBool("Use items"));
+            ProcessLink("comboUseIgnite", subMenu.AddLinkedBool("Use Ignite"));
+            ProcessLink("comboActive", subMenu.AddLinkedKeyBind("Combo active", 32, KeyBindType.Press));
 
             // Harass
-            var harass = menu.MainMenu.AddSubMenu("Harass");
-            boolLinks.Add("harassUseQ", harass.AddLinkedBool("Use Q"));
-            sliderLinks.Add("harassMana", harass.AddLinkedSlider("Mana usage in percent (%)", 30));
-            keyLinks.Add("harassActive", harass.AddLinkedKeyBind("Harass active", 'C', KeyBindType.Press));
+            subMenu = menu.MainMenu.AddSubMenu("Harass");
+            ProcessLink("harassUseQ", subMenu.AddLinkedBool("Use Q"));
+            ProcessLink("harassMana", subMenu.AddLinkedSlider("Mana usage in percent (%)", 30));
+            ProcessLink("harassActive", subMenu.AddLinkedKeyBind("Harass active", 'C', KeyBindType.Press));
 
             // WaveClear
-            var waveClear = menu.MainMenu.AddSubMenu("WaveClear");
-            boolLinks.Add("waveUseQ", waveClear.AddLinkedBool("Use Q"));
-            sliderLinks.Add("waveNumQ", waveClear.AddLinkedSlider("Minion kill number for Q", 3, 1, 10));
-            boolLinks.Add("waveUseE", waveClear.AddLinkedBool("Use E"));
-            sliderLinks.Add("waveNumE", waveClear.AddLinkedSlider("Minion kill number for E", 2, 1, 10));
-            sliderLinks.Add("waveMana", waveClear.AddLinkedSlider("Mana usage in percent (%)", 30));
-            keyLinks.Add("waveActive", waveClear.AddLinkedKeyBind("WaveClear active", 'V', KeyBindType.Press));
+            subMenu = menu.MainMenu.AddSubMenu("WaveClear");
+            ProcessLink("waveUseQ", subMenu.AddLinkedBool("Use Q"));
+            ProcessLink("waveNumQ", subMenu.AddLinkedSlider("Minion kill number for Q", 3, 1, 10));
+            ProcessLink("waveUseE", subMenu.AddLinkedBool("Use E"));
+            ProcessLink("waveNumE", subMenu.AddLinkedSlider("Minion kill number for E", 2, 1, 10));
+            ProcessLink("waveMana", subMenu.AddLinkedSlider("Mana usage in percent (%)", 30));
+            ProcessLink("waveActive", subMenu.AddLinkedKeyBind("WaveClear active", 'V', KeyBindType.Press));
 
             // JungleClear
-            var jungleClear = menu.MainMenu.AddSubMenu("JungleClear");
-            boolLinks.Add("jungleUseE", jungleClear.AddLinkedBool("Use E"));
-            keyLinks.Add("jungleActive", jungleClear.AddLinkedKeyBind("JungleClear active", 'V', KeyBindType.Press));
+            subMenu = menu.MainMenu.AddSubMenu("JungleClear");
+            ProcessLink("jungleUseE", subMenu.AddLinkedBool("Use E"));
+            ProcessLink("jungleActive", subMenu.AddLinkedKeyBind("JungleClear active", 'V', KeyBindType.Press));
 
             // Flee
-            var flee = menu.MainMenu.AddSubMenu("Flee");
-            boolLinks.Add("fleeWalljump", flee.AddLinkedBool("Try to jump over walls"));
-            boolLinks.Add("fleeAA", flee.AddLinkedBool("Smart usage of AA"));
-            keyLinks.Add("fleeActive", flee.AddLinkedKeyBind("Flee active", 'T', KeyBindType.Press));
+            subMenu = menu.MainMenu.AddSubMenu("Flee");
+            ProcessLink("fleeWalljump", subMenu.AddLinkedBool("Try to jump over walls"));
+            ProcessLink("fleeAA", subMenu.AddLinkedBool("Smart usage of AA"));
+            ProcessLink("fleeActive", subMenu.AddLinkedKeyBind("Flee active", 'T', KeyBindType.Press));
 
             // Misc
-            var misc = menu.MainMenu.AddSubMenu("Misc");
-            boolLinks.Add("miscKillstealE", misc.AddLinkedBool("Killsteal with E"));
-            boolLinks.Add("miscBigE", misc.AddLinkedBool("Always E big minions / monsters"));
+            subMenu = menu.MainMenu.AddSubMenu("Misc");
+            ProcessLink("miscKillstealE", subMenu.AddLinkedBool("Killsteal with E"));
+            ProcessLink("miscBigE", subMenu.AddLinkedBool("Always E big minions / monsters"));
 
             // Spell settings
-            var spellSettings = menu.MainMenu.AddSubMenu("SpellSettings");
-            sliderLinks.Add("spellReductionE", spellSettings.AddLinkedSlider("E damage reduction", 20));
+            subMenu = menu.MainMenu.AddSubMenu("SpellSettings");
+            ProcessLink("spellReductionE", subMenu.AddLinkedSlider("E damage reduction", 20));
 
             // Items
-            var items = menu.MainMenu.AddSubMenu("Items");
-            boolLinks.Add("itemsBotrk", items.AddLinkedBool("Use BotRK"));
+            subMenu = menu.MainMenu.AddSubMenu("Items");
+            ProcessLink("itemsBotrk", subMenu.AddLinkedBool("Use BotRK"));
 
             // Drawings
-            var drawings = menu.MainMenu.AddSubMenu("Drawings");
-            circleLinks.Add("drawRangeQ", drawings.AddLinkedCircle("Q range", true, Color.FromArgb(150, Color.IndianRed), Q.Range));
-            circleLinks.Add("drawRangeW", drawings.AddLinkedCircle("W range", true, Color.FromArgb(150, Color.MediumPurple), W.Range));
-            circleLinks.Add("drawRangeEsmall", drawings.AddLinkedCircle("E range (leaving)", false, Color.FromArgb(150, Color.DarkRed), E.Range - 200));
-            circleLinks.Add("drawRangeEactual", drawings.AddLinkedCircle("E range (actual)", true, Color.FromArgb(150, Color.DarkRed), E.Range));
-            circleLinks.Add("drawRangeR", drawings.AddLinkedCircle("R range", false, Color.FromArgb(150, Color.Red), R.Range));
+            subMenu = menu.MainMenu.AddSubMenu("Drawings");
+            ProcessLink("drawRangeQ", subMenu.AddLinkedCircle("Q range", true, Color.FromArgb(150, Color.IndianRed), Q.Range));
+            ProcessLink("drawRangeW", subMenu.AddLinkedCircle("W range", true, Color.FromArgb(150, Color.MediumPurple), W.Range));
+            ProcessLink("drawRangeEsmall", subMenu.AddLinkedCircle("E range (leaving)", false, Color.FromArgb(150, Color.DarkRed), E.Range - 200));
+            ProcessLink("drawRangeEactual", subMenu.AddLinkedCircle("E range (actual)", true, Color.FromArgb(150, Color.DarkRed), E.Range));
+            ProcessLink("drawRangeR", subMenu.AddLinkedCircle("R range", false, Color.FromArgb(150, Color.Red), R.Range));
         }
     }
 }
