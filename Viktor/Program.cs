@@ -2,36 +2,37 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
+
 using LeagueSharp;
 using LeagueSharp.Common;
+
 using SharpDX;
+
 using Color = System.Drawing.Color;
 
-namespace ViktorSharp
+namespace Viktor
 {
-    class Program
+    public class Program
     {
-        // Generic
-        public static readonly string champName = "Viktor";
+        public const string CHAMP_NAME = "Viktor";
         private static readonly Obj_AI_Hero player = ObjectManager.Player;
 
         // Spells
-        private static readonly List<Spell> spellList = new List<Spell>();
         private static Spell Q, W, E, R;
-        private static readonly int maxRangeE = 1200;
-        private static readonly int lengthE   = 750;
-        private static readonly int speedE    = 780;
-        private static readonly int rangeE    = 540;
-
-        private static readonly string nameNormalR = "ViktorChaosStorm";
-        private static readonly string nameControlR = "viktorchaosstormguide";
-        private static readonly float targetChangeTime = 0.5f;
-        private static float targetLastChangeTime = -1f;
+        private static readonly int maxRangeE = 1275;
+        private static readonly int lengthE = 750;
+        private static readonly int speedE = 1200;
+        private static readonly int rangeE = 525;
 
         // Menu
-        public static Menu menu;
+        public static MenuWrapper menu;
 
-        private static Orbwalking.Orbwalker OW;
+        // Menu links
+        public static Dictionary<string, MenuWrapper.BoolLink> boolLinks = new Dictionary<string, MenuWrapper.BoolLink>();
+        public static Dictionary<string, MenuWrapper.CircleLink> circleLinks = new Dictionary<string, MenuWrapper.CircleLink>();
+        public static Dictionary<string, MenuWrapper.KeyBindLink> keyLinks = new Dictionary<string, MenuWrapper.KeyBindLink>();
+        public static Dictionary<string, MenuWrapper.SliderLink> sliderLinks = new Dictionary<string, MenuWrapper.SliderLink>();
 
         public static void Main(string[] args)
         {
@@ -42,78 +43,50 @@ namespace ViktorSharp
         private static void Game_OnGameLoad(EventArgs args)
         {
             // Champ validation
-            if (player.ChampionName != champName) return;
-            
+            if (player.ChampionName != CHAMP_NAME)
+                return;
+
             // Define spells
             Q = new Spell(SpellSlot.Q, 600);
-            W = new Spell(SpellSlot.W, 625);
+            W = new Spell(SpellSlot.W, 700);
             E = new Spell(SpellSlot.E, rangeE);
-            R = new Spell(SpellSlot.R, 600);
-            spellList.AddRange(new []{Q, W, E, R});
+            R = new Spell(SpellSlot.R, 700);
 
             // Finetune spells
-            Q.SetTargetted(0.25f, 1400f);
-            W.SetSkillshot(0.25f, 300f, float.MaxValue, false, SkillshotType.SkillshotCircle);
-            E.SetSkillshot(0f,    80f,  speedE,         false, SkillshotType.SkillshotLine);
-            R.SetSkillshot(0f,    450f, float.MaxValue, false, SkillshotType.SkillshotCircle);
+            Q.SetTargetted(0.25f, 2000);
+            W.SetSkillshot(0.25f, 300, float.MaxValue, false, SkillshotType.SkillshotCircle);
+            E.SetSkillshot(0, 90, speedE, false, SkillshotType.SkillshotLine);
+            R.SetSkillshot(0.25f, 450f, float.MaxValue, false, SkillshotType.SkillshotCircle);
 
             // Create menu
-            createMenu();
+            SetupMenu();
 
             // Register events
             Game.OnGameUpdate += Game_OnGameUpdate;
             Drawing.OnDraw += Drawing_OnDraw;
-            Interrupter.OnPosibleToInterrupt += Interrupter_OnPosibleToInterrupt;
+            Interrupter.OnPossibleToInterrupt += Interrupter_OnPossibleToInterrupt;
             AntiGapcloser.OnEnemyGapcloser += AntiGapcloser_OnEnemyGapcloser;
-
-            // Setup ult handler
-            UltHandler.Setup();
-
-            // Print shit
-            Game.PrintChat("ViktorSharp has been loaded.");
-        }
-
-        private static void Drawing_OnDraw(EventArgs args)
-        {
-            // Spell ranges
-            foreach (var spell in spellList)
-            {
-                // Regular spell ranges
-                var circleEntry = menu.Item("drawRange" + spell.Slot).GetValue<Circle>();
-                if (circleEntry.Active)
-                    Utility.DrawCircle(player.Position, spell.Range, circleEntry.Color);
-                // Extended E range
-                if (spell.Slot == SpellSlot.E)
-                {
-                    circleEntry = menu.Item("drawRangeEMax").GetValue<Circle>();
-                    if (circleEntry.Active)
-                        Utility.DrawCircle(player.Position, maxRangeE, circleEntry.Color);
-                }
-            }
         }
 
         private static void Game_OnGameUpdate(EventArgs args)
         {
             // Combo
-            if (menu.SubMenu("combo").Item("comboActive").GetValue<KeyBind>().Active)
+            if (keyLinks["comboActive"].Value.Active)
                 OnCombo();
-
             // Harass
-            if (menu.SubMenu("harass").Item("harassActive").GetValue<KeyBind>().Active)
+            if (keyLinks["harassActive"].Value.Active)
                 OnHarass();
-
             // WaveClear
-            if (menu.SubMenu("waveClear").Item("waveActive").GetValue<KeyBind>().Active)
+            if (keyLinks["waveActive"].Value.Active)
                 OnWaveClear();
         }
 
         private static void OnCombo()
         {
-            Menu comboMenu = menu.SubMenu("combo");
-            bool useQ = comboMenu.Item("comboUseQ").GetValue<bool>() && Q.IsReady();
-            bool useE = comboMenu.Item("comboUseE").GetValue<bool>() && E.IsReady();
-            bool useIgnite = comboMenu.Item("comboUseIgnite").GetValue<bool>();
-            bool longRange = comboMenu.Item("comboExtend").GetValue<KeyBind>().Active;
+            bool useQ = boolLinks["comboUseQ"].Value && Q.IsReady();
+            bool useE = boolLinks["comboUseE"].Value && E.IsReady();
+            bool useIgnite = boolLinks["comboUseIgnite"].Value;
+            bool longRange = keyLinks["comboExtend"].Value.Active;
 
             if (useQ)
             {
@@ -126,34 +99,40 @@ namespace ViktorSharp
             {
                 var target = SimpleTs.GetTarget(longRange ? maxRangeE : E.Range, SimpleTs.DamageType.Magical);
                 if (target != null)
-                    predictCastE(target, longRange);
+                    PredictCastE(target, longRange);
             }
         }
 
         private static void OnHarass()
         {
-            Menu harassMenu = menu.SubMenu("harass");
-            bool useE = harassMenu.Item("harassUseE").GetValue<bool>() && E.IsReady();
+            // Mana check
+            if ((player.Mana / player.MaxMana) * 100 < sliderLinks["harassMana"].Value.Value)
+                return;
+
+            bool useE = boolLinks["harassUseE"].Value && E.IsReady();
 
             if (useE)
             {
                 var target = SimpleTs.GetTarget(maxRangeE, SimpleTs.DamageType.Magical);
                 if (target != null)
-                    predictCastE(target, true);
+                    PredictCastE(target, true);
             }
         }
 
         private static void OnWaveClear()
         {
-            Menu waveClearMenu = menu.SubMenu("waveClear");
-            bool useQ = waveClearMenu.Item("waveUseQ").GetValue<bool>() && Q.IsReady();
-            bool useE = waveClearMenu.Item("waveUseE").GetValue<bool>() && E.IsReady();
+            // Mana check
+            if ((player.Mana / player.MaxMana) * 100 < sliderLinks["waveMana"].Value.Value)
+                return;
+
+            bool useQ = boolLinks["waveUseQ"].Value && Q.IsReady();
+            bool useE = boolLinks["waveUseE"].Value && E.IsReady();
 
             if (useQ)
             {
                 foreach (var minion in MinionManager.GetMinions(player.Position, player.AttackRange))
                 {
-                    if (DamageLib.getDmg(minion, DamageLib.SpellType.Q) > minion.Health && DamageLib.getDmg(minion, DamageLib.SpellType.AD) * 2 < minion.Health)
+                    if (Q.IsKillable(minion) && player.GetAutoAttackDamage(minion) * 2 < minion.Health)
                     {
                         Q.Cast(minion);
                         break;
@@ -162,27 +141,10 @@ namespace ViktorSharp
             }
 
             if (useE)
-                predictCastMinionE(waveClearMenu.Item("waveNumE").GetValue<Slider>().Value + 1);
+                PredictCastMinionE(sliderLinks["waveNumE"].Value.Value + 1);
         }
 
-        private static void Interrupter_OnPosibleToInterrupt(Obj_AI_Base unit, InterruptableSpell spell)
-        {
-            if (menu.SubMenu("misc").Item("miscInterrupt").GetValue<bool>() && spell.DangerLevel == InterruptableDangerLevel.High && R.InRange(unit.ServerPosition))
-                R.Cast(unit.ServerPosition.To2D(), true);
-        }
-
-        private static void AntiGapcloser_OnEnemyGapcloser(ActiveGapcloser gapcloser)
-        {
-            if (menu.SubMenu("misc").Item("miscGapcloser").GetValue<bool>() && W.InRange(gapcloser.End))
-                W.Cast(gapcloser.End.To2D(), true);
-        }
-
-        private static bool predictCastMinionE()
-        {
-            return predictCastMinionE(-1);
-        }
-
-        private static bool predictCastMinionE(int requiredHitNumber)
+        private static bool PredictCastMinionE(int requiredHitNumber = -1)
         {
             int hitNum = 0;
             Vector2 startPos = new Vector2(0, 0);
@@ -197,30 +159,25 @@ namespace ViktorSharp
             }
 
             if (startPos.X != 0 && startPos.Y != 0)
-                return predictCastMinionE(startPos, requiredHitNumber);
+                return PredictCastMinionE(startPos, requiredHitNumber);
 
             return false;
         }
 
-        private static bool predictCastMinionE(Vector2 fromPosition)
-        {
-            return predictCastMinionE(fromPosition, 1);
-        }
-
-        private static bool predictCastMinionE(Vector2 fromPosition, int requiredHitNumber)
+        private static bool PredictCastMinionE(Vector2 fromPosition, int requiredHitNumber = 1)
         {
             var farmLocation = MinionManager.GetBestLineFarmLocation(MinionManager.GetMinionsPredictedPositions(MinionManager.GetMinions(fromPosition.To3D(), lengthE), E.Delay, E.Width, speedE, fromPosition.To3D(), lengthE, false, SkillshotType.SkillshotLine), E.Width, lengthE);
 
             if (farmLocation.MinionsHit >= requiredHitNumber)
             {
-                castE(fromPosition, farmLocation.Position);
+                CastE(fromPosition, farmLocation.Position);
                 return true;
             }
 
             return false;
         }
 
-        private static void predictCastE(Obj_AI_Hero target, bool longRange = false)
+        private static void PredictCastE(Obj_AI_Hero target, bool longRange = false)
         {
             // Helpers
             bool inRange = Vector2.DistanceSquared(target.ServerPosition.To2D(), player.Position.To2D()) < E.Range * E.Range;
@@ -306,7 +263,7 @@ namespace ViktorSharp
                         pos2 = prediction.CastPosition;
 
                         // Cast spell
-                        castE(pos1, pos2);
+                        CastE(pos1, pos2);
                         spellCasted = true;
                     }
                 }
@@ -314,14 +271,14 @@ namespace ViktorSharp
                 // Spell not casted
                 if (!spellCasted)
                     // Try casting on minion
-                    if (!predictCastMinionE(pos1.To2D()))
+                    if (!PredictCastMinionE(pos1.To2D()))
                         // Cast it directly
-                        castE(pos1, E.GetPrediction(target).CastPosition);
+                        CastE(pos1, E.GetPrediction(target).CastPosition);
 
                 // Reset spell
                 E.Speed = speedE;
                 E.Range = rangeE;
-                E.From  = player.Position;
+                E.From = player.Position;
                 E.RangeCheckFrom = player.Position;
             }
 
@@ -370,7 +327,7 @@ namespace ViktorSharp
 
                 // Cast the E
                 if (prediction.Hitchance == HitChance.High)
-                    castE(pos1, prediction.CastPosition);
+                    CastE(pos1, prediction.CastPosition);
 
                 // Reset spell
                 E.Range = rangeE;
@@ -380,75 +337,88 @@ namespace ViktorSharp
 
         }
 
-        private static void castE(Vector3 source, Vector3 destination)
+        private static void CastE(Vector3 source, Vector3 destination)
         {
-            castE(source.To2D(), destination.To2D());
+            CastE(source.To2D(), destination.To2D());
         }
 
-        private static void castE(Vector2 source, Vector2 destination)
+        private static void CastE(Vector2 source, Vector2 destination)
         {
             Packet.C2S.Cast.Encoded(new Packet.C2S.Cast.Struct(0, E.Slot, -1, source.X, source.Y, destination.X, destination.Y)).Send();
         }
 
-        private static void createMenu()
+        private static void Interrupter_OnPossibleToInterrupt(Obj_AI_Base unit, InterruptableSpell spell)
         {
-            menu = new Menu("[Hellsing] " + champName, "hells" + champName, true);
+            if (boolLinks["miscInterrupt"].Value && spell.DangerLevel == InterruptableDangerLevel.High && R.InRange(unit.ServerPosition))
+                R.Cast(unit.ServerPosition.To2D(), true);
+        }
 
-            // Target selector
-            Menu ts = new Menu("Target Selector", "ts");
-            menu.AddSubMenu(ts);
-            SimpleTs.AddToMenu(ts);
+        private static void AntiGapcloser_OnEnemyGapcloser(ActiveGapcloser gapcloser)
+        {
+            if (boolLinks["miscGapcloser"].Value && W.InRange(gapcloser.End))
+                W.Cast(gapcloser.End.To2D(), true);
+        }
 
-            // Orbwalker
-            Menu orbwalk = new Menu("Orbwalking", "orbwalk");
-            menu.AddSubMenu(orbwalk);
-            OW = new Orbwalking.Orbwalker(orbwalk);
+        private static void Drawing_OnDraw(EventArgs args)
+        {
+            // All circles
+            foreach (var circle in circleLinks.Values.Select(link => link.Value))
+            {
+                if (circle.Active)
+                    Utility.DrawCircle(player.Position, circle.Radius, circle.Color);
+            }
+        }
+
+        private static void ProcessLink(string key, object value)
+        {
+            if (value is MenuWrapper.BoolLink)
+                boolLinks.Add(key, value as MenuWrapper.BoolLink);
+            else if (value is MenuWrapper.CircleLink)
+                circleLinks.Add(key, value as MenuWrapper.CircleLink);
+            else if (value is MenuWrapper.KeyBindLink)
+                keyLinks.Add(key, value as MenuWrapper.KeyBindLink);
+            else if (value is MenuWrapper.SliderLink)
+                sliderLinks.Add(key, value as MenuWrapper.SliderLink);
+        }
+
+        private static void SetupMenu()
+        {
+            menu = new MenuWrapper("[Hellsing] " + CHAMP_NAME);
 
             // Combo
-            Menu combo = new Menu("Combo", "combo");
-            menu.AddSubMenu(combo);
-            combo.AddItem(new MenuItem("comboUseQ",         "Use Q").SetValue(true));
-            combo.AddItem(new MenuItem("comboUseE",         "Use E").SetValue(true));
-            combo.AddItem(new MenuItem("comboUseIgnite",    "Use ignite").SetValue(true));
-            combo.AddItem(new MenuItem("comboActive",       "Combo active!").SetValue(new KeyBind(32, KeyBindType.Press)));
-            combo.AddItem(new MenuItem("comboExtend",       "E extended range!").SetValue(new KeyBind('A', KeyBindType.Press)));
+            var subMenu = menu.MainMenu.AddSubMenu("Combo");
+            ProcessLink("comboUseQ", subMenu.AddLinkedBool("Use Q"));
+            ProcessLink("comboUseE", subMenu.AddLinkedBool("Use E"));
+            ProcessLink("comboUseIgnite", subMenu.AddLinkedBool("Use ignite"));
+            ProcessLink("comboActive", subMenu.AddLinkedKeyBind("Combo active", 32, KeyBindType.Press));
+            ProcessLink("comboExtend", subMenu.AddLinkedKeyBind("E extended range", 'A', KeyBindType.Press));
 
             // Harass
-            Menu harass = new Menu("Harass", "harass");
-            menu.AddSubMenu(harass);
-            harass.AddItem(new MenuItem("harassUseE",   "Use E").SetValue(true));
-            harass.AddItem(new MenuItem("harassActive", "Harass active!").SetValue(new KeyBind('X', KeyBindType.Press)));
+            subMenu = menu.MainMenu.AddSubMenu("Harass");
+            ProcessLink("harassUseE", subMenu.AddLinkedBool("Use E"));
+            ProcessLink("harassMana", subMenu.AddLinkedSlider("Mana usage in percent (%)", 30));
+            ProcessLink("harassActive", subMenu.AddLinkedKeyBind("Harass active", 'C', KeyBindType.Press));
 
             // WaveClear
-            Menu waveClear = new Menu("WaveClear", "waveClear");
-            menu.AddSubMenu(waveClear);
-            waveClear.AddItem(new MenuItem("waveUseQ",    "Use Q").SetValue(false));
-            waveClear.AddItem(new MenuItem("waveUseE",    "Use E").SetValue(true));
-            waveClear.AddItem(new MenuItem("waveNumE",    "Minions to hit with E").SetValue<Slider>(new Slider(3, 1, 10)));
-            waveClear.AddItem(new MenuItem("waveActive",  "WaveClear active!").SetValue(new KeyBind('V', KeyBindType.Press)));
+            subMenu = menu.MainMenu.AddSubMenu("WaveClear");
+            ProcessLink("waveUseQ", subMenu.AddLinkedBool("Use Q"));
+            ProcessLink("waveUseE", subMenu.AddLinkedBool("Use E"));
+            ProcessLink("waveNumE", subMenu.AddLinkedSlider("Minions to hit with E", 2, 1, 10));
+            ProcessLink("waveMana", subMenu.AddLinkedSlider("Mana usage in percent (%)", 30));
+            ProcessLink("waveActive", subMenu.AddLinkedKeyBind("WaveClear active", 'V', KeyBindType.Press));
 
             // Misc
-            Menu misc = new Menu("Misc", "misc");
-            menu.AddSubMenu(misc);
-            misc.AddItem(new MenuItem("miscInterrupt",  "Use R to interrupt dangerous spells").SetValue(true));
-            misc.AddItem(new MenuItem("miscGapcloser",  "Use W against gapclosers").SetValue(true));
-            //misc.AddItem(new MenuItem("miscUseAutoW",   "Use auto W with condition below").SetValue(true));
-            //misc.AddItem(new MenuItem("miscNumAutoW",   "Minimum targets hit").SetValue<Slider>(new Slider(2, 1, 5)));
-            //misc.AddItem(new MenuItem("miscUseAutoR",   "Use auto R with condition below").SetValue(true));
-            //misc.AddItem(new MenuItem("miscNumAutoR",   "Minimum targets hit and min 1 dies").SetValue<Slider>(new Slider(1, 1, 5)));
-            //misc.AddItem(new MenuItem("miscTargetR", "Auto change target R").SetValue(true));
+            subMenu = menu.MainMenu.AddSubMenu("Misc");
+            ProcessLink("miscInterrupt", subMenu.AddLinkedBool("Use R to interrupt dangerous spells"));
+            ProcessLink("miscGapcloser", subMenu.AddLinkedBool("Use W against gapclosers"));
 
             // Drawings
-            Menu drawings = new Menu("Drawings", "drawings");
-            menu.AddSubMenu(drawings);
-            drawings.AddItem(new MenuItem("drawRangeQ",     "Q range").SetValue(new Circle(false, Color.FromArgb(150, Color.IndianRed))));
-            drawings.AddItem(new MenuItem("drawRangeW",     "W range").SetValue(new Circle(false, Color.FromArgb(150, Color.IndianRed))));
-            drawings.AddItem(new MenuItem("drawRangeE",     "E range").SetValue(new Circle(true, Color.FromArgb(150, Color.DarkRed))));
-            drawings.AddItem(new MenuItem("drawRangeEMax",  "E max range").SetValue(new Circle(true, Color.FromArgb(150, Color.OrangeRed))));
-            drawings.AddItem(new MenuItem("drawRangeR",     "R range").SetValue(new Circle(false, Color.FromArgb(150, Color.Red))));
-
-            // Finalizing
-            menu.AddToMainMenu();
+            subMenu = menu.MainMenu.AddSubMenu("Drawings");
+            ProcessLink("drawRangeQ", subMenu.AddLinkedCircle("Q range", true, Color.FromArgb(150, Color.IndianRed), Q.Range));
+            ProcessLink("drawRangeW", subMenu.AddLinkedCircle("W range", true, Color.FromArgb(150, Color.IndianRed), W.Range));
+            ProcessLink("drawRangeE", subMenu.AddLinkedCircle("E range", false, Color.FromArgb(150, Color.DarkRed), E.Range));
+            ProcessLink("drawRangeEMax", subMenu.AddLinkedCircle("E max range", true, Color.FromArgb(150, Color.OrangeRed), maxRangeE));
+            ProcessLink("drawRangeR", subMenu.AddLinkedCircle("R range", false, Color.FromArgb(150, Color.Red), R.Range));
         }
     }
 }
