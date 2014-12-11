@@ -186,8 +186,8 @@ namespace Kalista
                     // Check if the target would die from E
                     if (target.IsRendKillable())
                         E.Cast(true);
-                    // Check if the target would die with 2 more stacks, useless to waste E then
-                    else if (GetRendDamage(target, buff.Count + 2) < target.Health || target.ServerPosition.Distance(player.Position, true) > 800 * 800 || buff.EndTime - Game.Time <= 0.25)
+                    // If the target is still in range or the buff is active for longer than 0.25 seconds, if not, cast it
+                    else if (GetRendDamage(target, buff.Count + 2) < target.Health && target.ServerPosition.Distance(player.Position, true) > 800 * 800 || buff.EndTime - Game.Time <= 0.25)
                         E.Cast(true);
                 }
             }
