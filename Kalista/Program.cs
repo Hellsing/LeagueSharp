@@ -19,7 +19,6 @@ namespace Kalista
         internal static Obj_AI_Hero player = ObjectManager.Player;
 
         internal static Spell Q, W, E, R;
-        internal static readonly List<Spell> spellList = new List<Spell>();
 
         internal static int? wallJumpInitTime;
         internal static Vector3? wallJumpTarget;
@@ -33,6 +32,12 @@ namespace Kalista
         internal static Dictionary<string, MenuWrapper.CircleLink> circleLinks = new Dictionary<string, MenuWrapper.CircleLink>();
         internal static Dictionary<string, MenuWrapper.KeyBindLink> keyLinks = new Dictionary<string, MenuWrapper.KeyBindLink>();
         internal static Dictionary<string, MenuWrapper.SliderLink> sliderLinks = new Dictionary<string, MenuWrapper.SliderLink>();
+
+        // Cache raw E damages for performance
+        internal static float[] rawRendDamage = new float[] { 20, 30, 40, 50, 60 };
+        internal static float[] rawRendDamageMultiplier = new float[] { 0.6f, 0.6f, 0.6f, 0.6f, 0.6f };
+        internal static float[] rawRendDamagePerSpear = new float[] { 10 , 14 , 19 , 25 , 32 };
+        internal static float[] rawRendDamagePerSpearMultiplier = new float[] { 0.2f, 0.225f, 0.25f, 0.275f, 0.3f };
 
         internal static void Main(string[] args)
         {
@@ -50,9 +55,6 @@ namespace Kalista
             W = new Spell(SpellSlot.W, 5000);
             E = new Spell(SpellSlot.E, 1000);
             R = new Spell(SpellSlot.R, 1500);
-
-            // Add to spell list
-            spellList.AddRange(new[] { Q, W, E, R });
 
             // Finetune spells
             Q.SetSkillshot(0.25f, 40, 1200, true, SkillshotType.SkillshotLine);
@@ -80,6 +82,8 @@ namespace Kalista
 
         internal static void Game_OnGameUpdate(EventArgs args)
         {
+            #region Hotkeys
+
             // Combo
             if (keyLinks["comboActive"].Value.Active)
                 OnCombo();
@@ -98,6 +102,10 @@ namespace Kalista
             else
                 fleeTargetPosition = null;
 
+            #endregion
+
+            #region Killsteal
+
             // Check killsteal
             if (E.IsReady() && boolLinks["miscKillstealE"].Value)
             {
@@ -110,6 +118,10 @@ namespace Kalista
                     }
                 }
             }
+
+            #endregion
+
+            #region E on big mobs
 
             // Always E on big mobs
             if (E.IsReady() && boolLinks["miscBigE"].Value)
@@ -126,6 +138,8 @@ namespace Kalista
                     }
                 }
             }
+
+            #endregion
         }
 
         internal static void OnCombo()
@@ -481,28 +495,22 @@ namespace Kalista
             return GetRendDamage(target) > target.Health;
         }
 
-        internal static double GetRendDamage(Obj_AI_Base target, int customStacks = -1)
+        internal static float GetRendDamage(Obj_AI_Base target, int customStacks = -1)
         {
             // Calculate the damage and return
-            return player.CalcDamage(target, Damage.DamageType.Physical, GetRawRendDamage(target, customStacks)) - sliderLinks["spellReductionE"].Value.Value;
+            return (float)player.CalcDamage(target, Damage.DamageType.Physical, GetRawRendDamage(target, customStacks)) - sliderLinks["spellReductionE"].Value.Value;
         }
 
-        internal static double GetRawRendDamage(Obj_AI_Base target, int customStacks = -1)
+        internal static float GetRawRendDamage(Obj_AI_Base target, int customStacks = -1)
         {
             // Get buff
             var buff = target.GetRendBuff();
 
             if (buff != null || customStacks != -1)
             {
-                // Base damage
-                double damage = (10 + 10 * player.Spellbook.GetSpell(SpellSlot.E).Level) + 0.6 * (player.BaseAttackDamage + player.FlatPhysicalDamageMod);
-
-                // Damage per spear
-                double singleSpearDamage = damage * new double[] { 0, 0.25, 0.30, 0.35, 0.40, 0.45 }[player.Spellbook.GetSpell(SpellSlot.E).Level];
-                damage += (((customStacks == -1 ? buff.Count : customStacks) - 1) * singleSpearDamage);
-
-                // Calculate the damage and return
-                return damage;
+                return (rawRendDamage[E.Level - 1] + rawRendDamageMultiplier[E.Level - 1] * player.TotalAttackDamage()) + // Base damage
+                       ((customStacks == -1 ? buff.Count : customStacks) - 1) * // Spear count
+                       (rawRendDamagePerSpear[E.Level - 1] + rawRendDamagePerSpearMultiplier[E.Level - 1] * player.TotalAttackDamage()); // Damage pear spear
             }
 
             return 0;
@@ -527,6 +535,11 @@ namespace Kalista
                 damage += GetRendDamage(target);
 
             return (float)damage;
+        }
+
+        internal static float TotalAttackDamage(this Obj_AI_Base target)
+        {
+            return target.BaseAttackDamage + target.FlatPhysicalDamageMod;
         }
 
         internal static BuffInstance GetRendBuff(this Obj_AI_Base target)
