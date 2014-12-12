@@ -180,10 +180,10 @@ namespace Kalista
             if (useE && (E.IsReady() || E.Instance.State == SpellState.Surpressed))
             {
                 // Target is not in range but has E stacks on
-                if (!E.InRange(target.ServerPosition) && target.HasRendBuff())
+                if (player.Distance(target, true) > Math.Pow(Orbwalking.GetRealAutoAttackRange(player), 2) && target.HasRendBuff())
                 {
                     // Get minions around
-                    var minions = ObjectManager.Get<Obj_AI_Minion>().Where(m => m.IsValidTarget(E.Range));
+                    var minions = ObjectManager.Get<Obj_AI_Minion>().Where(m => m.IsValidTarget(Orbwalking.GetRealAutoAttackRange(player)));
                     
                     // Check if a minion can die with the current E stacks
                     if (minions.Any(m => m.IsRendKillable()))
