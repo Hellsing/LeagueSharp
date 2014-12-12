@@ -152,7 +152,7 @@ namespace Kalista
             if (useQ && Q.IsReady())
                 target = SimpleTs.GetTarget(Q.Range, SimpleTs.DamageType.Physical);
             else
-                target = SimpleTs.GetTarget(Orbwalking.GetRealAutoAttackRange(player), SimpleTs.DamageType.Physical);
+                target = SimpleTs.GetTarget(E.Range * 1.2f, SimpleTs.DamageType.Physical);
 
             if (target == null)
                 return;
@@ -177,9 +177,28 @@ namespace Kalista
             if (useQ && Q.IsReady() && !player.IsDashing())
                 Q.Cast(target);
 
-            if (useE && E.IsReady())
+            if (useE && (E.IsReady() || E.Instance.State == SpellState.Surpressed))
             {
-                if (target.IsRendKillable() || target.HasBuff("KalistaExpungeMarker") && target.GetRendBuff().Count >= sliderLinks["comboNumE"].Value.Value)
+                // Target is not in range but has E stacks on
+                if (!E.InRange(target.ServerPosition) && target.HasRendBuff())
+                {
+                    // Get minions around
+                    var minions = ObjectManager.Get<Obj_AI_Minion>().Where(m => m.IsValidTarget(E.Range));
+                    
+                    // Check if a minion can die with the current E stacks
+                    if (minions.Any(m => m.IsRendKillable()))
+                        E.Cast(true);
+                    else
+                    {
+                        // Check if a minion can die with one AA and E. Also, the AA minion has be be behind the player direction for a further leap
+                        var minion = GetDashObjects(minions).FirstOrDefault(m => m.Health > player.GetAutoAttackDamage(m) && m.Health < player.GetAutoAttackDamage(m) + GetRendDamage(m, 1));
+                        if (minion != null)
+                            menu.Orbwalker.ForceTarget(minion);
+                    }
+                }
+
+                // Target is in range and has at least the set amount of E stacks on
+                if (E.InRange(target.ServerPosition) && (target.IsRendKillable() || target.HasRendBuff() && target.GetRendBuff().Count >= sliderLinks["comboNumE"].Value.Value))
                 {
                     var buff = target.GetRendBuff();
 
@@ -187,7 +206,7 @@ namespace Kalista
                     if (target.IsRendKillable())
                         E.Cast(true);
                     // If the target is still in range or the buff is active for longer than 0.25 seconds, if not, cast it
-                    else if (GetRendDamage(target, buff.Count + 2) < target.Health && target.ServerPosition.Distance(player.Position, true) > 800 * 800 || buff.EndTime - Game.Time <= 0.25)
+                    else if (GetRendDamage(target, buff.Count + 2) < target.Health && target.ServerPosition.Distance(player.Position, true) > Math.Pow(E.Range * 0.8, 2) || buff.EndTime - Game.Time <= 0.25)
                         E.Cast(true);
                 }
             }
@@ -339,7 +358,10 @@ namespace Kalista
 
             // Quick AAing without jumping over walls
             if (useAA && !useWalljump)
-                Orbwalking.Orbwalk(GetDashObject(), Game.CursorPos);
+            {
+                var dashObjects = GetDashObjects();
+                Orbwalking.Orbwalk(dashObjects.Count > 0 ? dashObjects[0] : null, Game.CursorPos);
+            }
 
             // Wall jumping with possible AAing aswell
             if (useWalljump)
@@ -364,7 +386,11 @@ namespace Kalista
                 // Also check if we want to AA aswell
                 Obj_AI_Base target = null;
                 if (useAA)
-                    target = GetDashObject();
+                {
+                    var dashObjects = GetDashObjects();
+                    if (dashObjects.Count > 0)
+                        target = dashObjects[0];
+                }
 
                 // Reset walljump indicators
                 wallJumpPossible = false;
@@ -469,25 +495,29 @@ namespace Kalista
             }
         }
 
-        internal static Obj_AI_Base GetDashObject()
+        internal static List<Obj_AI_Base> GetDashObjects(IEnumerable<Obj_AI_Base> predefinedObjectList = null)
         {
             float realAArange = Orbwalking.GetRealAutoAttackRange(player);
 
-            var objects = ObjectManager.Get<Obj_AI_Base>().Where(o => o.IsValidTarget(realAArange));
+            List<Obj_AI_Base> objects;
+            if (predefinedObjectList != null)
+                objects = predefinedObjectList.ToList();
+            else
+                objects = ObjectManager.Get<Obj_AI_Base>().Where(o => o.IsValidTarget(realAArange)).ToList();
+
             Vector2 apexPoint = player.ServerPosition.To2D() + (player.ServerPosition.To2D() - Game.CursorPos.To2D()).Normalized() * realAArange;
 
-            Obj_AI_Base target = null;
+            List<Obj_AI_Base> targets = new List<Obj_AI_Base>();
 
             foreach (var obj in objects)
             {
                 if (VectorHelper.IsLyingInCone(obj.ServerPosition.To2D(), apexPoint, player.ServerPosition.To2D(), realAArange))
-                {
-                    if (target == null || target.Distance(apexPoint, true) > obj.Distance(apexPoint, true))
-                        target = obj;
-                }
+                    targets.Add(obj);
             }
 
-            return target;
+            targets.Sort((t1, t2) => t1.Distance(apexPoint, true).CompareTo(t2.Distance(apexPoint, true)));
+
+            return targets;
         }
 
         internal static bool IsRendKillable(this Obj_AI_Base target)
@@ -510,7 +540,7 @@ namespace Kalista
             {
                 return (rawRendDamage[E.Level - 1] + rawRendDamageMultiplier[E.Level - 1] * player.TotalAttackDamage()) + // Base damage
                        ((customStacks == -1 ? buff.Count : customStacks) - 1) * // Spear count
-                       (rawRendDamagePerSpear[E.Level - 1] + rawRendDamagePerSpearMultiplier[E.Level - 1] * player.TotalAttackDamage()); // Damage pear spear
+                       (rawRendDamagePerSpear[E.Level - 1] + rawRendDamagePerSpearMultiplier[E.Level - 1] * player.TotalAttackDamage()); // Damage per spear
             }
 
             return 0;
@@ -540,6 +570,11 @@ namespace Kalista
         internal static float TotalAttackDamage(this Obj_AI_Base target)
         {
             return target.BaseAttackDamage + target.FlatPhysicalDamageMod;
+        }
+
+        internal static bool HasRendBuff(this Obj_AI_Base target)
+        {
+            return target.HasBuff("KalistaExpungeMarker");
         }
 
         internal static BuffInstance GetRendBuff(this Obj_AI_Base target)
