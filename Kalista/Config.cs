@@ -14,7 +14,7 @@ namespace Kalista
     public class Config
     {
         private static bool initialized = false;
-        private const string MENU_TITLE = "[Hellsing] Kalista";
+        private const string MENU_TITLE = "[Hellsing] " + Program.CHAMP_NAME;
 
         private static MenuWrapper _menu;
 
@@ -101,11 +101,11 @@ namespace Kalista
 
             // Drawings
             subMenu = _menu.MainMenu.AddSubMenu("Drawings");
-            ProcessLink("drawRangeQ", subMenu.AddLinkedCircle("Q range", true, Color.FromArgb(150, Color.IndianRed), Q.Range));
-            ProcessLink("drawRangeW", subMenu.AddLinkedCircle("W range", true, Color.FromArgb(150, Color.MediumPurple), W.Range));
-            ProcessLink("drawRangeEsmall", subMenu.AddLinkedCircle("E range (leaving)", false, Color.FromArgb(150, Color.DarkRed), E.Range - 200));
-            ProcessLink("drawRangeEactual", subMenu.AddLinkedCircle("E range (actual)", true, Color.FromArgb(150, Color.DarkRed), E.Range));
-            ProcessLink("drawRangeR", subMenu.AddLinkedCircle("R range", false, Color.FromArgb(150, Color.Red), R.Range));
+            ProcessLink("drawRangeQ", subMenu.AddLinkedCircle("Q range", true, Color.FromArgb(150, Color.IndianRed), SpellManager.Q.Range));
+            ProcessLink("drawRangeW", subMenu.AddLinkedCircle("W range", true, Color.FromArgb(150, Color.MediumPurple), SpellManager.W.Range));
+            ProcessLink("drawRangeEsmall", subMenu.AddLinkedCircle("E range (leaving)", false, Color.FromArgb(150, Color.DarkRed), SpellManager.E.Range - 200));
+            ProcessLink("drawRangeEactual", subMenu.AddLinkedCircle("E range (actual)", true, Color.FromArgb(150, Color.DarkRed), SpellManager.E.Range));
+            ProcessLink("drawRangeR", subMenu.AddLinkedCircle("R range", false, Color.FromArgb(150, Color.Red), SpellManager.R.Range));
         }
     }
 }
