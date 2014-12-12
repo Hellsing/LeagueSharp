@@ -14,7 +14,7 @@ namespace Kalista
     public class Config
     {
         private static bool initialized = false;
-        private const string MENU_TITLE = "[Hellsing] " + ObjectManager.Player.ChampionName;
+        private const string MENU_TITLE = "[Hellsing] Kalista";
 
         private static MenuWrapper _menu;
 
