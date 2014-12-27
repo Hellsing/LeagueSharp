@@ -73,9 +73,9 @@ namespace Kalista
             Obj_AI_Hero target;
 
             if (useQ && Q.IsReady())
-                target = SimpleTs.GetTarget(Q.Range, SimpleTs.DamageType.Physical);
+                target = TargetSelector.GetTarget(Q.Range, TargetSelector.DamageType.Physical);
             else
-                target = SimpleTs.GetTarget(E.Range * 1.2f, SimpleTs.DamageType.Physical);
+                target = TargetSelector.GetTarget(E.Range * 1.2f, TargetSelector.DamageType.Physical);
 
             if (target == null)
                 return;
@@ -141,7 +141,7 @@ namespace Kalista
             if ((player.Mana / player.MaxMana) * 100 < Config.SliderLinks["harassMana"].Value.Value)
                 return;
 
-            var target = SimpleTs.GetTarget(Q.Range, SimpleTs.DamageType.Physical);
+            var target = TargetSelector.GetTarget(Q.Range, TargetSelector.DamageType.Physical);
             if (target == null)
                 return;
 
