@@ -25,7 +25,7 @@ namespace Kalista
 
         public static float GetRendDamage(Obj_AI_Hero target)
         {
-            return (float)GetRendDamage(target);
+            return (float)GetRendDamage(target, -1);
         }
 
         public static float GetRendDamage(Obj_AI_Base target, int customStacks = -1)

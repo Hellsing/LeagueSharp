@@ -52,6 +52,9 @@ namespace Kalista
 
         private static void Game_OnGameUpdate(EventArgs args)
         {
+            // Permanent checks for something like killsteal
+            ActiveModes.OnPermaActive();
+
             #region Hotkeys
 
             // Combo
@@ -73,9 +76,6 @@ namespace Kalista
                 ActiveModes.fleeTargetPosition = null;
 
             #endregion
-
-            // Permanent checks for something like killsteal
-            ActiveModes.OnPermaActive();
         }
 
         private static void Unit_OnDash(Obj_AI_Base sender, Dash.DashItem args)

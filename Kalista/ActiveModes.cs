@@ -15,10 +15,22 @@ namespace Kalista
     {
         private static Obj_AI_Hero player = ObjectManager.Player;
 
-        private static Spell Q { get { return SpellManager.Q; } }
-        private static Spell W { get { return SpellManager.W; } }
-        private static Spell E { get { return SpellManager.E; } }
-        private static Spell R { get { return SpellManager.R; } }
+        private static Spell Q
+        {
+            get { return SpellManager.Q; }
+        }
+        private static Spell W
+        { 
+            get { return SpellManager.W; }
+        }
+        private static Spell E
+        { 
+            get { return SpellManager.E; }
+        }
+        private static Spell R
+        {
+            get { return SpellManager.R; }
+        }
 
         public static int? wallJumpInitTime;
         public static Vector3? wallJumpTarget;
@@ -32,14 +44,9 @@ namespace Kalista
             // Check killsteal
             if (E.IsReady() && Config.BoolLinks["miscKillstealE"].Value)
             {
-                foreach (var enemy in ObjectManager.Get<Obj_AI_Hero>().Where(h => h.IsValidTarget(E.Range)))
-                {
-                    if (enemy.IsRendKillable())
-                    {
-                        E.Cast(true);
-                        break;
-                    }
-                }
+                var target = ObjectManager.Get<Obj_AI_Hero>().FirstOrDefault(h => h.IsValidTarget(E.Range) && h.IsRendKillable());
+                if (target != null)
+                    E.Cast(true);
             }
 
             #endregion
