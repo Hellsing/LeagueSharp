@@ -53,7 +53,7 @@ namespace Brand
 
             // Finetune spells
             Q.SetSkillshot(0.25f, 80, 1200, true, SkillshotType.SkillshotLine);
-            W.SetSkillshot(1, 240, float.MaxValue, false, SkillshotType.SkillshotCircle);
+            W.SetSkillshot(1, 200, float.MaxValue, false, SkillshotType.SkillshotCircle);
             E.SetTargetted(0.25f, float.MaxValue);
             R.SetTargetted(0.25f, 1000);
 
@@ -84,7 +84,7 @@ namespace Brand
             // Toggles
             if (boolLinks["harassToggleW"].Value && W.IsReady())
             {
-                var target = SimpleTs.GetTarget(W.Range + W.Width, SimpleTs.DamageType.Magical);
+                var target = TargetSelector.GetTarget(W.Range + W.Width, TargetSelector.DamageType.Magical);
                 if (target != null)
                     W.CastIfHitchanceEquals(target, HitChance.High);
             }
@@ -93,7 +93,7 @@ namespace Brand
         private static void OnCombo()
         {
             // Target aquireing
-            var target = SimpleTs.GetTarget(W.Range, SimpleTs.DamageType.Magical);
+            var target = TargetSelector.GetTarget(W.Range, TargetSelector.DamageType.Magical);
 
             // Target validation
             if (target == null)
@@ -112,7 +112,7 @@ namespace Brand
 
             // Ignite auto cast if killable, bitch please
             if (mainComboKillable && player.HasIgnite())
-                player.SummonerSpellbook.CastSpell(player.GetSpellSlot("SummonerDot"), target);
+                player.Spellbook.CastSpell(player.GetSpellSlot("SummonerDot"), target);
 
             foreach (var spell in spellList)
             {
@@ -192,7 +192,7 @@ namespace Brand
         private static void OnHarass()
         {
             // Target aquireing
-            var target = SimpleTs.GetTarget(W.Range, SimpleTs.DamageType.Magical);
+            var target = TargetSelector.GetTarget(W.Range, TargetSelector.DamageType.Magical);
 
             // Target validation
             if (target == null)
@@ -379,7 +379,7 @@ namespace Brand
             if (target.IsMe)
             {
                 var ignite = player.Spellbook.GetSpell(player.GetSpellSlot("SummonerDot"));
-                return ignite != null && ignite.Slot != SpellSlot.Unknown && (checkReady ? player.SummonerSpellbook.CanUseSpell(ignite.Slot) == SpellState.Ready && player.Distance(target, true) < 400 * 400 : true);
+                return ignite != null && ignite.Slot != SpellSlot.Unknown && (checkReady ? player.Spellbook.CanUseSpell(ignite.Slot) == SpellState.Ready && player.Distance(target, true) < 400 * 400 : true);
             }
             return false;
         }
