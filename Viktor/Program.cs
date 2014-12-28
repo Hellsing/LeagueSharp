@@ -90,14 +90,14 @@ namespace Viktor
 
             if (useQ)
             {
-                var target = SimpleTs.GetTarget(Q.Range, SimpleTs.DamageType.Magical);
+                var target = TargetSelector.GetTarget(Q.Range, TargetSelector.DamageType.Magical);
                 if (target != null)
                     Q.Cast(target);
             }
 
             if (useE)
             {
-                var target = SimpleTs.GetTarget(longRange ? maxRangeE : E.Range, SimpleTs.DamageType.Magical);
+                var target = TargetSelector.GetTarget(longRange ? maxRangeE : E.Range, TargetSelector.DamageType.Magical);
                 if (target != null)
                     PredictCastE(target, longRange);
             }
@@ -113,7 +113,7 @@ namespace Viktor
 
             if (useE)
             {
-                var target = SimpleTs.GetTarget(maxRangeE, SimpleTs.DamageType.Magical);
+                var target = TargetSelector.GetTarget(maxRangeE, TargetSelector.DamageType.Magical);
                 if (target != null)
                     PredictCastE(target, true);
             }
@@ -339,12 +339,12 @@ namespace Viktor
 
         private static void CastE(Vector3 source, Vector3 destination)
         {
-            CastE(source.To2D(), destination.To2D());
+            E.Cast(source, destination);
         }
 
         private static void CastE(Vector2 source, Vector2 destination)
         {
-            Packet.C2S.Cast.Encoded(new Packet.C2S.Cast.Struct(0, E.Slot, -1, source.X, source.Y, destination.X, destination.Y)).Send();
+            E.Cast(source, destination);
         }
 
         private static void Interrupter_OnPossibleToInterrupt(Obj_AI_Base unit, InterruptableSpell spell)
