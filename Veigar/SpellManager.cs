@@ -105,7 +105,7 @@ namespace Veigar
             return prediction.UnitPosition.Extend(player.Position, W.Width / 2);
         }
 
-        public static enum ComboSpell
+        public enum ComboSpell
         {
             DFG,
             Q,
