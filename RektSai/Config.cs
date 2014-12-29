@@ -108,7 +108,7 @@ namespace Rekt_Sai
             // Items
             subMenu = _menu.MainMenu.AddSubMenu("Items");
             ProcessLink("itemsTiamat", subMenu.AddLinkedBool("Use Tiamat"));
-            ProcessLink("itemsHydra", subMenu.AddLinkedBool("Use Hydra"));
+            ProcessLink("itemsHydra", subMenu.AddLinkedBool("Use Ravenous Hydra"));
             ProcessLink("itemsCutlass", subMenu.AddLinkedBool("Use Bilgewater Cutlass"));
             ProcessLink("itemsBotrk", subMenu.AddLinkedBool("Use Blade of the Ruined King"));
             ProcessLink("itemsRanduin", subMenu.AddLinkedBool("Use Randuin's Omen"));
