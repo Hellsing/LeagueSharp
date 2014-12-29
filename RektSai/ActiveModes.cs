@@ -60,6 +60,9 @@ namespace Rekt_Sai
                 // Get a low range target, since we don't have much range with our spells
                 var target = TargetSelector.GetTarget(useQ && Q.IsReady() ? Q.Range : E.Range, TargetSelector.DamageType.Physical);
 
+                // More item usage
+                ItemManager.UseBotrkOrCutlass(target);
+
                 if (target != null)
                 {
                     // General Q usage, we can safely spam that I guess
