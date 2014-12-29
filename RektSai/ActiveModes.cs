@@ -62,6 +62,7 @@ namespace Rekt_Sai
 
                 // More item usage
                 ItemManager.UseBotrkOrCutlass(target);
+                ItemManager.UseRanduin(target);
 
                 if (target != null)
                 {

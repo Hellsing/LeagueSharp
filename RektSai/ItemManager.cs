@@ -13,10 +13,14 @@ namespace Rekt_Sai
     {
         private static Obj_AI_Hero player = ObjectManager.Player;
 
+        // Offensive items
         public static readonly Item TIAMAT = new Item(3077, 385);
         public static readonly Item HYDRA = new Item(3074, 400);
         public static readonly Item CUTLASS = new Item(3144, 450);
         public static readonly Item BOTRK = new Item(3153, 450);
+
+        // Defensive items
+        public static readonly Item RANDUIN = new Item(3143, 500);
 
         public static bool HasItem(this Obj_AI_Hero target, Item item)
         {
@@ -45,6 +49,15 @@ namespace Rekt_Sai
                 return BOTRK.Cast(target);
             else if (Config.BoolLinks["itemsCutlass"].Value && CUTLASS.IsReady() && target.IsValidTarget(CUTLASS.Range))
                 return CUTLASS.Cast(target);
+
+            // No item was used/found
+            return false;
+        }
+
+        public static bool UseRanduin(Obj_AI_Base target)
+        {
+            if (Config.BoolLinks["itemsRanduin"].Value && RANDUIN.IsReady() && target.IsValidTarget(RANDUIN.Range))
+                return RANDUIN.Cast();
 
             // No item was used/found
             return false;
