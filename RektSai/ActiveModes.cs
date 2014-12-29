@@ -172,10 +172,6 @@ namespace Rekt_Sai
                 var useQ = Config.BoolLinks["harassUseQ"].Value;
                 var useE = Config.BoolLinks["harassUseE"].Value;
 
-                // Item usage
-                if (afterAttack && Config.BoolLinks["harassUseItems"].Value && ItemManager.UseHydraOrTiamat(afterAttackTarget))
-                    return;
-
                 if (afterAttack)
                 {
                     // Item usage
@@ -229,7 +225,7 @@ namespace Rekt_Sai
                 if (afterAttack && afterAttackTarget.Team != GameObjectTeam.Neutral)
                 {
                     // Item usage
-                    if (afterAttack && Config.BoolLinks["waveUseItems"].Value && ItemManager.UseHydraOrTiamat(afterAttackTarget))
+                    if (Config.BoolLinks["waveUseItems"].Value && ItemManager.UseHydraOrTiamat(afterAttackTarget))
                         return;
 
                     // Validate spells we wanna use
