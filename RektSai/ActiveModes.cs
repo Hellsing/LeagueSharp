@@ -32,14 +32,13 @@ namespace Rekt_Sai
 
         public static void OnPermaActive()
         {
-            // Reset forced target and reenable auto attacks
-            Orbwalking.DisableNextAttack = false;
-            Config.Menu.Orbwalker.ForceTarget(null);
+            // Re-enable auto attacks that might have been disabled
+            Config.Menu.Orbwalker.SetAttack(true);
         }
 
         public static void OnCombo(bool afterAttack = false, Obj_AI_Base afterAttackTarget = null)
         {
-            // TODO: Item/Smite usage
+            // TODO: Smite usage
 
             // Unburrowed
             if (!player.IsBurrowed())
@@ -49,6 +48,10 @@ namespace Rekt_Sai
                 var useW = Config.BoolLinks["comboUseW"].Value;
                 var useE = Config.BoolLinks["comboUseE"].Value;
                 var useBurrowQ = Config.BoolLinks["comboUseQBurrow"].Value;
+
+                // Item usage
+                if (afterAttack && Config.BoolLinks["comboUseItems"].Value && ItemManager.UseHydraOrTiamat(afterAttackTarget))
+                    return;
 
                 // Validate spells we wanna use
                 if ((useQ ? !Q.IsReady() : true) && (useW ? !W.IsReady() : true) && (useE ? !E.IsReady() : true))
@@ -64,7 +67,7 @@ namespace Rekt_Sai
                         Q.Cast(true);
 
                     // E usage, only cast on secure kill, full fury or our health is low
-                    if (afterAttack && useE && E.IsReady() && (target.Health < E.GetDamage(target) || player.HasMaxFury() || player.IsLowHealth()))
+                    if (useE && E.IsReady() && (target.Health < E.GetDamage(target) || player.HasMaxFury() || player.IsLowHealth()))
                         E.Cast(target);
                 }
 
@@ -87,7 +90,7 @@ namespace Rekt_Sai
             else
             {
                 // Disable auto attacks
-                Orbwalking.DisableNextAttack = true;
+                Config.Menu.Orbwalker.SetAttack(false);
 
                 // Config values
                 var useQ = Config.BoolLinks["comboUseQBurrow"].Value;
@@ -156,7 +159,7 @@ namespace Rekt_Sai
             }
         }
 
-        public static void OnHarass()
+        public static void OnHarass(bool afterAttack = false, Obj_AI_Base afterAttackTarget = null)
         {
             // Mana check
             if (player.ManaPercentage() < Config.SliderLinks["harassMana"].Value.Value / 100)
@@ -169,18 +172,30 @@ namespace Rekt_Sai
                 var useQ = Config.BoolLinks["harassUseQ"].Value;
                 var useE = Config.BoolLinks["harassUseE"].Value;
 
-                if ((useQ ? !Q.IsReady() : true) && (useE ? !E.IsReady() : true))
+                // Item usage
+                if (afterAttack && Config.BoolLinks["harassUseItems"].Value && ItemManager.UseHydraOrTiamat(afterAttackTarget))
                     return;
 
-                var target = TargetSelector.GetTarget(Q.IsReady() ? Q.Range : E.Range, TargetSelector.DamageType.Physical);
-
-                if (target != null)
+                if (afterAttack)
                 {
+                    // Item usage
+                    if (ItemManager.UseHydraOrTiamat(afterAttackTarget))
+                        return;
+
+                    // Q usage
                     if (useQ && Q.IsReady())
                         Q.Cast();
+                }
 
-                    if (useE && E.IsReady() && (player.HasMaxFury() || E.GetRealDamage(target) > target.Health))
-                        E.Cast(target);
+                // E usage
+                if (useE && E.IsReady())
+                {
+                    var target = TargetSelector.GetTarget(E.Range, TargetSelector.DamageType.Physical);
+                    if (target != null)
+                    {
+                        if (player.HasMaxFury() || E.GetRealDamage(target) > target.Health)
+                            E.Cast(target);
+                    }
                 }
             }
             // Burrowed - Q only
@@ -200,7 +215,7 @@ namespace Rekt_Sai
 
         public static void OnWaveClear(bool afterAttack = false, Obj_AI_Base afterAttackTarget = null)
         {
-            // TODO: Item/Smite usage
+            // TODO: Smite usage
 
             // Config values
             var useQ = Config.BoolLinks["waveUseQ"].Value;
@@ -213,6 +228,10 @@ namespace Rekt_Sai
             {
                 if (afterAttack && afterAttackTarget.Team != GameObjectTeam.Neutral)
                 {
+                    // Item usage
+                    if (afterAttack && Config.BoolLinks["waveUseItems"].Value && ItemManager.UseHydraOrTiamat(afterAttackTarget))
+                        return;
+
                     // Validate spells we wanna use
                     if ((useQ ? !Q.IsReady() : true) && (useE ? !E.IsReady() : true))
                         return;
@@ -222,7 +241,7 @@ namespace Rekt_Sai
                     if (minions.Count > 0)
                     {
                         // Q usage
-                        if (afterAttack && useQ && Q.IsReady())
+                        if (useQ && Q.IsReady())
                         {
                             // Check the number of Minions we would hit with Q,
                             // Bounce radius is 450 according to RitoDecode (thanks Husky Kappa)
@@ -231,7 +250,7 @@ namespace Rekt_Sai
                         }
 
                         // E usage
-                        if (afterAttack && useE && E.IsReady())
+                        if (useE && E.IsReady())
                         {
                             var target = minions.FirstOrDefault(m => player.HasMaxFury() || m.Health < E.GetRealDamage(m));
                             if (target != null)
@@ -255,7 +274,7 @@ namespace Rekt_Sai
 
         public static void OnJungleClear(bool afterAttack = false, Obj_AI_Base afterAttackTarget = null)
         {
-            // TODO: Item/Smite usage
+            // TODO: Smite usage
 
             // Unburrowed
             if (!player.IsBurrowed())
@@ -268,6 +287,10 @@ namespace Rekt_Sai
 
                 if (afterAttack && afterAttackTarget.Team == GameObjectTeam.Neutral)
                 {
+                    // Item usage
+                    if (Config.BoolLinks["jungleUseItems"].Value && ItemManager.UseHydraOrTiamat(afterAttackTarget))
+                        return;
+
                     if (useQ && Q.IsReady())
                         Q.Cast();
 
@@ -339,6 +362,8 @@ namespace Rekt_Sai
             {
                 if (Config.KeyLinks["comboActive"].Value.Active)
                     ActiveModes.OnCombo(true, target as Obj_AI_Base);
+                if (Config.KeyLinks["harassActive"].Value.Active)
+                    ActiveModes.OnHarass(true, target as Obj_AI_Base);
                 if (Config.KeyLinks["waveActive"].Value.Active)
                     ActiveModes.OnWaveClear(true, target as Obj_AI_Base);
                 if (Config.KeyLinks["jungleActive"].Value.Active)

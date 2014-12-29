@@ -77,6 +77,7 @@ namespace Rekt_Sai
             ProcessLink("harassUseQ", subMenu.AddLinkedBool("Use Q"));
             ProcessLink("harassUseE", subMenu.AddLinkedBool("Use E"));
             ProcessLink("harassUseQBurrow", subMenu.AddLinkedBool("Use Q (Burrowed)"));
+            ProcessLink("harassUseItems", subMenu.AddLinkedBool("Use items"));
             ProcessLink("harassMana", subMenu.AddLinkedSlider("Mana usage in percent (%)", 30));
             ProcessLink("harassActive", subMenu.AddLinkedKeyBind("Harass active", 'C', KeyBindType.Press));
 
@@ -86,6 +87,7 @@ namespace Rekt_Sai
             ProcessLink("waveNumQ", subMenu.AddLinkedSlider("Surrounding minions for Q", 2, 1, 10));
             ProcessLink("waveUseE", subMenu.AddLinkedBool("Use E"));
             ProcessLink("waveUseQBurrow", subMenu.AddLinkedBool("Use Q (Burrowed)"));
+            ProcessLink("waveUseItems", subMenu.AddLinkedBool("Use items"));
             ProcessLink("waveMana", subMenu.AddLinkedSlider("Mana usage in percent (%)", 30));
             ProcessLink("waveActive", subMenu.AddLinkedKeyBind("WaveClear active", 'V', KeyBindType.Press));
 
@@ -95,6 +97,7 @@ namespace Rekt_Sai
             ProcessLink("jungleUseW", subMenu.AddLinkedBool("Use W"));
             ProcessLink("jungleUseE", subMenu.AddLinkedBool("Use E"));
             ProcessLink("jungleUseQBurrow", subMenu.AddLinkedBool("Use Q (Burrowed)"));
+            ProcessLink("jungleUseItems", subMenu.AddLinkedBool("Use items"));
             ProcessLink("jungleActive", subMenu.AddLinkedKeyBind("JungleClear active", 'V', KeyBindType.Press));
 
             // Flee
@@ -104,7 +107,8 @@ namespace Rekt_Sai
 
             // Items
             subMenu = _menu.MainMenu.AddSubMenu("Items");
-            ProcessLink("itemsHydra", subMenu.AddLinkedBool("Use Tiamat/Hydra"));
+            ProcessLink("itemsTiamat", subMenu.AddLinkedBool("Use Tiamat"));
+            ProcessLink("itemsHydra", subMenu.AddLinkedBool("Use Hydra"));
             ProcessLink("itemsBotrk", subMenu.AddLinkedBool("Use Blade of the Ruined King"));
             ProcessLink("itemsKappa", subMenu.AddLinkedBool("Use Kappa (warning, might cause nothing)", false));
 
