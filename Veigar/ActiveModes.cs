@@ -133,17 +133,16 @@ namespace Veigar
                             comboTarget = target;
                             currentCombo = combo.ToList();
                             comboInitialized = Environment.TickCount;
+                            return;
                         }
                     }
 
                     #endregion
                 }
-                else
-                {
-                    // Q usage
-                    if (comboSpells[ComboSpell.Q])
-                        Q.Cast(target);
-                }
+
+                // Q usage
+                if (comboSpells[ComboSpell.Q])
+                    Q.Cast(target);
             }
 
             // Get new target for W and E
