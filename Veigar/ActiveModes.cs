@@ -50,6 +50,7 @@ namespace Veigar
             { new[] { ComboSpell.R } },
             { new[] { ComboSpell.DFG, ComboSpell.Q } },
             { new[] { ComboSpell.Q, ComboSpell.R } },
+            { new[] { ComboSpell.DFG, ComboSpell.R } },
             { new[] { ComboSpell.DFG, ComboSpell.Q, ComboSpell.R } },
             { new[] { ComboSpell.Q, ComboSpell.IGNITE } },
             { new[] { ComboSpell.R, ComboSpell.IGNITE } },
@@ -85,7 +86,7 @@ namespace Veigar
             if (target != null)
             {
                 // Spells for our combo and their state
-                comboSpells[ComboSpell.DFG] = Config.BoolLinks["comboUseItems"].Value && Config.BoolLinks["itemsDfg"].Value && ItemManager.DFG.IsReady();
+                comboSpells[ComboSpell.DFG] = Config.BoolLinks["comboUseItems"].Value && Config.BoolLinks["itemsDfg"].Value && (ItemManager.DFG.IsReady() || ItemManager.B_TORCH.IsReady());
                 comboSpells[ComboSpell.Q] = Config.BoolLinks["comboUseQ"].Value && Q.IsReady();
                 comboSpells[ComboSpell.W] = Config.BoolLinks["comboUseW"].Value && W.IsReady() && target.GetStunDuration() > 1;
                 comboSpells[ComboSpell.E] = Config.BoolLinks["comboUseE"].Value && E.IsReady();
@@ -95,7 +96,7 @@ namespace Veigar
                 // Get the combos available with the current spells available
                 var availableSpells = comboSpells.Where(e => e.Value).Select(e => e.Key).ToArray();
 
-                var availableCombos = combos.Where(c => !availableSpells.Except(c).Any());
+                var availableCombos = combos.Where(c => !c.Except(availableSpells).Any());
                 if (availableCombos.Count() > 0)
                 {
                     #region Combo of Death
@@ -108,7 +109,7 @@ namespace Veigar
                         switch (spell)
                         {
                             case ComboSpell.DFG:
-                                damage = (float)player.GetItemDamage(target, Damage.DamageItems.Dfg);
+                                damage = (float)player.GetItemDamage(target, ItemManager.DFG.IsReady() ? Damage.DamageItems.Dfg : Damage.DamageItems.BlackFireTorch);
                                 break;
                             case ComboSpell.Q:
                             case ComboSpell.W:
@@ -138,9 +139,30 @@ namespace Veigar
                         // If the damage is higher than the targets health, perform it
                         if (damage > target.Health)
                         {
+                            // Set active combo
                             comboTarget = target;
                             currentCombo = combo.ToList();
                             comboInitialized = Environment.TickCount;
+
+                            // Cast all spells
+                            foreach (var spell in combo)
+                            {
+                                switch (spell)
+                                {
+                                    case ComboSpell.DFG:
+                                        ItemManager.UseDfg(target);
+                                        break;
+                                    case ComboSpell.Q:
+                                    case ComboSpell.W:
+                                    case ComboSpell.R:
+                                        combo[0].GetSpell().Cast(target);
+                                        break;
+                                    case ComboSpell.IGNITE:
+                                        SpellManager.CastIngite(target);
+                                        break;
+                                }
+                            }
+
                             return;
                         }
                     }
@@ -154,7 +176,7 @@ namespace Veigar
             }
 
             // Get new target for W and E
-            target = TargetSelector.GetTarget(E.Range + E.Width / 2, TargetSelector.DamageType.Magical);
+            target = TargetSelector.GetTarget(W.Range, TargetSelector.DamageType.Magical);
             if (target != null)
             {
                 // W usage
@@ -165,12 +187,14 @@ namespace Veigar
                 if (Config.BoolLinks["comboUseE"].Value && E.IsReady())
                 {
                     var castPosition = SpellManager.GetCageCastPosition(target);
+
                     if (castPosition != null)
                         E.Cast((Vector3)castPosition);
                 }
             }
         }
 
+        // Gonna be changed to Obj_AI_Base.OnProcessSpellCast once judus added the spellslot to it :^)
         public static void Spellbook_OnCastSpell(GameObject sender, SpellbookCastSpellEventArgs args)
         {
             if (sender.IsMe && currentCombo != null)

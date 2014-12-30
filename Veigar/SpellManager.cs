@@ -62,12 +62,13 @@ namespace Veigar
             var prediction = Prediction.GetPrediction(target, 0.2f);
 
             // Validate single cast position
-            if (prediction.Hitchance != HitChance.High && prediction.Hitchance != HitChance.Immobile)
+            if (prediction.Hitchance < HitChance.High)
                 return null;
 
             // Check if there are other targets around that could be stunned
             var nearTargets = ObjectManager.Get<Obj_AI_Hero>().Where(
                 h =>
+                    h.NetworkId != target.NetworkId &&
                     h.IsValidTarget(E.Range + _radius) &&
                     h.Distance(target, true) < _widthSqr);
 
@@ -77,7 +78,7 @@ namespace Veigar
                 var prediction2 = Prediction.GetPrediction(target2, 0.2f);
 
                 // Validate second cast position
-                if (prediction2.Hitchance != HitChance.High && prediction2.Hitchance != HitChance.Immobile ||
+                if (prediction2.Hitchance < HitChance.High ||
                     prediction.UnitPosition.Distance(prediction2.UnitPosition, true) > _widthSqr)
                     continue;
 
@@ -103,7 +104,7 @@ namespace Veigar
             }
 
             // Returning single cast position
-            return prediction.UnitPosition.Extend(player.Position, W.Width / 2);
+            return prediction.UnitPosition.Extend(player.Position, _radius);
         }
 
         public enum ComboSpell

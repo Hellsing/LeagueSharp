@@ -15,6 +15,7 @@ namespace Veigar
 
         // Offensive items
         public static readonly Item DFG = new Item(3128, 750);
+        public static readonly Item B_TORCH = new Item(3188, 750);
 
         public static bool HasItem(this Obj_AI_Hero target, Item item)
         {
@@ -23,8 +24,15 @@ namespace Veigar
 
         public static bool UseDfg(Obj_AI_Hero target)
         {
-            if (Config.BoolLinks["itemsDfg"].Value && DFG.IsReady() && target.IsValidTarget(DFG.Range))
-                return DFG.Cast(target);
+            if (Config.BoolLinks["itemsDfg"].Value)
+            {
+                // DFG
+                if (DFG.IsReady() && target.IsValidTarget(DFG.Range))
+                    return DFG.Cast(target);
+                // Blackfire
+                else if (B_TORCH.IsReady() && target.IsValidTarget(B_TORCH.Range))
+                    return B_TORCH.Cast(target);
+            }
 
             // No item was used/found
             return false;
