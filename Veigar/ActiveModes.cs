@@ -34,7 +34,15 @@ namespace Veigar
             get { return SpellManager.R; }
         }
 
-        private static readonly Dictionary<ComboSpell, bool> comboSpells = new Dictionary<ComboSpell, bool>();
+        private static readonly Dictionary<ComboSpell, bool> comboSpells = new Dictionary<ComboSpell, bool>()
+        {
+            { ComboSpell.DFG, false },
+            { ComboSpell.Q, false },
+            { ComboSpell.W, false },
+            { ComboSpell.E, false },
+            { ComboSpell.R, false },
+            { ComboSpell.IGNITE, false }
+        };
 
         private static readonly List<ComboSpell[]> combos = new List<ComboSpell[]>()
         {
