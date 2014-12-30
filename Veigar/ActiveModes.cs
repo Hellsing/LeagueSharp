@@ -113,19 +113,18 @@ namespace Veigar
                         damages.Add(spell, damage);
                     }
 
-                    // New we need to check if the target can die with one of our evil combos
+                    // Now we need to check if the target can die with one of our evil combos
                     foreach (var combo in availableCombos)
                     {
                         bool useDfg = combo.Contains(ComboSpell.DFG);
 
-                        float damage = 0;
-                        foreach (var spell in combo.Where(s => s != ComboSpell.DFG && s != ComboSpell.IGNITE))
-                            damage += spell.GetSpell().GetRealDamage(target);
+                        // Spell damage without items/summoners
+                        float damage = combo.Where(s => s != ComboSpell.DFG && s != ComboSpell.IGNITE).Sum(s => damages[s]);
 
                         // Full damage on target respecting DFG damge, DFG multiplier and Ignite damage
-                        damage = (useDfg ? (float)player.GetItemDamage(target, Damage.DamageItems.Dfg) : 0) +
-                            damage * (useDfg ? 1.2f : 0) +
-                            (combo.Contains(ComboSpell.IGNITE) ? (float)player.GetSummonerSpellDamage(target, Damage.SummonerSpell.Ignite) : 0);
+                        damage = (useDfg ? damages[ComboSpell.DFG] : 0) +
+                            damage * (useDfg ? 1.2f : 1) +
+                            (combo.Contains(ComboSpell.IGNITE) ? damages[ComboSpell.IGNITE] : 0);
 
                         // If the damage is higher than the targets health, perform it
                         if (damage > target.Health)
