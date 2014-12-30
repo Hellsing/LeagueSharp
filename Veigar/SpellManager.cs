@@ -77,7 +77,8 @@ namespace Veigar
                 var prediction2 = Prediction.GetPrediction(target2, 0.2f);
 
                 // Validate second cast position
-                if (prediction2.Hitchance != HitChance.High && prediction2.Hitchance != HitChance.Immobile)
+                if (prediction2.Hitchance != HitChance.High && prediction2.Hitchance != HitChance.Immobile ||
+                    prediction.UnitPosition.Distance(prediction2.UnitPosition, true) > _widthSqr)
                     continue;
 
                 // Calculate middle point and perpendicular

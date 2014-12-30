@@ -73,7 +73,7 @@ namespace Veigar
             // Harass
             subMenu = _menu.MainMenu.AddSubMenu("Harass");
             ProcessLink("harassUseQ", subMenu.AddLinkedBool("Use Q"));
-            ProcessLink("harassUseE", subMenu.AddLinkedBool("Use W"));
+            ProcessLink("harassUseW", subMenu.AddLinkedBool("Use W"));
             ProcessLink("harassMana", subMenu.AddLinkedSlider("Mana usage in percent (%)", 30));
             ProcessLink("harassActive", subMenu.AddLinkedKeyBind("Harass active", 'C', KeyBindType.Press));
 
@@ -93,7 +93,7 @@ namespace Veigar
 
             // Flee
             subMenu = _menu.MainMenu.AddSubMenu("Flee");
-            ProcessLink("fleeNothing", subMenu.AddLinkedBool("Nothing yet Kappa"));
+            ProcessLink("fleeUseE", subMenu.AddLinkedBool("Use E"));
             ProcessLink("fleeActive", subMenu.AddLinkedKeyBind("Flee active", 'T', KeyBindType.Press));
 
             // Items
