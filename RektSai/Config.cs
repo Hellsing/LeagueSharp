@@ -11,7 +11,7 @@ using Color = System.Drawing.Color;
 
 namespace Rekt_Sai
 {
-    public class Config
+    public static class Config
     {
         public const string MENU_NAME = "[Hellsing] Rekt'Sai";
         private static MenuWrapper _menu;
@@ -55,6 +55,11 @@ namespace Rekt_Sai
                 _sliderLinks.Add(key, value as MenuWrapper.SliderLink);
         }
 
+        public static void AddSeparator(this MenuWrapper.SubMenu menu, string displayName)
+        {
+            menu.MenuHandle.AddItem(new MenuItem(displayName, displayName));
+        }
+
         public static void Initialize()
         {
             // Create menu
@@ -62,42 +67,58 @@ namespace Rekt_Sai
 
             // Combo
             var subMenu = _menu.MainMenu.AddSubMenu("Combo");
+            subMenu.AddSeparator(" == Unburrowed");
             ProcessLink("comboUseQ", subMenu.AddLinkedBool("Use Q"));
             ProcessLink("comboUseW", subMenu.AddLinkedBool("Use W"));
             ProcessLink("comboUseE", subMenu.AddLinkedBool("Use E"));
-            ProcessLink("comboUseQBurrow", subMenu.AddLinkedBool("Use Q (Burrowed)"));
-            ProcessLink("comboUseEBurrow", subMenu.AddLinkedBool("Use E (Burrowed)"));
+            subMenu.AddSeparator(" == Burrowed");
+            ProcessLink("comboUseQBurrow", subMenu.AddLinkedBool("Use Q"));
+            ProcessLink("comboUseEBurrow", subMenu.AddLinkedBool("Use E (safe kills)"));
+            subMenu.AddSeparator(" ");
             ProcessLink("comboUseItems", subMenu.AddLinkedBool("Use items"));
             ProcessLink("comboUseIgnite", subMenu.AddLinkedBool("Use Ignite"));
             ProcessLink("comboUseSmite", subMenu.AddLinkedBool("Use Smite (if possible)"));
+            subMenu.AddSeparator(" ");
             ProcessLink("comboActive", subMenu.AddLinkedKeyBind("Combo active", 32, KeyBindType.Press));
 
             // Harass
             subMenu = _menu.MainMenu.AddSubMenu("Harass");
+            subMenu.AddSeparator(" == Unburrowed");
             ProcessLink("harassUseQ", subMenu.AddLinkedBool("Use Q"));
             ProcessLink("harassUseE", subMenu.AddLinkedBool("Use E"));
-            ProcessLink("harassUseQBurrow", subMenu.AddLinkedBool("Use Q (Burrowed)"));
+            subMenu.AddSeparator(" == Burrowed");
+            ProcessLink("harassUseQBurrow", subMenu.AddLinkedBool("Use Q"));
+            subMenu.AddSeparator(" ");
             ProcessLink("harassUseItems", subMenu.AddLinkedBool("Use items"));
+            subMenu.AddSeparator(" ");
             ProcessLink("harassMana", subMenu.AddLinkedSlider("Mana usage in percent (%)", 30));
             ProcessLink("harassActive", subMenu.AddLinkedKeyBind("Harass active", 'C', KeyBindType.Press));
 
             // WaveClear
             subMenu = _menu.MainMenu.AddSubMenu("WaveClear");
+            subMenu.AddSeparator(" == Unburrowed");
             ProcessLink("waveUseQ", subMenu.AddLinkedBool("Use Q"));
             ProcessLink("waveNumQ", subMenu.AddLinkedSlider("Surrounding minions for Q", 2, 1, 10));
             ProcessLink("waveUseE", subMenu.AddLinkedBool("Use E"));
-            ProcessLink("waveUseQBurrow", subMenu.AddLinkedBool("Use Q (Burrowed)"));
+            subMenu.AddSeparator(" == Burrowed");
+            ProcessLink("waveUseQBurrow", subMenu.AddLinkedBool("Use Q"));
+            subMenu.AddSeparator(" ");
             ProcessLink("waveUseItems", subMenu.AddLinkedBool("Use items"));
+            subMenu.AddSeparator(" ");
             ProcessLink("waveMana", subMenu.AddLinkedSlider("Mana usage in percent (%)", 30));
             ProcessLink("waveActive", subMenu.AddLinkedKeyBind("WaveClear active", 'V', KeyBindType.Press));
 
             // JungleClear
             subMenu = _menu.MainMenu.AddSubMenu("JungleClear");
+            subMenu.AddSeparator(" == Unburrowed");
             ProcessLink("jungleUseQ", subMenu.AddLinkedBool("Use Q"));
             ProcessLink("jungleUseW", subMenu.AddLinkedBool("Use W"));
             ProcessLink("jungleUseE", subMenu.AddLinkedBool("Use E"));
-            ProcessLink("jungleUseQBurrow", subMenu.AddLinkedBool("Use Q (Burrowed)"));
+            subMenu.AddSeparator(" == Burrowed");
+            ProcessLink("jungleUseQBurrow", subMenu.AddLinkedBool("Use Q"));
+            subMenu.AddSeparator(" ");
             ProcessLink("jungleUseItems", subMenu.AddLinkedBool("Use items"));
+            subMenu.AddSeparator(" ");
             ProcessLink("jungleActive", subMenu.AddLinkedKeyBind("JungleClear active", 'V', KeyBindType.Press));
 
             // Flee
@@ -107,10 +128,12 @@ namespace Rekt_Sai
 
             // Items
             subMenu = _menu.MainMenu.AddSubMenu("Items");
+            subMenu.AddSeparator(" == Offensive");
             ProcessLink("itemsTiamat", subMenu.AddLinkedBool("Use Tiamat"));
             ProcessLink("itemsHydra", subMenu.AddLinkedBool("Use Ravenous Hydra"));
             ProcessLink("itemsCutlass", subMenu.AddLinkedBool("Use Bilgewater Cutlass"));
             ProcessLink("itemsBotrk", subMenu.AddLinkedBool("Use Blade of the Ruined King"));
+            subMenu.AddSeparator(" == Defensive");
             ProcessLink("itemsRanduin", subMenu.AddLinkedBool("Use Randuin's Omen"));
 
             // Drawings
