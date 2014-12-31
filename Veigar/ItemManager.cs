@@ -83,7 +83,7 @@ namespace Veigar
 
             public bool IsReady()
             {
-                return IsOwned() ? Items.CanUseItem(Id) : false;
+                return IsOwned() && Items.CanUseItem(Id);
             }
 
             public bool Cast(Obj_AI_Base target = null)

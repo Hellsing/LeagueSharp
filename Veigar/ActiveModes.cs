@@ -291,7 +291,7 @@ namespace Veigar
                 var farmLocation = MinionManager.GetBestCircularFarmLocation(MinionManager.GetMinions(W.Range, MinionTypes.All, MinionTeam.Neutral).Select(m => m.ServerPosition.To2D()).ToList(), W.Width, W.Range);
 
                 // If enough targets will be hit, cast it
-                if (farmLocation.MinionsHit >= 0)
+                if (farmLocation.MinionsHit > 0)
                     W.Cast(farmLocation.Position);
             }
         }
