@@ -141,7 +141,7 @@ namespace Gnar
             ProcessLink("drawRangeQ", subSubMenu.AddLinkedCircle("Q range", true, Color.FromArgb(150, Color.IndianRed), SpellManager.QMini.Range));
             ProcessLink("drawRangeE", subSubMenu.AddLinkedCircle("E range", true, Color.FromArgb(150, Color.Azure), SpellManager.EMini.Range));
             // Mega
-            subSubMenu = subMenu.AddSubMenu("Mini");
+            subSubMenu = subMenu.AddSubMenu("Mega");
             ProcessLink("drawRangeQMega", subSubMenu.AddLinkedCircle("Q range", true, Color.FromArgb(150, Color.IndianRed), SpellManager.QMega.Range));
             ProcessLink("drawRangeWMega", subSubMenu.AddLinkedCircle("W range", false, Color.FromArgb(150, Color.Azure), SpellManager.EMega.Range));
             ProcessLink("drawRangeEMega", subSubMenu.AddLinkedCircle("E range", true, Color.FromArgb(150, Color.IndianRed), SpellManager.QMega.Range));
