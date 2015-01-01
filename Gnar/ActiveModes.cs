@@ -243,7 +243,32 @@ namespace Gnar
             {
                 var target = Q.GetTarget();
                 if (target != null)
-                    Q.Cast(target);
+                {
+                    var prediction = Q.GetPrediction(target);
+
+                    switch (prediction.Hitchance)
+                    {
+                        case HitChance.High:
+                        case HitChance.VeryHigh:
+                        case HitChance.Immobile:
+
+                            // Regular Q cast
+                            Q.Cast(prediction.CastPosition);
+                            break;
+
+                        case HitChance.Collision:
+
+                            // Special case for colliding enemies
+                            var colliding = prediction.CollisionObjects.OrderBy(o => o.Distance(player, true)).ToList();
+                            if (colliding.Count > 0)
+                            {
+                                // First colliding target is < 100 units away from our main target
+                                if (colliding[0].Distance(target, true) < 10000)
+                                    Q.Cast(prediction.CastPosition);
+                            }
+                            break;
+                    }
+                }
             }
 
             // Mega
