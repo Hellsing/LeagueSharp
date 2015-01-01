@@ -70,7 +70,7 @@ namespace Veigar
 
             // Q farming
             if (Q.IsReady() &&
-                (Config.KeyLinks["miscFarmQActive"].Value.Active && Config.KeyLinks["miscFarmQ"].Value.Active || // Perma active Q
+                (Config.KeyLinks["miscFarmQActive"].Value.Active && !Config.KeyLinks["miscFarmQ"].Value.Active || // Perma active Q
                 (Config.KeyLinks["waveActive"].Value.Active && Config.BoolLinks["waveUseQ"].Value))) // WaveClear Q
             {
                 // Get a target that would die with Q and won't die while the projectile is still flying

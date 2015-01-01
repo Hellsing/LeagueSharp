@@ -103,7 +103,7 @@ namespace Veigar
             // Misc
             subMenu = _menu.MainMenu.AddSubMenu("Misc");
             ProcessLink("miscFarmQActive", subMenu.AddLinkedKeyBind("Farm Q feature enabled", 'A', KeyBindType.Toggle, true));
-            ProcessLink("miscFarmQ", subMenu.AddLinkedKeyBind("Farm Q stacks", 32, KeyBindType.Press, true));
+            ProcessLink("miscFarmQ", subMenu.AddLinkedKeyBind("Don't farm Q stacks", 32, KeyBindType.Press));
 
             // Drawings
             subMenu = _menu.MainMenu.AddSubMenu("Drawings");
