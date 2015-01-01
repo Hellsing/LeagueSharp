@@ -67,6 +67,20 @@ namespace Veigar
         {
             // Re-enable auto attacks that might have been disabled
             Config.Menu.Orbwalker.SetAttack(true);
+
+            // Q farming
+            if (Q.IsReady() &&
+                (Config.KeyLinks["miscFarmQActive"].Value.Active && Config.KeyLinks["miscFarmQ"].Value.Active || // Perma active Q
+                (Config.KeyLinks["waveActive"].Value.Active && Config.BoolLinks["waveUseQ"].Value))) // WaveClear Q
+            {
+                // Get a target that would die with Q and won't die while the projectile is still flying
+                var target = MinionManager.GetMinions(Q.Range, MinionTypes.All, MinionTeam.Enemy, MinionOrderTypes.MaxHealth)
+                    .FirstOrDefault(m => m.Health < Q.GetRealDamage(m) &&
+                    HealthPrediction.GetHealthPrediction(m, (int)(player.Distance(m, false) / Q.Speed), (int)(Q.Delay * 1000 + Game.Ping / 2)) > 0);
+
+                if (target != null)
+                    Q.Cast(target);
+            }
         }
 
         public static void OnCombo()
@@ -246,18 +260,6 @@ namespace Veigar
 
         public static void OnWaveClear()
         {
-            // Q stacking
-            if (Config.BoolLinks["waveUseQ"].Value && Q.IsReady())
-            {
-                // Get a target that would die with Q and won't die while the projectile is still flying
-                var target = MinionManager.GetMinions(Q.Range, MinionTypes.All, MinionTeam.Enemy, MinionOrderTypes.MaxHealth)
-                    .FirstOrDefault(m => m.Health < Q.GetRealDamage(m) &&
-                    HealthPrediction.GetHealthPrediction(m, (int)(player.Distance(m, false) / Q.Speed), (int)(Q.Delay * 1000 + Game.Ping / 2)) > 0);
-                
-                if (target != null)
-                    Q.Cast(target);
-            }
-
             // Mana check, ignore Q bcause it's important
             if (player.ManaPercentage() < Config.SliderLinks["waveMana"].Value.Value / 100)
                 return;

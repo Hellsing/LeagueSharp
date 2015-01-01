@@ -100,6 +100,11 @@ namespace Veigar
             subMenu = _menu.MainMenu.AddSubMenu("Items");
             ProcessLink("itemsDfg", subMenu.AddLinkedBool("Use Deathfire Grasp"));
 
+            // Misc
+            subMenu = _menu.MainMenu.AddSubMenu("Misc");
+            ProcessLink("miscFarmQActive", subMenu.AddLinkedKeyBind("Farm Q feature enabled", 'A', KeyBindType.Toggle, true));
+            ProcessLink("miscFarmQ", subMenu.AddLinkedKeyBind("Farm Q stacks", 32, KeyBindType.Press, true));
+
             // Drawings
             subMenu = _menu.MainMenu.AddSubMenu("Drawings");
             ProcessLink("drawRangeQ", subMenu.AddLinkedCircle("Q range", true, Color.FromArgb(150, Color.IndianRed), SpellManager.Q.Range));
