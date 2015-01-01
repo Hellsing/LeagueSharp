@@ -239,7 +239,7 @@ namespace Gnar
         public static void OnHarass()
         {
             // Q usage
-            if (Q.IsEnabledAndReady(Mode.HARASS) && (player.IsMiniGnar() ? (player.IsAboutToTransform() ? Config.BoolLinks["harassUseQMega"].Value : true) : true))
+            if (Q.IsEnabledAndReady(Mode.HARASS) && (player.IsMiniGnar() && (player.IsAboutToTransform() ? Config.BoolLinks["harassUseQMega"].Value : true)))
             {
                 var target = Q.GetTarget();
                 if (target != null)
