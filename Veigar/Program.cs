@@ -37,7 +37,8 @@ namespace Veigar
             // Listen to several events
             Game.OnGameUpdate += Game_OnGameUpdate;
             Drawing.OnDraw += Drawing_OnDraw;
-            Spellbook.OnCastSpell += ActiveModes.Spellbook_OnCastSpell;
+            //Spellbook.OnCastSpell += ActiveModes.Spellbook_OnCastSpell;
+            Obj_AI_Base.OnProcessSpellCast += ActiveModes.Obj_AI_Base_OnProcessSpellCast;
         }
 
         private static void Drawing_OnDraw(EventArgs args)

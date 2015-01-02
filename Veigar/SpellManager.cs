@@ -143,7 +143,7 @@ namespace Veigar
                 case ComboSpell.R:
                     return new[] { spell.GetSpell().Slot };
                 case ComboSpell.DFG:
-                    return ItemManager.DFG.Slots.ToArray();
+                    return ItemManager.DFG.IsOwned() ? ItemManager.DFG.Slots.ToArray() : ItemManager.B_TORCH.Slots.ToArray();
                 case ComboSpell.IGNITE:
                     return new[] { player.GetIngiteSlot() };
                 default:
@@ -167,11 +167,12 @@ namespace Veigar
             return igniteSlot != SpellSlot.Unknown && player.GetSpell(igniteSlot).State == SpellState.Ready;
         }
 
-        public static void CastIngite(Obj_AI_Hero target)
+        public static bool CastIngite(Obj_AI_Hero target)
         {
             var igniteSlot = target.GetIngiteSlot();
             if (igniteSlot != SpellSlot.Unknown && player.GetSpell(igniteSlot).State == SpellState.Ready)
-                player.Spellbook.CastSpell(igniteSlot);
+                return player.Spellbook.CastSpell(igniteSlot, target);
+            return false;
         }
     }
 }

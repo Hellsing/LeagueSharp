@@ -93,18 +93,12 @@ namespace Veigar
 
         public static void OnCombo()
         {
-            // Check if a death combo is running, if so, wait for it to finish
-            if (currentCombo != null)
-            {
-                // Check if the combo is still valid, give it one second to finish
-                if (Environment.TickCount - comboInitialized > 1000)
-                    currentCombo = null;
-                else
-                    return;
-            }
+            // Validate combo
+            if (currentCombo != null && Environment.TickCount - comboInitialized < 1500)
+                return;
 
             // Get a poor target
-            var target = TargetSelector.GetTarget(Q.Range, TargetSelector.DamageType.Magical);
+            var target = TargetSelector.GetTarget(Q.Range, TargetSelector.DamageType.Magical, true, Environment.TickCount - comboInitialized < 1500 ? new[] { comboTarget } : null);
             if (target != null)
             {
                 // Spells for our combo and their state
@@ -123,8 +117,9 @@ namespace Veigar
                 {
                     #region Combo of Death
 
-                    // Damages for our spells
+                    // Damages and mana for our spells
                     var damages = new Dictionary<ComboSpell, float>();
+                    var mana = new Dictionary<ComboSpell, float>();
                     foreach (var spell in availableSpells)
                     {
                         float damage = 0;
@@ -137,6 +132,7 @@ namespace Veigar
                             case ComboSpell.W:
                             case ComboSpell.R:
                                 damage = spell.GetSpell().GetRealDamage(target);
+                                mana.Add(spell, spell.GetSpell().Instance.ManaCost);
                                 break;
                             case ComboSpell.IGNITE:
                                 damage = (float)player.GetSummonerSpellDamage(target, Damage.SummonerSpell.Ignite);
@@ -158,33 +154,16 @@ namespace Veigar
                             damage * (useDfg ? 1.2f : 1) +
                             (combo.Contains(ComboSpell.IGNITE) ? damages[ComboSpell.IGNITE] : 0);
 
-                        // If the damage is higher than the targets health, perform it
-                        if (damage > target.Health)
+                        // If the damage is higher than the targets health, also check the mana
+                        if (damage > target.Health && combo.Where(c => c != ComboSpell.DFG && c != ComboSpell.IGNITE).Sum(s => mana[s]) < player.Mana)
                         {
                             // Set active combo
                             comboTarget = target;
                             currentCombo = combo.ToList();
                             comboInitialized = Environment.TickCount;
 
-                            // Cast all spells
-                            foreach (var spell in combo)
-                            {
-                                switch (spell)
-                                {
-                                    case ComboSpell.DFG:
-                                        ItemManager.UseDfg(target);
-                                        break;
-                                    case ComboSpell.Q:
-                                    case ComboSpell.W:
-                                    case ComboSpell.R:
-                                        combo[0].GetSpell().Cast(target);
-                                        break;
-                                    case ComboSpell.IGNITE:
-                                        SpellManager.CastIngite(target);
-                                        break;
-                                }
-                            }
-
+                            // Cast the first spell to initiate the combo
+                            player.Spellbook.CastSpell(combo[0].GetSpellSlots()[0], target);
                             return;
                         }
                     }
@@ -211,9 +190,56 @@ namespace Veigar
             }
         }
 
+        public static void Obj_AI_Base_OnProcessSpellCast(Obj_AI_Base sender, GameObjectProcessSpellCastEventArgs args)
+        {
+            if (sender.IsMe && currentCombo != null)
+            {
+                if (Environment.TickCount - comboInitialized > 1500 || currentCombo.Count == 0)
+                {
+                    currentCombo = null;
+                    return;
+                }
+
+                // Compare if the spell was one of our combo spells
+                var spell = currentCombo[0];
+                var success = false;
+                switch (spell)
+                {
+                    case ComboSpell.DFG:
+                        success = args.SData.Name == player.GetSpell(ItemManager.B_TORCH.Slots[0]).SData.Name;
+                        break;
+                    case ComboSpell.Q:
+                    case ComboSpell.W:
+                    case ComboSpell.R:
+                        success = args.SData.Name == spell.GetSpell().Instance.SData.Name;
+                        break;
+                    case ComboSpell.IGNITE:
+                        success = args.SData.Name == "SummonerDot";
+                        break;
+                }
+
+                // Remove the casted spell on success
+                if (success)
+                {
+                    Game.PrintChat("Casted spell: " + spell.ToString());
+                    currentCombo.RemoveAt(0);
+                    Game.PrintChat("Remaining spells: " + currentCombo.Count);
+
+                    // Get the next spell to cast
+                    var nextSpell = currentCombo[0];
+                    Game.PrintChat("Now casting: " + nextSpell.ToString());
+                    player.Spellbook.CastSpell(nextSpell.GetSpellSlots()[0], comboTarget);
+
+                    if (currentCombo.Count == 1)
+                        currentCombo = null;
+                }
+            }
+        }
+
         // Gonna be changed to Obj_AI_Base.OnProcessSpellCast once judus added the spellslot to it :^)
         public static void Spellbook_OnCastSpell(GameObject sender, SpellbookCastSpellEventArgs args)
         {
+            /*
             if (sender.IsMe && currentCombo != null)
             {
                 // Validate the combo
@@ -236,6 +262,7 @@ namespace Veigar
                     }
                 }
             }
+            */
         }
 
         public static void OnHarass()
