@@ -47,6 +47,7 @@ namespace Veigar
         private static readonly List<ComboSpell[]> combos = new List<ComboSpell[]>()
         {
             { new[] { ComboSpell.Q } },
+            { new[] { ComboSpell.Q, ComboSpell.W } },
             { new[] { ComboSpell.R } },
             { new[] { ComboSpell.DFG, ComboSpell.Q } },
             { new[] { ComboSpell.Q, ComboSpell.R } },
@@ -179,7 +180,7 @@ namespace Veigar
             // E usage
             if (Config.BoolLinks["comboUseE"].Value && E.IsReady())
             {
-                target = TargetSelector.GetTarget(W.Range, TargetSelector.DamageType.Magical);
+                target = TargetSelector.GetTarget(W.Range, TargetSelector.DamageType.Magical, true, Environment.TickCount - comboInitialized < 1500 ? new[] { comboTarget } : null);
                 if (target != null)
                 {
                     var castPosition = SpellManager.GetCageCastPosition(target);
@@ -206,7 +207,7 @@ namespace Veigar
                 switch (spell)
                 {
                     case ComboSpell.DFG:
-                        success = args.SData.Name == player.GetSpell(ItemManager.B_TORCH.Slots[0]).SData.Name;
+                        success = args.SData.Name == player.GetSpell(ItemManager.DFG.IsOwned() ? ItemManager.DFG.Slots[0] : ItemManager.B_TORCH.Slots[0]).SData.Name;
                         break;
                     case ComboSpell.Q:
                     case ComboSpell.W:
@@ -225,7 +226,10 @@ namespace Veigar
 
                     // Get the next spell to cast
                     var nextSpell = currentCombo[0];
-                    player.Spellbook.CastSpell(nextSpell.GetSpellSlots()[0], comboTarget);
+                    Utility.DelayAction.Add(nextSpell != ComboSpell.IGNITE ? 250 : 0, () =>
+                    {
+                        player.Spellbook.CastSpell(nextSpell.GetSpellSlots()[0], comboTarget);
+                    });
 
                     if (currentCombo.Count == 1)
                         currentCombo = null;
