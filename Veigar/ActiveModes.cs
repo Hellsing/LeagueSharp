@@ -85,7 +85,7 @@ namespace Veigar
             // W on stunned target
             if (Config.BoolLinks["miscStunW"].Value && W.IsReady())
             {
-                var target = ObjectManager.Get<Obj_AI_Hero>().FirstOrDefault(h => h.IsValidTarget(W.Range) && h.GetStunDuration() >= 1);
+                var target = ObjectManager.Get<Obj_AI_Hero>().FirstOrDefault(h => h.IsValidTarget(W.Range) && h.GetStunDuration() >= W.Delay);
                 if (target != null)
                     W.Cast(target);
             }
@@ -110,7 +110,7 @@ namespace Veigar
                 // Spells for our combo and their state
                 comboSpells[ComboSpell.DFG] = Config.BoolLinks["comboUseItems"].Value && Config.BoolLinks["itemsDfg"].Value && (ItemManager.DFG.IsReady() || ItemManager.B_TORCH.IsReady());
                 comboSpells[ComboSpell.Q] = Config.BoolLinks["comboUseQ"].Value && Q.IsReady();
-                comboSpells[ComboSpell.W] = Config.BoolLinks["comboUseW"].Value && W.IsReady() && target.GetStunDuration() > 1;
+                comboSpells[ComboSpell.W] = W.IsReady() && target.GetStunDuration() > 1;
                 comboSpells[ComboSpell.E] = Config.BoolLinks["comboUseE"].Value && E.IsReady();
                 comboSpells[ComboSpell.R] = Config.BoolLinks["comboUseR"].Value && R.IsReady();
                 comboSpells[ComboSpell.IGNITE] = Config.BoolLinks["comboUseIgnite"].Value && player.HasIgniteReady();
