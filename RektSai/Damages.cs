@@ -99,7 +99,7 @@ namespace Rekt_Sai
                         // Rek'Sai bites a target dealing undefined Physical Damage, increasing by up to 100% at maximum Fury. If Rek'Sai has 100 Fury, Furious Bite deals True Damage.
                         // Maximum Damage: undefined
                         damage = new float[] { 80, 90, 100, 110, 120 }[spellLevel];
-                        damage *= 1 + player.ManaPercentage();
+                        damage *= (1 + player.ManaPercentage() / 100);
                         damage = (damage / 100) * player.TotalAttackDamage();
                         // True damage on full
                         if (player.HasMaxFury())
