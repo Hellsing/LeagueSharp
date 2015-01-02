@@ -26,6 +26,7 @@ namespace Gnar
 
         // Defensive items
         public static readonly Item RANDUIN = ItemData.Randuins_Omen.GetItem();
+        public static readonly Item FACE_MOUNTAIN = ItemData.Face_of_the_Mountain.GetItem();
 
         #region Use item methods
 

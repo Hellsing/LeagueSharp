@@ -41,14 +41,20 @@ namespace Gnar
             public const string FLEE = "flee";
         }
 
-        public static Vector3? castPos;
-        public static Vector3? myPos;
-        public static Vector3? targetPos;
-        public static Vector3? wallPos;
-
         public static void OnPermaActive()
         {
-            // Nothing here Kappa
+            // Face of the Mountain Kappa
+            if (Config.BoolLinks["itemsFace"].Value && ItemManager.FACE_MOUNTAIN.IsReady())
+            {
+                foreach (var ally in ObjectManager.Get<Obj_AI_Hero>().Where(h => h.Team == player.Team && h.IsValidTarget(700, false)))
+                {
+                    if (ally.HealthPercentage() < 15 && ally.CountEnemysInRange(700) > 0)
+                    {
+                        ItemManager.FACE_MOUNTAIN.Cast(ally);
+                        break;
+                    }
+                }
+            }
         }
 
         public static void OnCombo(bool afterAttack = false, Obj_AI_Base afterAttackTarget = null)

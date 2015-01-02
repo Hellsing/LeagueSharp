@@ -133,6 +133,7 @@ namespace Gnar
             ProcessLink("itemsBotrk", subMenu.AddLinkedBool("Use Blade of the Ruined King"));
             ProcessLink("itemsYoumuu", subMenu.AddLinkedBool("Use Youmuu's Ghostblade"));
             ProcessLink("itemsRanduin", subMenu.AddLinkedBool("Use Randuin's Omen"));
+            ProcessLink("itemsFace", subMenu.AddLinkedBool("Use Face of the Mountain"));
 
             // ----- Drawings
             subMenu = _menu.MainMenu.AddSubMenu("Drawings");
