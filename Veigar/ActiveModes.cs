@@ -81,6 +81,14 @@ namespace Veigar
                 if (target != null)
                     Q.Cast(target);
             }
+
+            // W on stunned target
+            if (Config.BoolLinks["miscStunW"].Value && W.IsReady())
+            {
+                var target = ObjectManager.Get<Obj_AI_Hero>().FirstOrDefault(h => h.IsValidTarget(W.Range) && h.GetStunDuration() >= 1);
+                if (target != null)
+                    W.Cast(target);
+            }
         }
 
         public static void OnCombo()
@@ -189,16 +197,11 @@ namespace Veigar
                     Q.Cast(target);
             }
 
-            // Get new target for W and E
-            target = TargetSelector.GetTarget(W.Range, TargetSelector.DamageType.Magical);
-            if (target != null)
+            // E usage
+            if (Config.BoolLinks["comboUseE"].Value && E.IsReady())
             {
-                // W usage
-                if (Config.BoolLinks["comboUseW"].Value && W.IsReady() && target.GetStunDuration() > 1)
-                    W.Cast(target);
-
-                // E usage
-                if (Config.BoolLinks["comboUseE"].Value && E.IsReady())
+                target = TargetSelector.GetTarget(W.Range, TargetSelector.DamageType.Magical);
+                if (target != null)
                 {
                     var castPosition = SpellManager.GetCageCastPosition(target);
 

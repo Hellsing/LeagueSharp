@@ -63,7 +63,6 @@ namespace Veigar
             // Combo
             var subMenu = _menu.MainMenu.AddSubMenu("Combo");
             ProcessLink("comboUseQ", subMenu.AddLinkedBool("Use Q"));
-            ProcessLink("comboUseW", subMenu.AddLinkedBool("Use W"));
             ProcessLink("comboUseE", subMenu.AddLinkedBool("Use E"));
             ProcessLink("comboUseR", subMenu.AddLinkedBool("Use R"));
             ProcessLink("comboUseItems", subMenu.AddLinkedBool("Use items"));
@@ -104,6 +103,7 @@ namespace Veigar
             subMenu = _menu.MainMenu.AddSubMenu("Misc");
             ProcessLink("miscFarmQActive", subMenu.AddLinkedKeyBind("Farm Q feature enabled", 'A', KeyBindType.Toggle, true));
             ProcessLink("miscFarmQ", subMenu.AddLinkedKeyBind("Don't farm Q stacks", 32, KeyBindType.Press));
+            ProcessLink("miscStunW", subMenu.AddLinkedBool("Auto W on stunned targets"));
 
             // Drawings
             subMenu = _menu.MainMenu.AddSubMenu("Drawings");
