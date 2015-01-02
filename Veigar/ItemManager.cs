@@ -24,10 +24,10 @@ namespace Veigar
             if (Config.BoolLinks["itemsDfg"].Value)
             {
                 // DFG
-                if (DFG.IsReady() && target.IsValidTarget(DFG.Range))
+                if (DFG.IsReady() && target.IsValidTarget(750))
                     return DFG.Cast(target);
                 // Blackfire
-                else if (B_TORCH.IsReady() && target.IsValidTarget(B_TORCH.Range))
+                else if (B_TORCH.IsReady() && target.IsValidTarget(750))
                     return B_TORCH.Cast(target);
             }
 
