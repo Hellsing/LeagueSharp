@@ -221,13 +221,10 @@ namespace Veigar
                 // Remove the casted spell on success
                 if (success)
                 {
-                    Game.PrintChat("Casted spell: " + spell.ToString());
                     currentCombo.RemoveAt(0);
-                    Game.PrintChat("Remaining spells: " + currentCombo.Count);
 
                     // Get the next spell to cast
                     var nextSpell = currentCombo[0];
-                    Game.PrintChat("Now casting: " + nextSpell.ToString());
                     player.Spellbook.CastSpell(nextSpell.GetSpellSlots()[0], comboTarget);
 
                     if (currentCombo.Count == 1)
