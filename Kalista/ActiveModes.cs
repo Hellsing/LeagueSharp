@@ -102,7 +102,7 @@ namespace Kalista
             {
                 // Q usage
                 if (Q.IsEnabledAndReady(Mode.COMBO) && Q.InRange(target) && !player.IsDashing())
-                    Q.CastIfHitchanceEquals(target, HitChance.VeryHigh | HitChance.Immobile);
+                    Q.Cast(target);
 
                 // E usage
                 if (E.IsEnabled(Mode.COMBO) && (E.Instance.State.HasFlag(SpellState.Ready | SpellState.Surpressed)))
