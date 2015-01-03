@@ -31,8 +31,8 @@ namespace Veigar
                 damage += SpellManager.W.GetRealDamage(target);
 
             // R
-            if (SpellManager.E.IsReady())
-                damage += SpellManager.E.GetRealDamage(target);
+            if (SpellManager.R.IsReady())
+                damage += SpellManager.R.GetRealDamage(target);
 
             // Full combo damage respecting DFG and ignite
             return (dfgFound ? (float)player.GetItemDamage(target, Damage.DamageItems.Dfg) : 0) + damage * (dfgFound ? 1.2f : 1) +

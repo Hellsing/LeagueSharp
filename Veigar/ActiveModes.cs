@@ -207,7 +207,7 @@ namespace Veigar
                 switch (spell)
                 {
                     case ComboSpell.DFG:
-                        success = args.SData.Name == player.GetSpell(ItemManager.DFG.IsOwned() ? ItemManager.DFG.Slots[0] : ItemManager.B_TORCH.Slots[0]).SData.Name;
+                        success = args.SData.Name == player.GetSpell(ItemManager.DFG.IsReady() ? ItemManager.DFG.Slots[0] : ItemManager.B_TORCH.Slots[0]).SData.Name;
                         break;
                     case ComboSpell.Q:
                     case ComboSpell.W:
