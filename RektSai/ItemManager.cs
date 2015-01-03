@@ -7,6 +7,8 @@ using System.Threading.Tasks;
 using LeagueSharp;
 using LeagueSharp.Common;
 
+using Item = LeagueSharp.Common.Items.Item;
+
 namespace Rekt_Sai
 {
     public static class ItemManager
@@ -14,17 +16,52 @@ namespace Rekt_Sai
         private static Obj_AI_Hero player = ObjectManager.Player;
 
         // Offensive items
-        public static readonly Item TIAMAT = new Item(3077, 385);
-        public static readonly Item HYDRA = new Item(3074, 400);
-        public static readonly Item CUTLASS = new Item(3144, 450);
-        public static readonly Item BOTRK = new Item(3153, 450);
+        public static readonly Item TIAMAT = ItemData.Tiamat_Melee_Only.GetItem();
+        public static readonly Item HYDRA = ItemData.Ravenous_Hydra_Melee_Only.GetItem();
+        public static readonly Item CUTLASS = ItemData.Bilgewater_Cutlass.GetItem();
+        public static readonly Item BOTRK = ItemData.Blade_of_the_Ruined_King.GetItem();
 
         // Defensive items
-        public static readonly Item RANDUIN = new Item(3143, 500);
+        public static readonly Item RANDUIN = ItemData.Randuins_Omen.GetItem();
+
+        // Smite items
+        public static readonly List<Item> STALKER_BLADES = new List<Item>()
+        {
+            // Smite that actually does damage
+            ItemData.Stalkers_Blade.GetItem(),
+            ItemData.Stalkers_Blade_Devourer.GetItem(),
+            ItemData.Stalkers_Blade_Juggernaut.GetItem(),
+            ItemData.Stalkers_Blade_Magus.GetItem(),
+            ItemData.Stalkers_Blade_Warrior.GetItem()
+        };
+        public static readonly List<Item> SKIRMISHER_SABRES = new List<Item>()
+        {
+            // Smite that does damage on the next auto attacks
+            ItemData.Skirmishers_Sabre.GetItem(),
+            ItemData.Skirmishers_Sabre_Devourer.GetItem(),
+            ItemData.Skirmishers_Sabre_Juggernaut.GetItem(),
+            ItemData.Skirmishers_Sabre_Magus.GetItem(),
+            ItemData.Skirmishers_Sabre_Warrior.GetItem()
+        };
 
         public static bool HasItem(this Obj_AI_Hero target, Item item)
         {
             return Items.HasItem(item.Id, target);
+        }
+
+        public static bool HasStalkersBlade(this Obj_AI_Hero target)
+        {
+            return STALKER_BLADES.Any(i => i.IsOwned(target));
+        }
+
+        public static bool HasSkirmishersSabre(this Obj_AI_Hero target)
+        {
+            return SKIRMISHER_SABRES.Any(i => i.IsOwned(target));
+        }
+
+        public static bool HasSmiteItem(this Obj_AI_Hero target)
+        {
+            return target.HasStalkersBlade() || target.HasSkirmishersSabre();
         }
 
         public static bool UseHydraOrTiamat(Obj_AI_Base target)
@@ -61,61 +98,6 @@ namespace Rekt_Sai
 
             // No item was used/found
             return false;
-        }
-
-        public class Item
-        {
-            private readonly int _id;
-            private readonly float _range;
-            private readonly float _rangeSqr;
-
-            public int Id
-            {
-                get { return _id; }
-            }
-            public float Range
-            {
-                get { return _range; }
-            }
-            public float RangeSqr
-            {
-                get { return _rangeSqr; }
-            }
-
-            public Item(int id, float range = -1)
-            {
-                this._id = id;
-                this._range = range;
-                this._rangeSqr = range * range;
-            }
-
-            public bool IsOwned()
-            {
-                return player.HasItem(this);
-            }
-
-            public bool IsInRange(AttackableUnit target)
-            {
-                return target.Position.Distance(player.Position, true) < RangeSqr;
-            }
-
-            public bool IsReady()
-            {
-                return IsOwned() ? Items.CanUseItem(Id) : false;
-            }
-
-            public bool Cast(Obj_AI_Base target = null)
-            {
-                // Don't check if we have the item since we do that already in the
-                // calling method, at least we should :^)
-                if (player.HasItem(this))
-                {
-                    Items.UseItem(Id, target);
-                    return true;
-                }
-                else
-                    return false;
-            }
         }
     }
 }

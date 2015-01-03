@@ -116,5 +116,10 @@ namespace Rekt_Sai
             // Calculate damage on target and return (-20 so it's actually accurate lol)
             return (float)player.CalcDamage(target, damageType, damage) + extraDamage - 20;
         }
+
+        public static int GetStalkerSmiteDamage(this Obj_AI_Hero player)
+        {
+            return 20 + 8 * player.Level;
+        }
     }
 }

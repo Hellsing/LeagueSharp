@@ -63,6 +63,9 @@ namespace Rekt_Sai
         private static Dictionary<string, float[]> cooldowns;
         private static readonly Dictionary<Spell, float> cooldownExpires = new Dictionary<Spell, float>();
 
+        private static bool smiteSearched = false;
+        private static bool hasSmite = false;
+
         public static void Initialize()
         {
             // General
@@ -95,6 +98,11 @@ namespace Rekt_Sai
             Spellbook.OnCastSpell += Spellbook_OnCastSpell;
         }
 
+        private static Spell GetSpellFromSlot(SpellSlot slot)
+        {
+            return slot == SpellSlot.Q ? Q : slot == SpellSlot.W ? W : slot == SpellSlot.E ? E : slot == SpellSlot.R ? R : null;
+        }
+
         public static float Cooldown(this Spell spell)
         {
             if (cooldownExpires.ContainsKey(spell))
@@ -110,6 +118,28 @@ namespace Rekt_Sai
 
             return true;
         }
+
+        public static SpellDataInst GetSmiteSpell(this Obj_AI_Hero target)
+        {
+            return target.Spellbook.Spells.FirstOrDefault(s => s.Name.ToLower().Contains("smite"));
+        }
+
+        public static bool HasSmite()
+        {
+            if (!smiteSearched)
+            {
+                smiteSearched = true;
+                hasSmite = player.GetSmiteSpell() != null;
+            }
+            return hasSmite;
+        }
+
+        public static void CastSmite(Obj_AI_Hero target)
+        {
+            // Cast smite of the hero if he has the specific item and smite ofc
+            if (HasSmite() && player.HasSmiteItem())
+                player.Spellbook.CastSpell(player.GetSmiteSpell().Slot, target);
+        }
         
         private static void Spellbook_OnCastSpell(GameObject sender, SpellbookCastSpellEventArgs args)
         {
@@ -117,23 +147,25 @@ namespace Rekt_Sai
             {
                 var spell = GetSpellFromSlot(args.Slot);
 
-                // Special cases for W, it has a fixed cooldown of 1 and 4
-                if (args.Slot == SpellSlot.W)
+                switch (args.Slot)
                 {
-                    if (player.IsBurrowed())
-                        cooldownExpires[WNormal] = Game.Time + 4;
-                    else
-                        cooldownExpires[WBurrowed] = Game.Time + 1;
-                }
-                // Regular case, any spell but W
-                else
-                    cooldownExpires[spell] = Game.Time + cooldowns[spell.Instance.Name][spell.Level - 1] * (1 + player.PercentCooldownMod);
-            }
-        }
+                    // Special cases for W, it has a fixed cooldown of 1 and 4
+                    case SpellSlot.W:
 
-        private static Spell GetSpellFromSlot(SpellSlot slot)
-        {
-            return slot == SpellSlot.Q ? Q : slot == SpellSlot.W ? W : slot == SpellSlot.E ? E : slot == SpellSlot.R ? R : null;
+                        if (player.IsBurrowed())
+                            cooldownExpires[WNormal] = Game.Time + 4;
+                        else
+                            cooldownExpires[WBurrowed] = Game.Time + 1;
+                        break;
+
+                    case SpellSlot.Q:
+                    case SpellSlot.E:
+                    case SpellSlot.R:
+
+                        cooldownExpires[spell] = Game.Time + cooldowns[spell.Instance.Name][spell.Level - 1] * (1 + player.PercentCooldownMod);
+                        break;
+                }
+            }
         }
     }
 }

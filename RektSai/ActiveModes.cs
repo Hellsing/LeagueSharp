@@ -49,6 +49,20 @@ namespace Rekt_Sai
                 var useE = Config.BoolLinks["comboUseE"].Value;
                 var useBurrowQ = Config.BoolLinks["comboUseQBurrow"].Value;
 
+                // Smite usage
+                if (Config.BoolLinks["comboUseSmite"].Value && SpellManager.HasSmite() && player.HasStalkersBlade())
+                {
+                    if (player.GetSmiteSpell().State == SpellState.Ready)
+                    {
+                        var smiteTarget = TargetSelector.GetTarget(700, TargetSelector.DamageType.True);
+                        if (smiteTarget != null)
+                        {
+                            if (smiteTarget.Health < player.GetStalkerSmiteDamage())
+                                SpellManager.CastSmite(smiteTarget);
+                        }
+                    }
+                }
+
                 // Item usage
                 if (afterAttack && Config.BoolLinks["comboUseItems"].Value && ItemManager.UseHydraOrTiamat(afterAttackTarget))
                     return;
