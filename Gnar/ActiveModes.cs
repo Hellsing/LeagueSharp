@@ -67,7 +67,8 @@ namespace Gnar
                     var target = (Obj_AI_Hero)afterAttackTarget;
 
                     // All in Kappa
-                    ItemManager.UseBotrk(target);
+                    if (player.IsMegaGnar())
+                        ItemManager.UseBotrk(target);
                     ItemManager.UseRanduin(target);
                     ItemManager.UseYoumuu(target);
                 }
