@@ -68,7 +68,7 @@ namespace Kalista
                         _incomingDamage.Add(SoulBound.ServerPosition.Distance(sender.ServerPosition) / args.SData.MissileSpeed + Game.Time, (float)sender.GetAutoAttackDamage(SoulBound));
                     }
                     // Sender is a hero
-                    else
+                    else if (sender is Obj_AI_Hero)
                     {
                         var attacker = (Obj_AI_Hero)sender;
                         var slot = attacker.GetSpellSlot(args.SData.Name);
