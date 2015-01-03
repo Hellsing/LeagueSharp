@@ -37,8 +37,20 @@ namespace Kalista
         public static bool wallJumpPossible = false;
         public static Vector3? fleeTargetPosition;
 
+        private class Mode
+        {
+            public const string COMBO = "combo";
+            public const string HARASS = "harass";
+            public const string WAVE = "wave";
+            public const string JUNGLE = "jungle";
+            public const string FLEE = "flee";
+        }
+
         public static void OnPermaActive()
         {
+            // Clear the forced target
+            Config.Menu.Orbwalker.ForceTarget(null);
+
             #region Killsteal
 
             // Check killsteal
@@ -72,103 +84,87 @@ namespace Kalista
             #endregion
         }
 
-        public static void OnCombo()
+        public static void OnCombo(bool afterAttack = false, Obj_AI_Base afterAttackTarget = null)
         {
-            bool useQ = Config.BoolLinks["comboUseQ"].Value;
-            bool useE = Config.BoolLinks["comboUseE"].Value;
-
-            Obj_AI_Hero target;
-
-            if (useQ && Q.IsReady())
-                target = TargetSelector.GetTarget(Q.Range, TargetSelector.DamageType.Physical);
-            else
-                target = TargetSelector.GetTarget(E.Range * 1.2f, TargetSelector.DamageType.Physical);
-
-            if (target == null)
-                return;
-
             // Item usage
-            if (Config.BoolLinks["comboUseItems"].Value)
+            if (afterAttack && afterAttackTarget is Obj_AI_Hero && Config.BoolLinks["comboUseItems"].Value)
             {
-                if (Config.BoolLinks["itemsBotrk"].Value)
-                {
-                    bool foundCutlass = Items.HasItem(3144);
-                    bool foundBotrk = Items.HasItem(3153);
-
-                    if (foundCutlass || foundBotrk)
-                    {
-                        if (foundCutlass || player.Health + player.GetItemDamage(target, Damage.DamageItems.Botrk) < player.MaxHealth)
-                            Items.UseItem(foundCutlass ? 3144 : 3153, target);
-                    }
-                }
+                ItemManager.UseBotrk(afterAttackTarget as Obj_AI_Hero);
+                ItemManager.UseYoumuu(afterAttackTarget);
             }
 
-            // Spell usage
-            if (useQ && Q.IsReady() && !player.IsDashing())
-                Q.Cast(target);
+            // Validate spell usage
+            if (!Q.IsEnabled(Mode.COMBO) && !E.IsEnabled(Mode.COMBO))
+                return;
 
-            if (useE && (E.IsReady() || E.Instance.State == SpellState.Surpressed))
+            var target = TargetSelector.GetTarget(Q.IsEnabledAndReady(Mode.COMBO) ? Q.Range : E.Range * 1.2f, TargetSelector.DamageType.Physical);
+            if (target != null)
             {
-                // Target is not in range but has E stacks on
-                if (player.Distance(target, true) > Math.Pow(Orbwalking.GetRealAutoAttackRange(player), 2) && target.HasRendBuff())
-                {
-                    // Get minions around
-                    var minions = ObjectManager.Get<Obj_AI_Minion>().Where(m => m.IsValidTarget(Orbwalking.GetRealAutoAttackRange(player)));
+                // Q usage
+                if (Q.IsEnabledAndReady(Mode.COMBO) && Q.InRange(target) && !player.IsDashing())
+                    Q.CastIfHitchanceEquals(target, HitChance.VeryHigh | HitChance.Immobile);
 
-                    // Check if a minion can die with the current E stacks
-                    if (minions.Any(m => m.IsRendKillable()))
-                        E.Cast(true);
-                    else
+                // E usage
+                if (E.IsEnabled(Mode.COMBO) && (E.Instance.State.HasFlag(SpellState.Ready | SpellState.Surpressed)))
+                {
+                    // Target is not in range but has E stacks on
+                    if (player.Distance(target, true) > Math.Pow(Orbwalking.GetRealAutoAttackRange(player), 2) && target.HasRendBuff())
                     {
-                        // Check if a minion can die with one AA and E. Also, the AA minion has be be behind the player direction for a further leap
-                        var minion = VectorHelper.GetDashObjects(minions).FirstOrDefault(m => m.Health > player.GetAutoAttackDamage(m) && m.Health < player.GetAutoAttackDamage(m) + Damages.GetRendDamage(m, 1));
-                        if (minion != null)
-                            Config.Menu.Orbwalker.ForceTarget(minion);
+                        // Get minions around
+                        var minions = ObjectManager.Get<Obj_AI_Minion>().Where(m => m.IsValidTarget(Orbwalking.GetRealAutoAttackRange(player)));
+
+                        // Check if a minion can die with the current E stacks
+                        if (minions.Any(m => m.IsRendKillable()))
+                            E.Cast(true);
+                        else
+                        {
+                            // Check if a minion can die with one AA and E. Also, the AA minion has be be behind the player direction for a further leap
+                            var minion = VectorHelper.GetDashObjects(minions).FirstOrDefault(m => m.Health > player.GetAutoAttackDamage(m) && m.Health < player.GetAutoAttackDamage(m) + Damages.GetRendDamage(m, 1));
+                            if (minion != null)
+                                Config.Menu.Orbwalker.ForceTarget(minion);
+                        }
                     }
-                }
 
-                // Target is in range and has at least the set amount of E stacks on
-                if (E.InRange(target.ServerPosition) && (target.IsRendKillable() || target.HasRendBuff() && target.GetRendBuff().Count >= Config.SliderLinks["comboNumE"].Value.Value))
-                {
-                    var buff = target.GetRendBuff();
+                    // Target is in range and has at least the set amount of E stacks on
+                    if (E.InRange(target.ServerPosition) &&
+                        (target.IsRendKillable() || target.HasRendBuff() && target.GetRendBuff().Count >= Config.SliderLinks["comboNumE"].Value.Value))
+                    {
+                        var buff = target.GetRendBuff();
 
-                    // Check if the target would die from E
-                    if (target.IsRendKillable())
-                        E.Cast(true);
-                    // If the target is still in range or the buff is active for longer than 0.25 seconds, if not, cast it
-                    else if (Damages.GetRendDamage(target, buff.Count + 2) < target.Health && target.ServerPosition.Distance(player.Position, true) > Math.Pow(E.Range * 0.8, 2) || buff.EndTime - Game.Time <= 0.25)
-                        E.Cast(true);
+                        // Check if the target would die from E
+                        if (target.IsRendKillable())
+                            E.Cast(true);
+                        // Check if target is about to leave our E range or the buff is about to run out
+                        else if (target.ServerPosition.Distance(player.Position, true) > Math.Pow(E.Range * 0.8, 2) ||
+                            buff.EndTime - Game.Time < 0.3)
+                            E.Cast(true);
+                    }
                 }
             }
         }
 
         public static void OnHarass()
         {
-            // Mana check
-            if ((player.Mana / player.MaxMana) * 100 < Config.SliderLinks["harassMana"].Value.Value)
-                return;
+            if (Q.IsEnabledAndReady(Mode.HARASS))
+            {
+                // Mana check
+                if (player.ManaPercentage() < Config.SliderLinks["harassMana"].Value.Value)
+                    return;
 
-            var target = TargetSelector.GetTarget(Q.Range, TargetSelector.DamageType.Physical);
-            if (target == null)
-                return;
-
-            bool useQ = Config.BoolLinks["harassUseQ"].Value;
-
-            if (useQ && Q.IsReady())
-                Q.Cast(target);
+                var target = TargetSelector.GetTarget(Q.Range, TargetSelector.DamageType.Physical);
+                if (target != null)
+                    Q.Cast(target);
+            }
         }
 
         public static void OnWaveClear()
         {
             // Mana check
-            if ((player.Mana / player.MaxMana) * 100 < Config.SliderLinks["waveMana"].Value.Value)
+            if (player.ManaPercentage() < Config.SliderLinks["waveMana"].Value.Value)
                 return;
 
-            bool useQ = Config.BoolLinks["waveUseQ"].Value;
-            bool useE = Config.BoolLinks["waveUseE"].Value;
-
             // Q usage
-            if (useQ && Q.IsReady() && !player.IsDashing())
+            if (Q.IsEnabledAndReady(Mode.WAVE) && !player.IsDashing())
             {
                 int hitNumber = Config.SliderLinks["waveNumQ"].Value.Value;
 
@@ -220,7 +216,7 @@ namespace Kalista
             }
 
             // General E usage
-            if (useE && E.IsReady())
+            if (E.IsEnabledAndReady(Mode.WAVE))
             {
                 int hitNumber = Config.SliderLinks["waveNumE"].Value.Value;
 
@@ -246,21 +242,12 @@ namespace Kalista
 
         public static void OnJungleClear()
         {
-            bool useE = Config.BoolLinks["jungleUseE"].Value;
-
-            if (useE && E.IsReady())
+            if (E.IsEnabledAndReady(Mode.JUNGLE))
             {
-                var minions = MinionManager.GetMinions(player.Position, E.Range, MinionTypes.All, MinionTeam.Neutral);
-
-                // Check if a jungle mob can die with E
-                foreach (var minion in minions)
-                {
-                    if (minion.IsRendKillable())
-                    {
-                        E.Cast(true);
-                        break;
-                    }
-                }
+                // Get a jungle mob that can die with E
+                var minion = MinionManager.GetMinions(player.Position, E.Range, MinionTypes.All, MinionTeam.Neutral).FirstOrDefault(m => m.IsRendKillable());
+                if (minion != null)
+                    E.Cast(true);
             }
         }
 
@@ -271,10 +258,10 @@ namespace Kalista
 
             // A jump has been triggered, move into the set direction and
             // return the function to stop further calculations in the flee code
-            if (wallJumpTarget != null)
+            if (wallJumpTarget.HasValue)
             {
                 // Move to the target
-                player.IssueOrder(GameObjectOrder.MoveTo, (Vector3)wallJumpTarget);
+                player.IssueOrder(GameObjectOrder.MoveTo, wallJumpTarget.Value);
 
                 // This is only to validate when the jump get aborted by, for example, stuns
                 if (Environment.TickCount - wallJumpInitTime > 500)
@@ -411,6 +398,15 @@ namespace Kalista
                 // Either no wall or Q on cooldown, just move towards to wall then
                 else
                     Orbwalking.Orbwalk(target, movePosition, 90f, 0f, false, false);
+            }
+        }
+
+        public static void Orbwalking_AfterAttack(AttackableUnit unit, AttackableUnit target)
+        {
+            if (unit.IsMe && target is Obj_AI_Base)
+            {
+                if (Config.KeyLinks["comboActive"].Value.Active)
+                    ActiveModes.OnCombo(true, target as Obj_AI_Base);
             }
         }
     }

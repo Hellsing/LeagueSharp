@@ -90,6 +90,7 @@ namespace Kalista
             subMenu = _menu.MainMenu.AddSubMenu("Misc");
             ProcessLink("miscKillstealE", subMenu.AddLinkedBool("Killsteal with E"));
             ProcessLink("miscBigE", subMenu.AddLinkedBool("Always E big minions / monsters"));
+            ProcessLink("miscUseR", subMenu.AddLinkedBool("Use R to save your soulbound"));
 
             // Spell settings
             subMenu = _menu.MainMenu.AddSubMenu("SpellSettings");
@@ -97,7 +98,9 @@ namespace Kalista
 
             // Items
             subMenu = _menu.MainMenu.AddSubMenu("Items");
-            ProcessLink("itemsBotrk", subMenu.AddLinkedBool("Use BotRK"));
+            ProcessLink("itemsCutlass", subMenu.AddLinkedBool("Use Bilgewater Cutlass"));
+            ProcessLink("itemsBotrk", subMenu.AddLinkedBool("Use Blade of the Ruined King"));
+            ProcessLink("itemsYoumuu", subMenu.AddLinkedBool("Use Youmuu's Ghostblade"));
 
             // Drawings
             subMenu = _menu.MainMenu.AddSubMenu("Drawings");

@@ -29,11 +29,10 @@ namespace Kalista
             if (player.ChampionName != CHAMP_NAME)
                 return;
 
-            // Initialize everything related to spell managing
+            // Initialize classes
             SpellManager.Initialize();
-
-            // Initialize the config (menu)
             Config.Initialize();
+            SoulBoundSaver.Initialize();
 
             // Enable damage indicators
             Utility.HpBarDamageIndicator.DamageToUnit = Damages.GetTotalDamage;
@@ -44,10 +43,11 @@ namespace Kalista
 
             // Listen to additional events
             Game.OnGameUpdate += Game_OnGameUpdate;
-            Game.OnGameSendPacket += Game_OnGameSendPacket;
+            Spellbook.OnCastSpell += Spellbook_OnCastSpell;
             Drawing.OnDraw += Drawing_OnDraw;
-            Obj_AI_Hero.OnProcessSpellCast += Obj_AI_Hero_OnProcessSpellCast;
+            Obj_AI_Base.OnProcessSpellCast += Obj_AI_Base_OnProcessSpellCast;
             CustomEvents.Unit.OnDash += Unit_OnDash;
+            Orbwalking.AfterAttack += ActiveModes.Orbwalking_AfterAttack;
         }
 
         private static void Game_OnGameUpdate(EventArgs args)
@@ -55,27 +55,18 @@ namespace Kalista
             // Permanent checks for something like killsteal
             ActiveModes.OnPermaActive();
 
-            #region Hotkeys
-
-            // Combo
             if (Config.KeyLinks["comboActive"].Value.Active)
                 ActiveModes.OnCombo();
-            // Harass
             if (Config.KeyLinks["harassActive"].Value.Active)
                 ActiveModes.OnHarass();
-            // WaveClear
             if (Config.KeyLinks["waveActive"].Value.Active)
                 ActiveModes.OnWaveClear();
-            // JungleClear
             if (Config.KeyLinks["jungleActive"].Value.Active)
                 ActiveModes.OnJungleClear();
-            // Flee
             if (Config.KeyLinks["fleeActive"].Value.Active)
                 ActiveModes.OnFlee();
             else
                 ActiveModes.fleeTargetPosition = null;
-
-            #endregion
         }
 
         private static void Unit_OnDash(Obj_AI_Base sender, Dash.DashItem args)
@@ -87,7 +78,7 @@ namespace Kalista
             }
         }
 
-        private static void Obj_AI_Hero_OnProcessSpellCast(Obj_AI_Base sender, GameObjectProcessSpellCastEventArgs args)
+        private static void Obj_AI_Base_OnProcessSpellCast(Obj_AI_Base sender, GameObjectProcessSpellCastEventArgs args)
         {
             if (sender.IsMe)
             {
@@ -100,14 +91,13 @@ namespace Kalista
             }
         }
 
-        private static void Game_OnGameSendPacket(GamePacketEventArgs args)
+        private static void Spellbook_OnCastSpell(GameObject sender, SpellbookCastSpellEventArgs args)
         {
             // Avoid stupic Q casts while jumping in mid air!
-            if (args.PacketData[0] == Packet.C2S.Cast.Header && player.IsDashing())
+            if (sender.IsMe && args.Slot == SpellSlot.Q && player.IsDashing())
             {
-                // Don't process the packet if we are jumping!
-                if (Packet.C2S.Cast.Decoded(args.PacketData).Slot == SpellSlot.Q)
-                    args.Process = false;
+                // Don't process the packet since we are jumping!
+                args.Process = false;
             }
         }
 
@@ -121,8 +111,8 @@ namespace Kalista
             }
 
             // Flee position the player moves to
-            if (ActiveModes.fleeTargetPosition != null)
-                Utility.DrawCircle((Vector3)ActiveModes.fleeTargetPosition, 50, ActiveModes.wallJumpPossible ? Color.Green : SpellManager.Q.IsReady() ? Color.Red : Color.Teal, 10);
+            if (ActiveModes.fleeTargetPosition.HasValue)
+                Utility.DrawCircle(ActiveModes.fleeTargetPosition.Value, 50, ActiveModes.wallJumpPossible ? Color.Green : SpellManager.Q.IsReady() ? Color.Red : Color.Teal, 10);
         }
     }
 }
