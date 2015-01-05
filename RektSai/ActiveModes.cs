@@ -13,22 +13,10 @@ namespace Rekt_Sai
     {
         private static Obj_AI_Hero player = ObjectManager.Player;
 
-        private static Spell Q
-        {
-            get { return SpellManager.Q; }
-        }
-        private static Spell W
-        {
-            get { return SpellManager.W; }
-        }
-        private static Spell E
-        {
-            get { return SpellManager.E; }
-        }
-        private static Spell R
-        {
-            get { return SpellManager.R; }
-        }
+        private static Spell Q { get { return SpellManager.Q; } }
+        private static Spell W { get { return SpellManager.W; } }
+        private static Spell E { get { return SpellManager.E; } }
+        private static Spell R { get { return SpellManager.R; } }
 
         public static void OnPermaActive()
         {
@@ -276,12 +264,25 @@ namespace Rekt_Sai
             // Burrowed
             else
             {
+                // Disable auto attacks
+                Config.Menu.Orbwalker.SetAttack(true);
+
                 if (useQBurrowed && Q.IsReady())
                 {
                     // Get the best position to shoot the Q
                     var location = MinionManager.GetBestCircularFarmLocation(MinionManager.GetMinions(Q.Range).Select(m => m.ServerPosition.To2D()).ToList(), Q.Width, Q.Range);
                     if (location.MinionsHit > 0)
                         Q.Cast(location.Position);
+                }
+                else
+                {
+                    // Get minions above us
+                    var minions = MinionManager.GetMinions(Orbwalking.GetRealAutoAttackRange(player), MinionTypes.All, MinionTeam.Enemy, MinionOrderTypes.MaxHealth);
+                    if (minions.Count > 0)
+                    {
+                        // Unburrow
+                        W.Cast();
+                    }
                 }
             }
         }
@@ -321,7 +322,7 @@ namespace Rekt_Sai
                         else
                         {
                             // Get best target for E
-                            var mob = jungleMobs.FirstOrDefault(m => E.GetRealDamage(m) > m.Health);
+                            var mob = jungleMobs.FirstOrDefault(m => E.GetRealDamage(m) > m.Health && player.GetAutoAttackDamage(m) < m.Health);
                             if (mob != null)
                                 E.Cast(mob);
                         }
@@ -359,8 +360,16 @@ namespace Rekt_Sai
                     if (jungleMobs.Count > 0)
                         Q.Cast(jungleMobs[0]);
                 }
-
-
+                else
+                {
+                    // Get jungle mobs above us
+                    var minions = MinionManager.GetMinions(Orbwalking.GetRealAutoAttackRange(player), MinionTypes.All, MinionTeam.Neutral, MinionOrderTypes.MaxHealth);
+                    if (minions.Count > 0)
+                    {
+                        // Unburrow
+                        W.Cast();
+                    }
+                }
             }
         }
 
