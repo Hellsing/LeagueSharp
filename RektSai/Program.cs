@@ -51,7 +51,7 @@ namespace Rekt_Sai
                 foreach (var circle in Config.CircleLinks.Values.Select(link => link.Value))
                 {
                     if (circle.Active)
-                        Utility.DrawCircle(player.Position, circle.Radius, circle.Color);
+                        Drawing.DrawCircle(player.Position, circle.Radius, circle.Color);
                 }
             }
         }

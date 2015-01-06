@@ -24,16 +24,6 @@ namespace Rekt_Sai
             return ObjectManager.Player.HasBuff("RekSaiW");
         }
 
-        public static float TotalAttackDamage(this Obj_AI_Base target)
-        {
-            return target.BaseAttackDamage + target.FlatPhysicalDamageMod;
-        }
-
-        public static float TotalMagicalDamage(this Obj_AI_Base target)
-        {
-            return target.BaseAbilityDamage + target.FlatMagicDamageMod;
-        }
-
         public static float AttackSpeed(this Obj_AI_Base target)
         {
             return 1 / target.AttackDelay;
