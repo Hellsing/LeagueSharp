@@ -214,10 +214,18 @@ namespace Xerath
 
         public static void OnWaveClear()
         {
+            // Validate Q and W are ready
+            if (!Q.IsEnabledAndReady(Mode.WAVE) && !W.IsEnabledAndReady(Mode.WAVE))
+                return;
+
+            // Get the minions around
+            var minions = MinionManager.GetMinions(W.Range, MinionTypes.All, MinionTeam.Enemy, MinionOrderTypes.MaxHealth);
+            if (minions.Count == 0)
+                return;
+
             if (Q.IsEnabledAndReady(Mode.WAVE))
             {
-                var minions = MinionManager.GetMinions(Q.Range, MinionTypes.All, MinionTeam.Enemy, MinionOrderTypes.MaxHealth);
-                if (minions.Count > 0)
+                if (minions.Count >= Config.SliderLinks["waveNumQ"].Value.Value)
                 {
                     var minionPrediction = MinionManager.GetMinionsPredictedPositions(minions, Q.Delay, Q.Width, Q.Speed, player.ServerPosition, Q.Range, Q.Collision, Q.Type);
                     var prediction = MinionManager.GetBestLineFarmLocation(minionPrediction, Q.Width, Q.Range);
@@ -234,8 +242,7 @@ namespace Xerath
 
             if (W.IsEnabledAndReady(Mode.WAVE))
             {
-                var minions = MinionManager.GetMinions(W.Range, MinionTypes.All, MinionTeam.Enemy, MinionOrderTypes.MaxHealth);
-                if (minions.Count > 0)
+                if (minions.Count >= Config.SliderLinks["waveNumW"].Value.Value)
                 {
                     var minionPrediction = MinionManager.GetMinionsPredictedPositions(minions, W.Delay, W.Width, W.Speed, player.ServerPosition, W.Range, W.Collision, W.Type);
                     var prediction = MinionManager.GetBestCircularFarmLocation(minionPrediction, W.Width, W.Range);
@@ -250,46 +257,43 @@ namespace Xerath
 
         public static void OnJungleClear()
         {
+            // Validate Q, W and E are ready
+            if (!Q.IsEnabledAndReady(Mode.JUNGLE) && !W.IsEnabledAndReady(Mode.JUNGLE) && !E.IsEnabledAndReady(Mode.JUNGLE))
+                return;
+
+            // Get the minions around
+            var minions = MinionManager.GetMinions(W.Range, MinionTypes.All, MinionTeam.Enemy, MinionOrderTypes.MaxHealth);
+            if (minions.Count == 0)
+                return;
+
             if (Q.IsEnabledAndReady(Mode.JUNGLE))
             {
-                var minions = MinionManager.GetMinions(Q.Range, MinionTypes.All, MinionTeam.Neutral, MinionOrderTypes.MaxHealth);
-                if (minions.Count > 0)
-                {
-                    var minionPrediction = MinionManager.GetMinionsPredictedPositions(minions, Q.Delay, Q.Width, Q.Speed, player.ServerPosition, Q.Range, Q.Collision, Q.Type);
-                    var prediction = MinionManager.GetBestLineFarmLocation(minionPrediction, Q.Width, Q.Range);
+                var minionPrediction = MinionManager.GetMinionsPredictedPositions(minions, Q.Delay, Q.Width, Q.Speed, player.ServerPosition, Q.Range, Q.Collision, Q.Type);
+                var prediction = MinionManager.GetBestLineFarmLocation(minionPrediction, Q.Width, Q.Range);
 
-                    if (prediction.MinionsHit > 0)
-                    {
-                        if (!Q.IsCharging)
-                            Q.StartCharging();
-                        else
-                            Q.Cast(prediction.Position);
-                    }
+                if (prediction.MinionsHit > 0)
+                {
+                    if (!Q.IsCharging)
+                        Q.StartCharging();
+                    else
+                        Q.Cast(prediction.Position);
                 }
             }
 
-            if (W.IsEnabledAndReady(Mode.WAVE))
+            if (W.IsEnabledAndReady(Mode.JUNGLE))
             {
-                var minions = MinionManager.GetMinions(W.Range, MinionTypes.All, MinionTeam.Neutral, MinionOrderTypes.MaxHealth);
-                if (minions.Count > 0)
-                {
-                    var minionPrediction = MinionManager.GetMinionsPredictedPositions(minions, W.Delay, W.Width, W.Speed, player.ServerPosition, W.Range, W.Collision, W.Type);
-                    var prediction = MinionManager.GetBestCircularFarmLocation(minionPrediction, W.Width, W.Range);
+                var minionPrediction = MinionManager.GetMinionsPredictedPositions(minions, W.Delay, W.Width, W.Speed, player.ServerPosition, W.Range, W.Collision, W.Type);
+                var prediction = MinionManager.GetBestCircularFarmLocation(minionPrediction, W.Width, W.Range);
 
-                    if (prediction.MinionsHit > 0)
-                    {
-                        W.Cast(prediction.Position);
-                    }
+                if (prediction.MinionsHit > 0)
+                {
+                    W.Cast(prediction.Position);
                 }
             }
 
-            if (E.IsEnabledAndReady(Mode.WAVE))
+            if (E.IsEnabledAndReady(Mode.JUNGLE))
             {
-                var minions = MinionManager.GetMinions(W.Range, MinionTypes.All, MinionTeam.Neutral, MinionOrderTypes.MaxHealth);
-                if (minions.Count > 0)
-                {
-                    E.Cast(minions[0]);
-                }
+                E.Cast(minions[0]);
             }
         }
 
