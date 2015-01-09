@@ -64,7 +64,7 @@ namespace Xerath
                         else if (SpellManager.ChargesRemaining < 3)
                         {
                             // Shoot the same target again if in range
-                            if (!targetWillDie && lastUltTarget.IsValidTarget(R.Range))
+                            if ((!targetWillDie || Environment.TickCount - SpellManager.LastChargeTime > R.Delay * 1000 + 100) && lastUltTarget.IsValidTarget(R.Range))
                             {
                                 if (R.Cast(lastUltTarget) == Spell.CastStates.SuccessfullyCasted)
                                 {
@@ -82,7 +82,7 @@ namespace Xerath
                                     if (Config.StringListLinks["ultSettingsMode"].Value.SelectedIndex == 0)
                                     {
                                         // Calculate smart target change time
-                                        var waitTime = Math.Max(3000, target.Distance(SpellManager.LastChargePosition, false) * 2);
+                                        var waitTime = Math.Max(2000, target.Distance(SpellManager.LastChargePosition, false));
                                         if (SpellManager.LastChargeTime + waitTime - Environment.TickCount > 0)
                                             break;
                                     }
@@ -127,20 +127,23 @@ namespace Xerath
             if (Q.IsEnabledAndReady(Mode.COMBO))
             {
                 var target = Q.GetTarget();
-                if (!Q.IsCharging)
-                    Q.StartCharging();
-                else
+                if (target != null)
                 {
                     var prediction = Q.GetPrediction(target);
                     if (prediction.Hitchance >= Q.MinHitChance)
                     {
-                        if (Q.Range == Q.ChargedMaxRange)
-                            Q.Cast(target);
+                        if (!Q.IsCharging)
+                            Q.StartCharging();
                         else
                         {
-                            var preferredRange = player.ServerPosition.Distance(prediction.UnitPosition + Config.SliderLinks["comboExtraRangeQ"].Value.Value * (prediction.UnitPosition - player.ServerPosition).Normalized(), true);
-                            if (preferredRange < Q.RangeSqr)
-                                Q.Cast(prediction.CastPosition);
+                            if (Q.Range == Q.ChargedMaxRange)
+                                Q.Cast(target);
+                            else
+                            {
+                                var preferredRange = player.ServerPosition.Distance(prediction.UnitPosition + Config.SliderLinks["comboExtraRangeQ"].Value.Value * (prediction.UnitPosition - player.ServerPosition).Normalized(), true);
+                                if (preferredRange < Q.RangeSqr)
+                                    Q.Cast(prediction.CastPosition);
+                            }
                         }
                     }
                 }
@@ -176,20 +179,23 @@ namespace Xerath
             if (Q.IsEnabledAndReady(Mode.HARASS))
             {
                 var target = Q.GetTarget();
-                if (!Q.IsCharging)
-                    Q.StartCharging();
-                else
+                if (target != null)
                 {
                     var prediction = Q.GetPrediction(target);
                     if (prediction.Hitchance >= Q.MinHitChance)
                     {
-                        if (Q.Range == Q.ChargedMaxRange)
-                            Q.Cast(target);
+                        if (!Q.IsCharging)
+                            Q.StartCharging();
                         else
                         {
-                            var preferredRange = player.ServerPosition.Distance(prediction.UnitPosition + Config.SliderLinks["harassExtraRangeQ"].Value.Value * (prediction.UnitPosition - player.ServerPosition).Normalized(), true);
-                            if (preferredRange < Q.RangeSqr)
-                                Q.Cast(prediction.CastPosition);
+                            if (Q.Range == Q.ChargedMaxRange)
+                                Q.Cast(target);
+                            else
+                            {
+                                var preferredRange = player.ServerPosition.Distance(prediction.UnitPosition + Config.SliderLinks["harassExtraRangeQ"].Value.Value * (prediction.UnitPosition - player.ServerPosition).Normalized(), true);
+                                if (preferredRange < Q.RangeSqr)
+                                    Q.Cast(prediction.CastPosition);
+                            }
                         }
                     }
                 }
