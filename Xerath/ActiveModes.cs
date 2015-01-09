@@ -82,7 +82,7 @@ namespace Xerath
                                     if (Config.StringListLinks["ultSettingsMode"].Value.SelectedIndex == 0)
                                     {
                                         // Calculate smart target change time
-                                        var waitTime = target.Distance(SpellManager.LastChargePosition, false);
+                                        var waitTime = target.Distance(SpellManager.LastChargePosition, false) * 2;
                                         if (SpellManager.LastChargeTime + waitTime - Environment.TickCount > 0)
                                             break;
                                     }
