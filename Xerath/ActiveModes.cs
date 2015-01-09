@@ -82,7 +82,7 @@ namespace Xerath
                                     if (Config.StringListLinks["ultSettingsMode"].Value.SelectedIndex == 0)
                                     {
                                         // Calculate smart target change time
-                                        var waitTime = target.Distance(SpellManager.LastChargePosition, false) * 2;
+                                        var waitTime = Math.Max(3000, target.Distance(SpellManager.LastChargePosition, false) * 2);
                                         if (SpellManager.LastChargeTime + waitTime - Environment.TickCount > 0)
                                             break;
                                     }
@@ -153,7 +153,11 @@ namespace Xerath
 
             if (E.IsEnabledAndReady(Mode.COMBO))
             {
-                E.CastOnBestTarget();
+                var target = E.GetTarget();
+                if (target != null && (target.GetStunDuration() == 0 || target.GetStunDuration() < player.ServerPosition.Distance(target.ServerPosition) / E.Speed + E.Delay))
+                {
+                    E.Cast(target);
+                }
             }
 
             if (R.IsEnabledAndReady(Mode.COMBO) && !SpellManager.IsCastingUlt)
