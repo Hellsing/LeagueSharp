@@ -214,7 +214,10 @@ namespace Xerath
 
                     if (prediction.MinionsHit >= Config.SliderLinks["waveNumQ"].Value.Value)
                     {
-                        Q.Cast(prediction.Position);
+                        if (!Q.IsCharging)
+                            Q.StartCharging();
+                        else
+                            Q.Cast(prediction.Position);
                     }
                 }
             }
@@ -247,7 +250,10 @@ namespace Xerath
 
                     if (prediction.MinionsHit > 0)
                     {
-                        Q.Cast(prediction.Position);
+                        if (!Q.IsCharging)
+                            Q.StartCharging();
+                        else
+                            Q.Cast(prediction.Position);
                     }
                 }
             }
