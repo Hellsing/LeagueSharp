@@ -74,7 +74,7 @@ namespace Xerath
             ProcessLink("comboExtraRangeQ", subSubMenu.AddLinkedSlider("Extra range for Q", 200, 0, 200));
             ProcessLink("comboUseW", subMenu.AddLinkedBool("Use W"));
             ProcessLink("comboUseE", subMenu.AddLinkedBool("Use E"));
-            ProcessLink("comboUseR", subMenu.AddLinkedBool("Use R"), false);
+            ProcessLink("comboUseR", subMenu.AddLinkedBool("Use R", false));
             //ProcessLink("comboUseItems", subMenu.AddLinkedBool("Use items"));
             //ProcessLink("comboUseIgnite", subMenu.AddLinkedBool("Use Ignite"));
             ProcessLink("comboActive", subMenu.AddLinkedKeyBind("Combo active", 32, KeyBindType.Press));
