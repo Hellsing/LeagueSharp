@@ -78,6 +78,10 @@ namespace Xerath
             // Draw Q while charging
             if (Config.CircleLinks["drawRangeQ"].Value.Active && SpellManager.Q.IsCharging && SpellManager.Q.Range < SpellManager.Q.ChargedMaxRange)
                 Render.Circle.DrawCircle(player.Position, SpellManager.Q.Range, Config.CircleLinks["drawRangeQ"].Value.Color);
+
+            // Draw R on minimap
+            if (Config.CircleLinks["drawRangeR"].Value.Active && SpellManager.R.Level > 0)
+                Utility.DrawCircle(player.Position, SpellManager.R.Range, Config.CircleLinks["drawRangeR"].Value.Color, 5, 30, true);
         }
 
         private static void AntiGapcloser_OnEnemyGapcloser(ActiveGapcloser gapcloser)
