@@ -44,6 +44,7 @@ namespace Xerath
 
             // Listend to some other events
             Game.OnGameUpdate += Game_OnGameUpdate;
+            Game.OnWndProc += Game_OnWndProc;
             Drawing.OnDraw += Drawing_OnDraw;
             AntiGapcloser.OnEnemyGapcloser += AntiGapcloser_OnEnemyGapcloser;
             Interrupter.OnPossibleToInterrupt += Interrupter_OnPossibleToInterrupt;
@@ -64,6 +65,24 @@ namespace Xerath
                 ActiveModes.OnJungleClear();
             if (Config.KeyLinks["fleeActive"].Value.Active)
                 ActiveModes.OnFlee();
+        }
+
+        private static void Game_OnWndProc(WndEventArgs args)
+        {
+            if (args.Msg == (uint)WindowsMessages.WM_KEYUP && Config.BoolLinks["castEnabled"].Value)
+            {
+                // Single Spell Casts
+                if (args.WParam == Config.KeyLinks["castW"].Value.Key && SpellManager.W.IsReady())
+                {
+                    // Cast W on best target
+                    SpellManager.W.CastOnBestTarget();
+                }
+                else if (args.WParam == Config.KeyLinks["castE"].Value.Key && SpellManager.E.IsReady())
+                {
+                    // Cast E on best target
+                    SpellManager.E.CastOnBestTarget();
+                }
+            }
         }
 
         private static void Drawing_OnDraw(EventArgs args)

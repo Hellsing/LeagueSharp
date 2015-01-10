@@ -126,6 +126,12 @@ namespace Xerath
             ProcessLink("miscInterruptE", subMenu.AddLinkedBool("Use E to interrupt dangerous spells"));
             ProcessLink("miscAlerter", subMenu.AddLinkedBool("Altert in chat when someone is killable with R"));
 
+            // ----- Single Spell Casting
+            subMenu = _menu.MainMenu.AddSubMenu("Single Spell Casting");
+            ProcessLink("castEnabled", subMenu.AddLinkedBool("Enabled"));
+            ProcessLink("castW", subMenu.AddLinkedKeyBind("Cast W", 'A', KeyBindType.Press));
+            ProcessLink("castE", subMenu.AddLinkedKeyBind("Cast E", 'S', KeyBindType.Press));
+
             // ----- Drawings
             subMenu = _menu.MainMenu.AddSubMenu("Drawings");
             ProcessLink("drawRangeQ", subMenu.AddLinkedCircle("Q range", true, Color.FromArgb(150, Color.IndianRed), SpellManager.Q.Range));

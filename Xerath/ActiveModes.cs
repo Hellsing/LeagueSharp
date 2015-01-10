@@ -114,7 +114,7 @@ namespace Xerath
                                     if (Config.StringListLinks["ultSettingsMode"].Value.SelectedIndex == 0)
                                     {
                                         // Calculate smart target change time
-                                        var waitTime = Math.Max(1500, target.Distance(SpellManager.LastChargePosition, false));
+                                        var waitTime = Math.Max(1500, target.Distance(SpellManager.LastChargePosition, false) / 2);
                                         if (Environment.TickCount - SpellManager.LastChargeTime + waitTime < 0)
                                             break;
                                     }
@@ -147,11 +147,21 @@ namespace Xerath
                         var targets = ObjectManager.Get<Obj_AI_Hero>().Where(h => h.IsValidTarget(R.Range) && h.Distance(Game.CursorPos, true) < 500 * 500);
                         if (targets.Count() > 0)
                         {
-                            // Get the best target out of the found targets
-                            var target = targets.OrderByDescending(t => R.GetRealDamage(t)).FirstOrDefault();
+                            // Get a killable target
+                            var killable = targets.Where(t => t.Health < R.GetRealDamage(t) * SpellManager.ChargesRemaining).OrderByDescending(t => R.GetRealDamage(t)).FirstOrDefault();
+                            if (killable != null)
+                            {
+                                // Shoot on the killable target
+                                R.Cast(killable);
+                            }
+                            else
+                            {
+                                // Get the best target out of the found targets
+                                var target = targets.OrderByDescending(t => R.GetRealDamage(t)).FirstOrDefault();
 
-                            // Shoot
-                            R.Cast(target);
+                                // Shoot
+                                R.Cast(target);
+                            }
                         }
 
                         break;
