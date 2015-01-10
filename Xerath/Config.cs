@@ -111,7 +111,7 @@ namespace Xerath
             // ----- Ultimate Settings
             subMenu = _menu.MainMenu.AddSubMenu("Ultimate Settings");
             ProcessLink("ultSettingsEnabled", subMenu.AddLinkedBool("Enabled"));
-            ProcessLink("ultSettingsMode", subMenu.AddLinkedStringList("Mode:", new[] { "Smart targetting", "Obvious scripting", "Near mouse", "On key press" }));
+            ProcessLink("ultSettingsMode", subMenu.AddLinkedStringList("Mode:", new[] { "Smart targetting", "Obvious scripting", "Near mouse", "On key press (auto)", "On key press (near mouse)" }));
             ProcessLink("ultSettingsKeyPress", subMenu.AddLinkedKeyBind("Shoot charge on press", 'T', KeyBindType.Press));
 
             // ----- Items

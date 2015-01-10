@@ -41,10 +41,13 @@ namespace Xerath
             {
                 switch (Config.StringListLinks["ultSettingsMode"].Value.SelectedIndex)
                 {
-                    #region Smart targetting & Obviously scripting & On key press
+                    #region Smart targetting & Obviously scripting & On key press (auto)
 
+                    // Smart targetting
                     case 0:
+                    // Obviously scripting
                     case 1:
+                    // On key press (auto)
                     case 3:
 
                         // Only for tap key
@@ -112,9 +115,16 @@ namespace Xerath
 
                     #endregion
 
-                    #region Near mouse
+                    #region Near mouse & On key press (near mouse)
 
+                    // Near mouse
                     case 2:
+                    // On key press (near mouse)
+                    case 4:
+
+                        // Only for tap key
+                        if (Config.StringListLinks["ultSettingsMode"].Value.SelectedIndex == 4 && !SpellManager.TapKeyPressed)
+                            break;
 
                         // Get all enemy heroes in a distance of 500 from the mouse
                         var targets = ObjectManager.Get<Obj_AI_Hero>().Where(h => h.IsValidTarget(R.Range) && h.Distance(Game.CursorPos, true) < 500 * 500);
