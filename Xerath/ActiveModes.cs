@@ -219,7 +219,7 @@ namespace Xerath
                 return;
 
             // Get the minions around
-            var minions = MinionManager.GetMinions(W.Range, MinionTypes.All, MinionTeam.Enemy, MinionOrderTypes.MaxHealth);
+            var minions = MinionManager.GetMinions(Q.ChargedMaxRange, MinionTypes.All, MinionTeam.Enemy, MinionOrderTypes.MaxHealth);
             if (minions.Count == 0)
                 return;
 
@@ -228,9 +228,11 @@ namespace Xerath
                 if (minions.Count >= Config.SliderLinks["waveNumQ"].Value.Value)
                 {
                     var minionPrediction = MinionManager.GetMinionsPredictedPositions(minions, Q.Delay, Q.Width, Q.Speed, player.ServerPosition, Q.Range, Q.Collision, Q.Type);
-                    var prediction = MinionManager.GetBestLineFarmLocation(minionPrediction, Q.Width, Q.Range);
 
-                    if (prediction.MinionsHit >= Config.SliderLinks["waveNumQ"].Value.Value)
+                    var prediction = MinionManager.GetBestLineFarmLocation(minionPrediction, Q.Width, Q.Range);
+                    var prediction2 = MinionManager.GetBestLineFarmLocation(minionPrediction, Q.Width, Q.ChargedMaxRange);
+
+                    if (prediction.MinionsHit == prediction2.MinionsHit && prediction.MinionsHit >= Config.SliderLinks["waveNumQ"].Value.Value)
                     {
                         if (!Q.IsCharging)
                             Q.StartCharging();
