@@ -276,7 +276,7 @@ namespace Xerath
                 return;
 
             // Get the minions around
-            var minions = MinionManager.GetMinions(W.Range, MinionTypes.All, MinionTeam.Enemy, MinionOrderTypes.MaxHealth);
+            var minions = MinionManager.GetMinions(W.Range, MinionTypes.All, MinionTeam.Neutral, MinionOrderTypes.MaxHealth);
             if (minions.Count == 0)
                 return;
 
