@@ -94,8 +94,8 @@ namespace Xerath
                                     if (Config.StringListLinks["ultSettingsMode"].Value.SelectedIndex == 0)
                                     {
                                         // Calculate smart target change time
-                                        var waitTime = Math.Max(2000, target.Distance(SpellManager.LastChargePosition, false));
-                                        if (SpellManager.LastChargeTime + waitTime - Environment.TickCount > 0)
+                                        var waitTime = Math.Max(1500, target.Distance(SpellManager.LastChargePosition, false));
+                                        if (Environment.TickCount - SpellManager.LastChargeTime + waitTime < 0)
                                             break;
                                     }
 
@@ -138,7 +138,7 @@ namespace Xerath
         {
             if (Q.IsEnabledAndReady(Mode.COMBO))
             {
-                var target = Q.GetTarget();
+                var target = TargetSelector.GetTarget(Q.ChargedMaxRange, TargetSelector.DamageType.Magical);
                 if (target != null)
                 {
                     var prediction = Q.GetPrediction(target);
@@ -190,7 +190,7 @@ namespace Xerath
         {
             if (Q.IsEnabledAndReady(Mode.HARASS))
             {
-                var target = Q.GetTarget();
+                var target = TargetSelector.GetTarget(Q.ChargedMaxRange, TargetSelector.DamageType.Magical);
                 if (target != null)
                 {
                     var prediction = Q.GetPrediction(target);
@@ -239,17 +239,13 @@ namespace Xerath
             {
                 if (minions.Count >= Config.SliderLinks["waveNumQ"].Value.Value)
                 {
-                    var minionPrediction = MinionManager.GetMinionsPredictedPositions(minions, Q.Delay, Q.Width, Q.Speed, player.ServerPosition, Q.Range, Q.Collision, Q.Type);
-
-                    var prediction = MinionManager.GetBestLineFarmLocation(minionPrediction, Q.Width, Q.Range);
-                    var prediction2 = MinionManager.GetBestLineFarmLocation(minionPrediction, Q.Width, Q.ChargedMaxRange);
-
-                    if (prediction.MinionsHit == prediction2.MinionsHit && prediction.MinionsHit >= Config.SliderLinks["waveNumQ"].Value.Value)
+                    var farmLocation = Q.GetLineFarmLocation(minions);
+                    if (farmLocation.MinionsHit >= Config.SliderLinks["waveNumQ"].Value.Value)
                     {
                         if (!Q.IsCharging)
                             Q.StartCharging();
                         else
-                            Q.Cast(prediction.Position);
+                            Q.Cast(farmLocation.Position);
                     }
                 }
             }
@@ -258,12 +254,10 @@ namespace Xerath
             {
                 if (minions.Count >= Config.SliderLinks["waveNumW"].Value.Value)
                 {
-                    var minionPrediction = MinionManager.GetMinionsPredictedPositions(minions, W.Delay, W.Width, W.Speed, player.ServerPosition, W.Range, W.Collision, W.Type);
-                    var prediction = MinionManager.GetBestCircularFarmLocation(minionPrediction, W.Width, W.Range);
-
-                    if (prediction.MinionsHit >= Config.SliderLinks["waveNumW"].Value.Value)
+                    var farmLocation = W.GetCircularFarmLocation(minions);
+                    if (farmLocation.MinionsHit >= Config.SliderLinks["waveNumW"].Value.Value)
                     {
-                        W.Cast(prediction.Position);
+                        W.Cast(farmLocation.Position);
                     }
                 }
             }
@@ -282,26 +276,22 @@ namespace Xerath
 
             if (Q.IsEnabledAndReady(Mode.JUNGLE))
             {
-                var minionPrediction = MinionManager.GetMinionsPredictedPositions(minions, Q.Delay, Q.Width, Q.Speed, player.ServerPosition, Q.Range, Q.Collision, Q.Type);
-                var prediction = MinionManager.GetBestLineFarmLocation(minionPrediction, Q.Width, Q.Range);
-
-                if (prediction.MinionsHit > 0)
+                var farmLocation = Q.GetLineFarmLocation(minions);
+                if (farmLocation.MinionsHit > 0)
                 {
                     if (!Q.IsCharging)
                         Q.StartCharging();
                     else
-                        Q.Cast(prediction.Position);
+                        Q.Cast(farmLocation.Position);
                 }
             }
 
             if (W.IsEnabledAndReady(Mode.JUNGLE))
             {
-                var minionPrediction = MinionManager.GetMinionsPredictedPositions(minions, W.Delay, W.Width, W.Speed, player.ServerPosition, W.Range, W.Collision, W.Type);
-                var prediction = MinionManager.GetBestCircularFarmLocation(minionPrediction, W.Width, W.Range);
-
-                if (prediction.MinionsHit > 0)
+                var farmLocation = W.GetCircularFarmLocation(minions);
+                if (farmLocation.MinionsHit > 0)
                 {
-                    W.Cast(prediction.Position);
+                    W.Cast(farmLocation.Position);
                 }
             }
 
