@@ -22,8 +22,7 @@ namespace Xerath
 
         // Trinkets
         public static readonly Item BLUE_ORB1 = ItemData.Scrying_Orb_Trinket.GetItem();
-        public static readonly Item BLUE_ORB2 = ItemData.Greater_Orb_Trinket.GetItem();
-        public static readonly Item BLUE_ORB3 = ItemData.Farsight_Orb_Trinket.GetItem();
+        public static readonly Item BLUE_ORB2 = ItemData.Farsight_Orb_Trinket.GetItem();
 
         public static bool UseDfg(Obj_AI_Hero target)
         {
@@ -50,15 +49,10 @@ namespace Xerath
                 {
                     return BLUE_ORB1.Cast(target);
                 }
-                // Greater Orb
+                // Farsight Orb
                 else if (BLUE_ORB2.IsReady() && BLUE_ORB2.IsInRange(target))
                 {
                     return BLUE_ORB2.Cast(target);
-                }
-                // Farsight Orb
-                else if (BLUE_ORB3.IsReady() && BLUE_ORB3.IsInRange(target))
-                {
-                    return BLUE_ORB3.Cast(target);
                 }
             }
 
