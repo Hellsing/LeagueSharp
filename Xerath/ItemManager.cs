@@ -7,6 +7,8 @@ using System.Threading.Tasks;
 using LeagueSharp;
 using LeagueSharp.Common;
 
+using SharpDX;
+
 using Item = LeagueSharp.Common.Items.Item;
 
 namespace Xerath
@@ -17,6 +19,11 @@ namespace Xerath
 
         public static readonly Item DFG = ItemData.Deathfire_Grasp.GetItem();
         public static readonly Item BLACKFIRE_TORCH = ItemData.Blackfire_Torch.GetItem();
+
+        // Trinkets
+        public static readonly Item BLUE_ORB1 = ItemData.Scrying_Orb_Trinket.GetItem();
+        public static readonly Item BLUE_ORB2 = ItemData.Greater_Orb_Trinket.GetItem();
+        public static readonly Item BLUE_ORB3 = ItemData.Farsight_Orb_Trinket.GetItem();
 
         public static bool UseDfg(Obj_AI_Hero target)
         {
@@ -31,6 +38,30 @@ namespace Xerath
             }
 
             // No item was used/found
+            return false;
+        }
+
+        public static bool UseRevealingOrb(Vector3 target)
+        {
+            if (Config.BoolLinks["itemsOrb"].Value)
+            {
+                // Scrying Orb
+                if (BLUE_ORB1.IsReady() && BLUE_ORB1.IsInRange(target))
+                {
+                    return BLUE_ORB1.Cast(target);
+                }
+                // Greater Orb
+                else if (BLUE_ORB2.IsReady() && BLUE_ORB2.IsInRange(target))
+                {
+                    return BLUE_ORB2.Cast(target);
+                }
+                // Farsight Orb
+                else if (BLUE_ORB3.IsReady() && BLUE_ORB3.IsInRange(target))
+                {
+                    return BLUE_ORB3.Cast(target);
+                }
+            }
+
             return false;
         }
     }

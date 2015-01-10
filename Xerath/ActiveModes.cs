@@ -29,6 +29,7 @@ namespace Xerath
 
         private static Obj_AI_Hero lastUltTarget = null;
         private static bool targetWillDie = false;
+        private static int orbUsedTime = 0;
 
         public static void OnPermaActive()
         {
@@ -74,6 +75,17 @@ namespace Xerath
                             // Target died or is out of range, shoot new target
                             else
                             {
+                                // Check if last target is still alive
+                                if (!lastUltTarget.IsDead && ItemManager.UseRevealingOrb(lastUltTarget.ServerPosition))
+                                {
+                                    orbUsedTime = Environment.TickCount;
+                                    break;
+                                }
+
+                                // Check if orb was used
+                                if (Environment.TickCount - orbUsedTime < 250)
+                                    break;
+
                                 // Get a new target
                                 var target = R.GetTarget(new[] { lastUltTarget });
                                 if (target != null)

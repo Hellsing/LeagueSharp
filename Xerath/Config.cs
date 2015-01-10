@@ -115,8 +115,8 @@ namespace Xerath
             ProcessLink("ultSettingsKeyPress", subMenu.AddLinkedKeyBind("Shoot charge on press", 'T', KeyBindType.Press));
 
             // ----- Items
-            //subMenu = _menu.MainMenu.AddSubMenu("Items");
-            //ProcessLink("itemsDfg", subMenu.AddLinkedBool("Use Deathfire Grasp"));
+            subMenu = _menu.MainMenu.AddSubMenu("Items");
+            ProcessLink("itemsOrb", subMenu.AddLinkedBool("Use Revealing Orb (trinket)"));
 
             // ----- Misc
             subMenu = _menu.MainMenu.AddSubMenu("Misc");
