@@ -34,15 +34,15 @@ namespace Xerath
         {
             // Initialize spells
             Q = new Spell(SpellSlot.Q, 1550);
-            W = new Spell(SpellSlot.W, 1000);
-            E = new Spell(SpellSlot.E, 1150);
+            W = new Spell(SpellSlot.W, 1100);
+            E = new Spell(SpellSlot.E, 1050);
             R = new Spell(SpellSlot.R, 3200);
 
             // Finetune spells
-            Q.SetSkillshot(0.6f, 100f, float.MaxValue, false, SkillshotType.SkillshotLine);
-            W.SetSkillshot(0.7f, 125f, float.MaxValue, false, SkillshotType.SkillshotCircle);
-            E.SetSkillshot(0.25f, 60f, 1400f, true, SkillshotType.SkillshotLine);
-            R.SetSkillshot(0.7f, 120f, float.MaxValue, false, SkillshotType.SkillshotCircle);
+            Q.SetSkillshot(0.6f, 100, float.MaxValue, false, SkillshotType.SkillshotLine);
+            W.SetSkillshot(0.7f, 200, float.MaxValue, false, SkillshotType.SkillshotCircle);
+            E.SetSkillshot(0.25f, 70, 1600, true, SkillshotType.SkillshotLine);
+            R.SetSkillshot(0.6f, 120, float.MaxValue, false, SkillshotType.SkillshotCircle);
 
             Q.SetCharged("XerathArcanopulseChargeUp", "XerathArcanopulseChargeUp", 750, 1550, 1.5f);
 
