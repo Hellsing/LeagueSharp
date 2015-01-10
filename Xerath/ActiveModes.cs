@@ -30,11 +30,28 @@ namespace Xerath
         private static Obj_AI_Hero lastUltTarget = null;
         private static bool targetWillDie = false;
         private static int orbUsedTime = 0;
+        private static int lastAltert = 0;
 
         public static void OnPermaActive()
         {
             // Disable movement while ulting
             Config.Menu.Orbwalker.SetMovement(!SpellManager.IsCastingUlt);
+
+            // Alerter for ultimate
+            if (Config.BoolLinks["miscAlerter"].Value && (SpellManager.IsCastingUlt || R.IsReady()) && Environment.TickCount - lastAltert > 5000)
+            {
+                // Get targets that can die with R
+                var killableTargets = ObjectManager.Get<Obj_AI_Hero>()
+                    .Where(h =>h.IsValidTarget(R.Range) && h.Health < (SpellManager.IsCastingUlt ? SpellManager.ChargesRemaining : 3) * R.GetRealDamage(h))
+                    .OrderByDescending(h => R.GetRealDamage(h));
+
+                if (killableTargets.Count() > 0)
+                {
+                    lastAltert = Environment.TickCount;
+                    var time = TimeSpan.FromSeconds(Game.Time);
+                    Game.PrintChat(string.Format("[{0}:{1:D2}] Targets killable: {2}", Math.Floor(time.TotalMinutes), time.Seconds, string.Join(", ", killableTargets.Select(t => t.ChampionName))));
+                }
+            }
 
             // Ult handling
             if (SpellManager.IsCastingUlt && Config.BoolLinks["ultSettingsEnabled"].Value)

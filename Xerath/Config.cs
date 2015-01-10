@@ -122,6 +122,7 @@ namespace Xerath
             subMenu = _menu.MainMenu.AddSubMenu("Misc");
             ProcessLink("miscGapcloseE", subMenu.AddLinkedBool("Use E against gapclosers"));
             ProcessLink("miscInterruptE", subMenu.AddLinkedBool("Use E to interrupt dangerous spells"));
+            ProcessLink("miscAlerter", subMenu.AddLinkedBool("Altert in chat when someone is killable with R"));
 
             // ----- Drawings
             subMenu = _menu.MainMenu.AddSubMenu("Drawings");
