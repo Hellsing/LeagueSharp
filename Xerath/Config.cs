@@ -86,6 +86,7 @@ namespace Xerath
             ProcessLink("harassExtraRangeQ", subSubMenu.AddLinkedSlider("Extra range for Q", 200, 0, 200));
             ProcessLink("harassUseW", subMenu.AddLinkedBool("Use W"));
             ProcessLink("harassUseE", subMenu.AddLinkedBool("Use E"));
+            ProcessLink("harassMana", subMenu.AddLinkedSlider("Mana usage in percent (%)", 30));
             ProcessLink("harassActive", subMenu.AddLinkedKeyBind("Harass active", 'C', KeyBindType.Press));
 
             // ----- WaveClear
@@ -94,6 +95,7 @@ namespace Xerath
             ProcessLink("waveNumQ", subMenu.AddLinkedSlider("Hit number for Q", 3, 1, 10));
             ProcessLink("waveUseW", subMenu.AddLinkedBool("Use W"));
             ProcessLink("waveNumW", subMenu.AddLinkedSlider("Hit number for W", 3, 1, 10));
+            ProcessLink("waveMana", subMenu.AddLinkedSlider("Mana usage in percent (%)", 30));
             ProcessLink("waveActive", subMenu.AddLinkedKeyBind("WaveClear active", 'V', KeyBindType.Press));
 
             // ----- JungleClear

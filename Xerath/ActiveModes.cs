@@ -48,7 +48,7 @@ namespace Xerath
                 if (killableTargets.Count() > 0)
                 {
                     lastAltert = Environment.TickCount;
-                    var time = TimeSpan.FromSeconds(Game.Time);
+                    var time = TimeSpan.FromSeconds(Game.ClockTime);
                     Game.PrintChat(string.Format("[{0}:{1:D2}] Targets killable: {2}", Math.Floor(time.TotalMinutes), time.Seconds, string.Join(", ", killableTargets.Select(t => t.ChampionName))));
                 }
             }
@@ -215,6 +215,10 @@ namespace Xerath
 
         public static void OnHarass()
         {
+            // Check mana
+            if (Config.SliderLinks["harassMana"].Value.Value > player.ManaPercentage())
+                return;
+
             if (Q.IsEnabledAndReady(Mode.HARASS))
             {
                 var target = TargetSelector.GetTarget(Q.ChargedMaxRange, TargetSelector.DamageType.Magical);
@@ -253,6 +257,10 @@ namespace Xerath
 
         public static void OnWaveClear()
         {
+            // Check mana
+            if (Config.SliderLinks["waveMana"].Value.Value > player.ManaPercentage())
+                return;
+
             // Validate Q and W are ready
             if (!Q.IsEnabledAndReady(Mode.WAVE) && !W.IsEnabledAndReady(Mode.WAVE))
                 return;
