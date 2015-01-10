@@ -72,8 +72,12 @@ namespace Xerath
             foreach (var circleLink in Config.CircleLinks.Values)
             {
                 if (circleLink.Value.Active)
-                    Utility.DrawCircle(player.Position, circleLink.Value.Radius, circleLink.Value.Color);
+                    Render.Circle.DrawCircle(player.Position, circleLink.Value.Radius, circleLink.Value.Color);
             }
+
+            // Draw Q while charging
+            if (Config.CircleLinks["drawRangeQ"].Value.Active && SpellManager.Q.IsCharging && SpellManager.Q.Range < SpellManager.Q.ChargedMaxRange)
+                Render.Circle.DrawCircle(player.Position, SpellManager.Q.Range, Config.CircleLinks["drawRangeQ"].Value.Color);
         }
 
         private static void AntiGapcloser_OnEnemyGapcloser(ActiveGapcloser gapcloser)
