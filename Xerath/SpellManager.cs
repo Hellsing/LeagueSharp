@@ -75,17 +75,14 @@ namespace Xerath
             }
         }
 
+        private static float previousLevel = 0;
         private static void Game_OnGameUpdate(EventArgs args)
         {
             // Adjust R range
-            switch (R.Level)
+            if (previousLevel < R.Level)
             {
-                case 2:
-                    R.Range = 4400;
-                    break;
-                case 3:
-                    R.Range = 5600;
-                    break;
+                R.Range = 2000 + 1200 * R.Level;
+                previousLevel = R.Level;
             }
         }
 
