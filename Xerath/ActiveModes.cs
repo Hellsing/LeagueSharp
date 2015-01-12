@@ -292,8 +292,7 @@ namespace Xerath
                         else
                         {
                             // Check if we can hit more minions
-                            var farest = minions.Max(m => m.Distance(player, true));
-                            if (farest < Q.Range)
+                            if (minions.Max(m => m.Distance(player, true)) < Q.Range)
                                 Q.Cast(farmLocation.Position);
                         }
                     }
