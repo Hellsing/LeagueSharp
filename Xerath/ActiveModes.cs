@@ -292,7 +292,7 @@ namespace Xerath
                         else
                         {
                             // Check if we can hit more minions
-                            if (minions.Max(m => m.Distance(player, true)) < Q.Range)
+                            if (minions.Max(m => m.Distance(player, true)) < Q.RangeSqr)
                                 Q.Cast(farmLocation.Position);
                         }
                     }
