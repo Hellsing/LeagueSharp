@@ -51,19 +51,19 @@ namespace Lissandra
         public static void Initialize()
         {
             // Initialize the spells
-            Q = new Spell(SpellSlot.Q, 715);
+            Q = new Spell(SpellSlot.Q, 700);
             W = new Spell(SpellSlot.W, 440);
             E = new Spell(SpellSlot.E, 1050);
             R = new Spell(SpellSlot.R, 550);
 
             // Finetune spells
-            Q.SetSkillshot(0.25f, 75, 1200, true, SkillshotType.SkillshotLine);
+            Q.SetSkillshot(0.25f, 75, 2250, true, SkillshotType.SkillshotLine);
             W.Delay = 0.25f;
             E.SetSkillshot(0.25f, 110, 850, false, SkillshotType.SkillshotLine);
             R.SetSkillshot(0.25f, 690, 800, false, SkillshotType.SkillshotCircle);
 
             // Special case for Q shards
-            ShardQ = new Spell(SpellSlot.Q, 900);
+            ShardQ = new Spell(SpellSlot.Q, 850);
             ShardQ.SetSkillshot(Q.Delay, 90, Q.Speed, false, SkillshotType.SkillshotLine);
 
             // Listen to the OnProcessSpellCast event because we need to handle E
