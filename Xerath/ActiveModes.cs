@@ -290,7 +290,12 @@ namespace Xerath
                         if (!Q.IsCharging)
                             Q.StartCharging();
                         else
-                            Q.Cast(farmLocation.Position);
+                        {
+                            // Check if we can hit more minions
+                            var farest = minions.Max(m => m.Distance(player, true));
+                            if (farest < Q.Range)
+                                Q.Cast(farmLocation.Position);
+                        }
                     }
                 }
             }
