@@ -48,6 +48,7 @@ namespace Kalista
             Obj_AI_Base.OnProcessSpellCast += Obj_AI_Base_OnProcessSpellCast;
             CustomEvents.Unit.OnDash += Unit_OnDash;
             Orbwalking.AfterAttack += ActiveModes.Orbwalking_AfterAttack;
+            Orbwalking.OnNonKillableMinion += Orbwalking_OnNonKillableMinion;
         }
 
         private static void Game_OnGameUpdate(EventArgs args)
@@ -78,12 +79,30 @@ namespace Kalista
             }
         }
 
+        private static void Orbwalking_OnNonKillableMinion(AttackableUnit minion)
+        {
+            // Check if the minion has some rend stacks
+            if (minion is Obj_AI_Base)
+            {
+                // Check if minion is killable with E
+                var target = minion as Obj_AI_Base;
+                if (target.IsRendKillable() && SpellManager.E.IsReady())
+                {
+                    // Cast since it's killable with E
+                    SpellManager.E.Cast();
+                }
+            }
+        }
+
         private static void Obj_AI_Base_OnProcessSpellCast(Obj_AI_Base sender, GameObjectProcessSpellCastEventArgs args)
         {
             if (sender.IsMe)
             {
+                // Auto attack
+                if (args.SData.IsAutoAttack())
+                    Orbwalking.ResetAutoAttackTimer();
                 // E - Expunge
-                if (args.SData.Name == "KalistaExpungeWrapper")
+                else if (args.SData.Name == "KalistaExpungeWrapper")
                 {
                     // Make the orbwalker attack again, might get stuck after casting E
                     Utility.DelayAction.Add(250, Orbwalking.ResetAutoAttackTimer);
