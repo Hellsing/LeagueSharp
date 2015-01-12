@@ -94,13 +94,13 @@ namespace Lissandra
                     // Check if there is something to pass through when casting Q
                     ShardQ.Collision = true;
                     prediction = ShardQ.GetPrediction(target);
+                    // Reset the collision value
+                    ShardQ.Collision = false;
                     if (prediction.CollisionObjects.Count > 0)
                     {
                         // Cast Q
                         return castPos;
                     }
-                    // Reset the collision value
-                    ShardQ.Collision = false;
                 }
             }
 
