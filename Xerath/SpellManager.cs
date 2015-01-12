@@ -15,6 +15,9 @@ namespace Xerath
     {
         private static readonly Obj_AI_Hero player = ObjectManager.Player;
 
+        public delegate void TapKeyPressedEventHandler();
+        public static event TapKeyPressedEventHandler OnTapKeyPressed;
+
         public static Spell Q { get; private set; }
         public static Spell W { get; private set; }
         public static Spell E { get; private set; }
@@ -54,23 +57,21 @@ namespace Xerath
 
         static void Game_OnWndProc(WndEventArgs args)
         {
-            if (args.Msg == (uint)WindowsMessages.WM_KEYUP && args.WParam == Config.KeyLinks["ultSettingsKeyPress"].Value.Key)
+            if (IsCastingUlt && args.Msg == (uint)WindowsMessages.WM_KEYUP && args.WParam == Config.KeyLinks["ultSettingsKeyPress"].Value.Key)
             {
                 // Only handle the tap key if the mode is set to tap key
-                if (Config.StringListLinks["ultSettingsMode"].Value.SelectedIndex == 3)
+                switch (Config.StringListLinks["ultSettingsMode"].Value.SelectedIndex)
                 {
-                    // Check if ult is activated
-                    if (!IsCastingUlt && R.IsReady())
-                    {
-                        // Activate ult
-                        R.Cast();
-                        TapKeyPressed = false;
-                    }
-                    else if (IsCastingUlt)
-                    {
+                    // Auto
+                    case 3:
+                    // Near mouse
+                    case 4:
+
                         // Tap key has been pressed
+                        if (OnTapKeyPressed != null)
+                            OnTapKeyPressed();
                         TapKeyPressed = true;
-                    }
+                        break;
                 }
             }
         }
