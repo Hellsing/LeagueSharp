@@ -282,19 +282,23 @@ namespace Xerath
 
             if (Q.IsEnabledAndReady(Mode.WAVE))
             {
-                if (minions.Count >= Config.SliderLinks["waveNumQ"].Value.Value)
+                if (Q.IsCharging)
                 {
-                    var farmLocation = Q.GetLineFarmLocation(minions);
-                    if (farmLocation.MinionsHit >= Config.SliderLinks["waveNumQ"].Value.Value)
+                    // Check if we are on max range with the minions
+                    if (minions.Max(m => m.Distance(player, true)) < Q.RangeSqr)
                     {
-                        if (!Q.IsCharging)
-                            Q.StartCharging();
-                        else
-                        {
-                            // Check if we can hit more minions
-                            if (minions.Max(m => m.Distance(player, true)) < Q.RangeSqr)
-                                Q.Cast(farmLocation.Position);
-                        }
+                        // Check if we can hit more minions
+                        if (minions.Max(m => m.Distance(player, true)) < Q.RangeSqr)
+                            Q.Cast(Q.GetLineFarmLocation(minions).Position);
+                    }
+                }
+                else if (minions.Count >= Config.SliderLinks["waveNumQ"].Value.Value)
+                {
+                    // Check if we would hit enough minions
+                    if (Q.GetLineFarmLocation(minions).MinionsHit >= Config.SliderLinks["waveNumQ"].Value.Value)
+                    {
+                        // Start charging
+                        Q.StartCharging();
                     }
                 }
             }
