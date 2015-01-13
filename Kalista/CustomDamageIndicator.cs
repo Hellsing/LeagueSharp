@@ -9,7 +9,8 @@ using LeagueSharp;
 using LeagueSharp.Common;
 
 using SharpDX;
-using SharpDX.Direct3D9;
+
+using Color = System.Drawing.Color;
 
 namespace Kalista
 {
@@ -17,58 +18,39 @@ namespace Kalista
     // Removed unneeded stuff and improved the code to my needs
     public class CustomDamageIndicator
     {
-        private static bool initialized = false;
-        private const float BAR_WIDTH = 104;
-
-        private static readonly Line line = new Line(Drawing.Direct3DDevice) { Width = 9 };
+        private const int BAR_WIDTH = 104;
+        private const int LINE_THICKNESS = 4;
 
         private static Utility.HpBarDamageIndicator.DamageToUnitDelegate damageToUnit;
 
-        private static Vector2 BarOffset
-        {
-            get { return new Vector2(10, 20); }
-        }
+        private static readonly Vector2 BarOffset = new Vector2(10, 25);
 
-        private static ColorBGRA _colorBgra = new ColorBGRA(0x00, 0xFF, 0xFF, 90);
-        private static System.Drawing.Color _color = System.Drawing.Color.Aqua;
-        public static System.Drawing.Color Color
+        private static System.Drawing.Color _drawingColor;
+        public static System.Drawing.Color DrawingColor
         {
-            get { return _color; }
-            set
-            {
-                _color = value;
-                _colorBgra = new ColorBGRA(value.R, value.G, value.B, 90);
-            }
+            get { return Color.FromArgb(80, _drawingColor); }
+            set { _drawingColor = value; }
         }
 
         public static void Initialize(Utility.HpBarDamageIndicator.DamageToUnitDelegate damageToUnit)
         {
-            if (initialized)
-                return;
-
             // Apply needed field delegate for damage calculation
             CustomDamageIndicator.damageToUnit = damageToUnit;
-            Color = System.Drawing.Color.Aqua;
+            DrawingColor = System.Drawing.Color.OrangeRed;
 
             // Register event handlers
             Drawing.OnDraw += Drawing_OnDraw;
-            Drawing.OnPreReset += Drawing_OnPreReset;
-            Drawing.OnPostReset += Drawing_OnOnPostReset;
-            AppDomain.CurrentDomain.DomainUnload += OnProcessExit;
-            AppDomain.CurrentDomain.ProcessExit += OnProcessExit;
-
-            initialized = true;
         }
 
         private static void Drawing_OnDraw(EventArgs args)
         {
-            foreach (var unit in ObjectManager.Get<Obj_AI_Hero>().Where(u => u.IsValidTarget()))
+            foreach (var unit in ObjectManager.Get<Obj_AI_Hero>().Where(u => u.IsValidTarget() && u.IsHPBarRendered))
             {
                 // Get damage to unit
                 var damage = damageToUnit(unit);
 
                 // Continue on 0 damage
-                if (damage == 0)
+                if (damage <= 0)
                     continue;
 
                 // Get remaining HP after damage applied in percent and the current percent of health
@@ -79,26 +61,9 @@ namespace Kalista
                 var startPoint = new Vector2((int)(unit.HPBarPosition.X + BarOffset.X + damagePercentage * BAR_WIDTH), (int)(unit.HPBarPosition.Y + BarOffset.Y) + 4);
                 var endPoint = new Vector2((int)(unit.HPBarPosition.X + BarOffset.X + currentHealthPercentage * BAR_WIDTH) + 1, (int)(unit.HPBarPosition.Y + BarOffset.Y) + 4);
 
-                // Draw the DirectX line
-                line.Begin();
-                line.Draw(new[] { startPoint, endPoint }, _colorBgra);
-                line.End();
+                // Draw the line
+                Drawing.DrawLine(startPoint, endPoint, LINE_THICKNESS, DrawingColor);
             }
-        }
-
-        private static void Drawing_OnPreReset(EventArgs args)
-        {
-            line.OnLostDevice();
-        }
-
-        private static void Drawing_OnOnPostReset(EventArgs args)
-        {
-            line.OnResetDevice();
-        }
-
-        private static void OnProcessExit(object sender, EventArgs eventArgs)
-        {
-            line.Dispose();
         }
     }
 }
