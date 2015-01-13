@@ -65,7 +65,7 @@ namespace Kalista
             if (sender.IsEnemy)
             {
                 // Calculations to save your souldbound
-                if (SoulBound != null)
+                if (SoulBound != null && R.IsEnabled("misc"))
                 {
                     // Auto attacks
                     if ((!(sender is Obj_AI_Hero) || args.SData.IsAutoAttack()) && args.Target != null && args.Target.NetworkId == SoulBound.NetworkId)
