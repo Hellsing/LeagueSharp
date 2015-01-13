@@ -13,7 +13,7 @@ namespace Kalista
     {
         private static Obj_AI_Hero player = ObjectManager.Player;
         private static Spell R { get { return SpellManager.R; } }
-        public static Obj_AI_Hero SoulBound { get; set; }
+        public static Obj_AI_Hero SoulBound { get; private set; }
 
         private static Dictionary<float, float> _incomingDamage = new Dictionary<float, float>();
         private static Dictionary<float, float> _instantDamage = new Dictionary<float, float>();
@@ -31,35 +31,41 @@ namespace Kalista
 
         private static void Game_OnGameUpdate(EventArgs args)
         {
-            if (R.IsEnabledAndReady("misc"))
+            // SoulBound is not found yet!
+            if (SoulBound == null)
+            {
+                // TODO: Get the buff display name, I'm not at home so I needed to use xQx' method, which I don't like :D
+                SoulBound = ObjectManager.Get<Obj_AI_Hero>().FirstOrDefault(h => h.IsAlly && h.Buffs.Any(b => b.Caster.IsMe && b.Name.Contains("kalistacoopstrikeally")));
+            }
+            else if (R.IsEnabledAndReady("misc"))
             {
                 // Ult casting
-                if (SoulBound.HealthPercentage() < 10 && SoulBound.CountEnemysInRange(500) > 0 ||
+                if (SoulBound.HealthPercentage() < 5 && SoulBound.CountEnemysInRange(500) > 0 ||
                     IncomingDamage > SoulBound.Health)
                     R.Cast();
+            }
 
-                // Check spell arrival
-                foreach (var entry in _incomingDamage)
-                {
-                    if (entry.Key < Game.Time)
-                        _incomingDamage.Remove(entry.Key);
-                }
+            // Check spell arrival
+            foreach (var entry in _incomingDamage)
+            {
+                if (entry.Key < Game.Time)
+                    _incomingDamage.Remove(entry.Key);
+            }
 
-                // Instant damage removal
-                foreach (var entry in _instantDamage)
-                {
-                    if (entry.Key < Game.Time)
-                        _instantDamage.Remove(entry.Key);
-                }
+            // Instant damage removal
+            foreach (var entry in _instantDamage)
+            {
+                if (entry.Key < Game.Time)
+                    _instantDamage.Remove(entry.Key);
             }
         }
 
         private static void Obj_AI_Base_OnProcessSpellCast(Obj_AI_Base sender, GameObjectProcessSpellCastEventArgs args)
         {
-            if (sender.Team != player.Team)
+            if (sender.IsEnemy)
             {
                 // Calculations to save your souldbound
-                if (SoulBound != null && R.IsEnabledAndReady("misc"))
+                if (SoulBound != null)
                 {
                     // Auto attacks
                     if ((!(sender is Obj_AI_Hero) || args.SData.IsAutoAttack()) && args.Target != null && args.Target.NetworkId == SoulBound.NetworkId)
