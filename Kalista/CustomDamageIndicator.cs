@@ -28,8 +28,8 @@ namespace Kalista
         private static System.Drawing.Color _drawingColor;
         public static System.Drawing.Color DrawingColor
         {
-            get { return Color.FromArgb(80, _drawingColor); }
-            set { _drawingColor = value; }
+            get { return _drawingColor; }
+            set { _drawingColor = Color.FromArgb(80, value); }
         }
 
         public static void Initialize(Utility.HpBarDamageIndicator.DamageToUnitDelegate damageToUnit)
