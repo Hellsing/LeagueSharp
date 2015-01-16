@@ -13,11 +13,13 @@ namespace Kalista
 {
     public class VectorHelper
     {
+        private static readonly Obj_AI_Hero player = ObjectManager.Player;
+
         // Credits to furikuretsu from Stackoverflow (http://stackoverflow.com/a/10772759)
         // Modified for my needs
         #region ConeCalculations
 
-        public static bool IsLyingInCone(Vector2 position, Vector2 apexPoint, Vector2 circleCenter, float aperture)
+        public static bool IsLyingInCone(Vector2 position, Vector2 apexPoint, Vector2 circleCenter, double aperture)
         {
             // This is for our convenience
             float halfAperture = aperture / 2.0f;
@@ -73,7 +75,7 @@ namespace Kalista
             for (float d = 0; d < from.Distance(to); d = d + step)
             {
                 var testPoint = from + d * direction;
-                if (NavMesh.GetCollisionFlags(testPoint.X, testPoint.Y).HasFlag(CollisionFlags.Wall))
+                if (NavMesh.GetCollisionFlags(testPoint.X, testPoint.Y).HasFlag(CollisionFlags.Wall | CollisionFlags.Building))
                 {
                     return from + (d - step) * direction;
                 }
@@ -84,27 +86,15 @@ namespace Kalista
 
         public static List<Obj_AI_Base> GetDashObjects(IEnumerable<Obj_AI_Base> predefinedObjectList = null)
         {
-            float realAArange = Orbwalking.GetRealAutoAttackRange(ObjectManager.Player);
-
             List<Obj_AI_Base> objects;
             if (predefinedObjectList != null)
                 objects = predefinedObjectList.ToList();
             else
-                objects = ObjectManager.Get<Obj_AI_Base>().Where(o => o.IsValidTarget(realAArange)).ToList();
+                objects = ObjectManager.Get<Obj_AI_Base>().Where(o => o.IsValidTarget(Orbwalking.GetRealAutoAttackRange(o))).ToList();
 
-            Vector2 apexPoint = ObjectManager.Player.ServerPosition.To2D() + (ObjectManager.Player.ServerPosition.To2D() - Game.CursorPos.To2D()).Normalized() * realAArange;
+            var apexPoint = player.ServerPosition.To2D() + (player.ServerPosition.To2D() - Game.CursorPos.To2D()).Normalized() * Orbwalking.GetRealAutoAttackRange(player);
 
-            List<Obj_AI_Base> targets = new List<Obj_AI_Base>();
-
-            foreach (var obj in objects)
-            {
-                if (VectorHelper.IsLyingInCone(obj.ServerPosition.To2D(), apexPoint, ObjectManager.Player.ServerPosition.To2D(), realAArange))
-                    targets.Add(obj);
-            }
-
-            targets.Sort((t1, t2) => t1.Distance(apexPoint, true).CompareTo(t2.Distance(apexPoint, true)));
-
-            return targets;
+            return objects.Where(o => VectorHelper.IsLyingInCone(o.ServerPosition.To2D(), apexPoint, player.ServerPosition.To2D(), Math.PI)).OrderBy(o => o.Distance(apexPoint, true)).ToList();
         }
     }
 }
