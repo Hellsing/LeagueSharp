@@ -98,10 +98,10 @@ namespace Kalista
         {
             if (sender.IsMe)
             {
-                // E - Expunge
-                if (args.SData.Name == "KalistaExpungeWrapper")
+                // Rend | AutoAttack
+                if (args.SData.Name == "KalistaExpungeWrapper" || args.SData.IsAutoAttack())
                 {
-                    // Make the orbwalker attack again, might get stuck after casting E
+                    // Make the orbwalker attack again, might get stuck after casting E or auto-attacking
                     Utility.DelayAction.Add(250, Orbwalking.ResetAutoAttackTimer);
                 }
             }
