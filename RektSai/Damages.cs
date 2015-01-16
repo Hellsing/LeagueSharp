@@ -65,7 +65,7 @@ namespace Rekt_Sai
                     if (state == BurrowState.UNBURROWED || state == BurrowState.AUTOMATIC && !player.IsBurrowed())
                     {
                         // Rek'Sai's next 3 basic attacks within 5 seconds deal 15/30/45/60/75 (+0.3) bonus Physical Damage to nearby enemies.
-                        damage = new float[] { 15, 30, 45, 60, 75 }[spellLevel] + 0.4f * player.TotalAttackDamage();
+                        damage = new float[] { 15, 30, 45, 60, 75 }[spellLevel] + 0.3f * player.TotalAttackDamage();
                         extraDamage = (float)player.GetAutoAttackDamage(target);
                     }
                     else
