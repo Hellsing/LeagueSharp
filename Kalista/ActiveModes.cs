@@ -68,16 +68,10 @@ namespace Kalista
             // Always E on big mobs
             if (E.IsReady() && Config.BoolLinks["miscBigE"].Value)
             {
-                // Get big mobs
-                var mobs = ObjectManager.Get<Obj_AI_Minion>().Where(m => m.IsValidTarget(E.Range) && (m.BaseSkinName.Contains("MinionSiege") || m.BaseSkinName.Contains("Dragon") || m.BaseSkinName.Contains("Baron")));
-                foreach (var mob in mobs)
+                // Check if a big minion could die from the E
+                if (ObjectManager.Get<Obj_AI_Minion>().Any(m => m.IsValidTarget(E.Range) && (m.BaseSkinName.Contains("MinionSiege") || m.BaseSkinName.Contains("Dragon") || m.BaseSkinName.Contains("Baron")) && m.IsRendKillable()))
                 {
-                    if (mob.IsRendKillable())
-                    {
-                        // On first big mob which can die with E, use E
-                        E.Cast(true);
-                        break;
-                    }
+                    E.Cast(true);
                 }
             }
 
@@ -97,47 +91,55 @@ namespace Kalista
             if (!Q.IsEnabled(Mode.COMBO) && !E.IsEnabled(Mode.COMBO))
                 return;
 
-            var target = TargetSelector.GetTarget(Q.IsEnabledAndReady(Mode.COMBO) ? Q.Range : E.Range * 1.2f, TargetSelector.DamageType.Physical);
+            var target = TargetSelector.GetTarget(Q.IsEnabledAndReady(Mode.COMBO) ? Q.Range : (E.Range * 1.2f), TargetSelector.DamageType.Physical);
             if (target != null)
             {
                 // Q usage
-                if (Q.IsEnabledAndReady(Mode.COMBO) && Q.InRange(target) && !player.IsDashing())
+                if (Q.IsEnabledAndReady(Mode.COMBO) && !player.IsDashing())
                     Q.Cast(target);
 
                 // E usage
-                if (E.IsEnabled(Mode.COMBO) && (E.Instance.State.HasFlag(SpellState.Ready | SpellState.Surpressed)))
+                if (E.IsEnabled(Mode.COMBO) && (E.Instance.State == SpellState.Ready || E.Instance.State == SpellState.Surpressed) && target.HasRendBuff())
                 {
                     // Target is not in range but has E stacks on
-                    if (player.Distance(target, true) > Math.Pow(Orbwalking.GetRealAutoAttackRange(player), 2) && target.HasRendBuff())
+                    if (player.Distance(target, true) > Math.Pow(Orbwalking.GetRealAutoAttackRange(target), 2))
                     {
                         // Get minions around
-                        var minions = ObjectManager.Get<Obj_AI_Minion>().Where(m => m.IsValidTarget(Orbwalking.GetRealAutoAttackRange(player)));
+                        var minions = ObjectManager.Get<Obj_AI_Minion>().Where(m => m.IsValidTarget(Orbwalking.GetRealAutoAttackRange(m)));
 
                         // Check if a minion can die with the current E stacks
                         if (minions.Any(m => m.IsRendKillable()))
+                        {
                             E.Cast(true);
+                        }
                         else
                         {
                             // Check if a minion can die with one AA and E. Also, the AA minion has be be behind the player direction for a further leap
                             var minion = VectorHelper.GetDashObjects(minions).FirstOrDefault(m => m.Health > player.GetAutoAttackDamage(m) && m.Health < player.GetAutoAttackDamage(m) + Damages.GetRendDamage(m, 1));
                             if (minion != null)
+                            {
                                 Config.Menu.Orbwalker.ForceTarget(minion);
+                            }
                         }
                     }
-
                     // Target is in range and has at least the set amount of E stacks on
-                    if (E.InRange(target.ServerPosition) &&
-                        (target.IsRendKillable() || target.HasRendBuff() && target.GetRendBuff().Count >= Config.SliderLinks["comboNumE"].Value.Value))
+                    else if (E.IsInRange(target) &&
+                        (target.IsRendKillable() || target.GetRendBuff().Count >= Config.SliderLinks["comboNumE"].Value.Value))
                     {
-                        var buff = target.GetRendBuff();
-
                         // Check if the target would die from E
                         if (target.IsRendKillable())
+                        {
                             E.Cast(true);
-                        // Check if target is about to leave our E range or the buff is about to run out
-                        else if (target.ServerPosition.Distance(player.Position, true) > Math.Pow(E.Range * 0.8, 2) ||
-                            buff.EndTime - Game.Time < 0.3)
-                            E.Cast(true);
+                        }
+                        else
+                        {
+                            // Check if target is about to leave our E range or the buff is about to run out
+                            if (target.ServerPosition.Distance(player.ServerPosition, true) > Math.Pow(E.Range * 0.8, 2) ||
+                                target.GetRendBuff().EndTime - Game.Time < 0.3)
+                            {
+                                E.Cast(true);
+                            }
+                        }
                     }
                 }
             }
@@ -151,7 +153,7 @@ namespace Kalista
                 if (player.ManaPercentage() < Config.SliderLinks["harassMana"].Value.Value)
                     return;
 
-                var target = TargetSelector.GetTarget(Q.Range, TargetSelector.DamageType.Physical);
+                var target = Q.GetTarget();
                 if (target != null)
                     Q.Cast(target);
             }
@@ -163,18 +165,25 @@ namespace Kalista
             if (player.ManaPercentage() < Config.SliderLinks["waveMana"].Value.Value)
                 return;
 
+            // Check spells
+            if (!Q.IsEnabledAndReady(Mode.WAVE) && !E.IsEnabledAndReady(Mode.WAVE))
+                return;
+
+            // Minions around
+            var minions = MinionManager.GetMinions(Q.Range, MinionTypes.All, MinionTeam.Enemy, MinionOrderTypes.MaxHealth);
+            if (minions.Count == 0)
+                return;
+
             // Q usage
             if (Q.IsEnabledAndReady(Mode.WAVE) && !player.IsDashing())
             {
                 int hitNumber = Config.SliderLinks["waveNumQ"].Value.Value;
 
-                // Get minions in range
-                var minions = ObjectManager.Get<Obj_AI_Minion>().Where(m => m.BaseSkinName.Contains("Minion") && m.IsValidTarget(Q.Range)).ToList();
-
+                // Validate available minions
                 if (minions.Count >= hitNumber)
                 {
                     // Sort by distance
-                    minions.Sort((m1, m2) => m2.Distance(player, true).CompareTo(m1.Distance(player, true)));
+                    minions.OrderBy(m => m.Distance(player, true));
 
                     // Helpers
                     int bestHitCount = 0;
@@ -184,17 +193,21 @@ namespace Kalista
                     {
                         var prediction = Q.GetPrediction(minion);
 
+                        // Validate prediction
+                        if (prediction.Hitchance == HitChance.Collision)
+                            continue;
+
                         // Get targets being hit with colliding Q
                         var targets = prediction.CollisionObjects;
                         // Sort them by distance
-                        targets.Sort((t1, t2) => t1.Distance(player, true).CompareTo(t2.Distance(player, true)));
+                        targets.OrderBy(t => t.Distance(player, true));
                         // Add the initial minion as it won't be in the list
                         targets.Add(minion);
 
                         // Loop through the next targets to see if they will die with the Q hitting
                         for (int i = 0; i < targets.Count; i++)
                         {
-                            if (player.GetSpellDamage(targets[i], SpellSlot.Q) * 0.9 < targets[i].Health || i == targets.Count)
+                            if (player.GetSpellDamage(targets[i], SpellSlot.Q) < targets[i].Health || i == targets.Count)
                             {
                                 // Can't kill this minion, check result so far
                                 if (i >= hitNumber && (bestResult == null || bestHitCount < i))
@@ -220,21 +233,22 @@ namespace Kalista
             {
                 int hitNumber = Config.SliderLinks["waveNumE"].Value.Value;
 
-                // Get surrounding
-                var minions = ObjectManager.Get<Obj_AI_Minion>().Where(m => m.IsValidTarget(E.Range) && m.BaseSkinName.Contains("Minion")).ToList();
+                // Get minions in E range
+                var minionsInRange = minions.Where(m => E.IsInRange(m));
 
-                if (minions.Count >= hitNumber)
+                // Validate available minions
+                if (minionsInRange.Count() >= hitNumber)
                 {
                     // Check if enough minions die with E
-                    int conditionMet = 0;
-                    foreach (var minion in minions)
+                    int killableNum = 0;
+                    foreach (var minion in minionsInRange)
                     {
                         if (minion.IsRendKillable())
-                            conditionMet++;
+                            killableNum++;
                     }
 
                     // Cast on condition met
-                    if (conditionMet >= hitNumber)
+                    if (killableNum >= hitNumber)
                         E.Cast(true);
                 }
             }
@@ -245,7 +259,7 @@ namespace Kalista
             if (E.IsEnabledAndReady(Mode.JUNGLE))
             {
                 // Get a jungle mob that can die with E
-                var minion = MinionManager.GetMinions(player.Position, E.Range, MinionTypes.All, MinionTeam.Neutral).FirstOrDefault(m => m.IsRendKillable());
+                var minion = MinionManager.GetMinions(E.Range, MinionTypes.All, MinionTeam.Neutral).FirstOrDefault(m => m.IsRendKillable());
                 if (minion != null)
                     E.Cast(true);
             }

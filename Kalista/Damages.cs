@@ -39,10 +39,10 @@ namespace Kalista
             // Get buff
             var buff = target.GetRendBuff();
 
-            if (buff != null || customStacks != -1)
+            if (buff != null || customStacks > -1)
             {
                 return (rawRendDamage[SpellManager.E.Level - 1] + rawRendDamageMultiplier[SpellManager.E.Level - 1] * player.TotalAttackDamage()) + // Base damage
-                       ((customStacks == -1 ? buff.Count : customStacks) - 1) * // Spear count
+                       ((customStacks < 0 ? buff.Count : customStacks) - 1) * // Spear count
                        (rawRendDamagePerSpear[SpellManager.E.Level - 1] + rawRendDamagePerSpearMultiplier[SpellManager.E.Level - 1] * player.TotalAttackDamage()); // Damage per spear
             }
 

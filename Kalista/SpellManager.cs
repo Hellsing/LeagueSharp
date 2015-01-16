@@ -42,10 +42,5 @@ namespace Kalista
         {
             return spell.IsEnabled(mode) && spell.IsReady();
         }
-
-        public static Obj_AI_Hero GetTarget(this Spell spell, float extraRange = 0)
-        {
-            return TargetSelector.GetTarget(spell.Range + extraRange, TargetSelector.DamageType.Physical);
-        }
     }
 }
