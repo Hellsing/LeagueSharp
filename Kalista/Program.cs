@@ -123,12 +123,12 @@ namespace Kalista
             foreach (var circle in Config.CircleLinks.Values.Select(link => link.Value))
             {
                 if (circle.Active)
-                    Utility.DrawCircle(player.Position, circle.Radius, circle.Color);
+                    Render.Circle.DrawCircle(player.Position, circle.Radius, circle.Color);
             }
 
             // Flee position the player moves to
             if (ActiveModes.fleeTargetPosition.HasValue)
-                Utility.DrawCircle(ActiveModes.fleeTargetPosition.Value, 50, ActiveModes.wallJumpPossible ? Color.Green : SpellManager.Q.IsReady() ? Color.Red : Color.Teal, 10);
+                Render.Circle.DrawCircle(ActiveModes.fleeTargetPosition.Value, 50, ActiveModes.wallJumpPossible ? Color.Green : SpellManager.Q.IsReady() ? Color.Red : Color.Teal, 10);
         }
     }
 }
