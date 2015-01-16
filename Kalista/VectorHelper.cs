@@ -22,7 +22,7 @@ namespace Kalista
         public static bool IsLyingInCone(Vector2 position, Vector2 apexPoint, Vector2 circleCenter, double aperture)
         {
             // This is for our convenience
-            float halfAperture = aperture / 2.0f;
+            double halfAperture = aperture / 2;
 
             // Vector pointing to X point from apex
             Vector2 apexToXVect = apexPoint - position;
