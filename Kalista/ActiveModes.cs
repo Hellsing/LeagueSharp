@@ -183,7 +183,7 @@ namespace Kalista
                 if (minions.Count >= hitNumber)
                 {
                     // Sort by distance
-                    minions.OrderBy(m => m.Distance(player, true));
+                    minions.OrderByDescending(m => m.Distance(player, true));
 
                     // Helpers
                     int bestHitCount = 0;
@@ -193,8 +193,8 @@ namespace Kalista
                     {
                         var prediction = Q.GetPrediction(minion);
 
-                        // Validate prediction
-                        if (prediction.Hitchance == HitChance.Collision)
+                        // Validate prediction and collision objects
+                        if (prediction.Hitchance == HitChance.Collision || prediction.CollisionObjects.Count < hitNumber)
                             continue;
 
                         // Get targets being hit with colliding Q
