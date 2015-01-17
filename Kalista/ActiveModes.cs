@@ -56,7 +56,7 @@ namespace Kalista
             // Check killsteal
             if (E.IsReady() && Config.BoolLinks["miscKillstealE"].Value)
             {
-                var target = ObjectManager.Get<Obj_AI_Hero>().FirstOrDefault(h => h.IsValidTarget(E.Range) && h.IsRendKillable());
+                var target = ObjectManager.Get<Obj_AI_Hero>().Find(h => h.IsValidTarget(E.Range) && h.IsRendKillable());
                 if (target != null)
                     E.Cast(true);
             }
@@ -115,7 +115,7 @@ namespace Kalista
                         else
                         {
                             // Check if a minion can die with one AA and E. Also, the AA minion has be be behind the player direction for a further leap
-                            var minion = VectorHelper.GetDashObjects(minions).FirstOrDefault(m => m.Health > player.GetAutoAttackDamage(m) && m.Health < player.GetAutoAttackDamage(m) + Damages.GetRendDamage(m, 1));
+                            var minion = VectorHelper.GetDashObjects(minions).Find(m => m.Health > player.GetAutoAttackDamage(m) && m.Health < player.GetAutoAttackDamage(m) + Damages.GetRendDamage(m, 1));
                             if (minion != null)
                             {
                                 Config.Menu.Orbwalker.ForceTarget(minion);
@@ -259,7 +259,7 @@ namespace Kalista
             if (E.IsEnabledAndReady(Mode.JUNGLE))
             {
                 // Get a jungle mob that can die with E
-                var minion = MinionManager.GetMinions(E.Range, MinionTypes.All, MinionTeam.Neutral).FirstOrDefault(m => m.IsRendKillable());
+                var minion = MinionManager.GetMinions(E.Range, MinionTypes.All, MinionTeam.Neutral).Find(m => m.IsRendKillable());
                 if (minion != null)
                     E.Cast(true);
             }

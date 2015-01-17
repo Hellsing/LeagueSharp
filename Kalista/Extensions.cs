@@ -20,7 +20,7 @@ namespace Kalista
 
         public static BuffInstance GetRendBuff(this Obj_AI_Base target)
         {
-            return target.Buffs.FirstOrDefault(b => b.DisplayName == E_BUFF_NAME);
+            return target.Buffs.Find(b => b.DisplayName == E_BUFF_NAME);
         }
     }
 }
