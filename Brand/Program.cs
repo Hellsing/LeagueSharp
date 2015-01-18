@@ -1,35 +1,32 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
 using LeagueSharp;
 using LeagueSharp.Common;
-
-using SharpDX;
-
-using Color = System.Drawing.Color;
 
 namespace Brand
 {
     public static class Program
     {
         public const string CHAMP_NAME = "Brand";
-        public static Obj_AI_Hero player = ObjectManager.Player;
-
-        public static Spell Q, W, E, R;
-        public static readonly List<Spell> spellList = new List<Spell>();
-
         private const int BOUNCE_RADIUS = 450;
-
-        public static MenuWrapper menu;
-
+        public static Obj_AI_Hero Player = ObjectManager.Player;
+        public static Spell Q, W, E, R;
+        public static readonly List<Spell> SpellList = new List<Spell>();
+        public static MenuWrapper Menu;
         // Menu links
-        internal static Dictionary<string, MenuWrapper.BoolLink> boolLinks = new Dictionary<string, MenuWrapper.BoolLink>();
-        internal static Dictionary<string, MenuWrapper.CircleLink> circleLinks = new Dictionary<string, MenuWrapper.CircleLink>();
-        internal static Dictionary<string, MenuWrapper.KeyBindLink> keyLinks = new Dictionary<string, MenuWrapper.KeyBindLink>();
-        internal static Dictionary<string, MenuWrapper.SliderLink> sliderLinks = new Dictionary<string, MenuWrapper.SliderLink>();
+        internal static Dictionary<string, MenuWrapper.BoolLink> BoolLinks =
+            new Dictionary<string, MenuWrapper.BoolLink>();
+
+        internal static Dictionary<string, MenuWrapper.CircleLink> CircleLinks =
+            new Dictionary<string, MenuWrapper.CircleLink>();
+
+        internal static Dictionary<string, MenuWrapper.KeyBindLink> KeyLinks =
+            new Dictionary<string, MenuWrapper.KeyBindLink>();
+
+        internal static Dictionary<string, MenuWrapper.SliderLink> SliderLinks =
+            new Dictionary<string, MenuWrapper.SliderLink>();
 
         public static void Main(string[] args)
         {
@@ -39,7 +36,7 @@ namespace Brand
         private static void Game_OnGameLoad(EventArgs args)
         {
             // Validate champ, detuks should do this everywhere :D
-            if (player.ChampionName != CHAMP_NAME)
+            if (Player.ChampionName != CHAMP_NAME)
                 return;
 
             // Initialize spells
@@ -49,7 +46,7 @@ namespace Brand
             R = new Spell(SpellSlot.R, 750);
 
             // Add to spell list
-            spellList.AddRange(new[] { Q, W, E, R });
+            SpellList.AddRange(new[] {Q, W, E, R});
 
             // Finetune spells
             Q.SetSkillshot(0.25f, 80, 1200, true, SkillshotType.SkillshotLine);
@@ -72,17 +69,17 @@ namespace Brand
         private static void Game_OnGameUpdate(EventArgs args)
         {
             // Combo
-            if (keyLinks["comboActive"].Value.Active)
+            if (KeyLinks["comboActive"].Value.Active)
                 OnCombo();
             // Harass
-            if (keyLinks["harassActive"].Value.Active)
+            if (KeyLinks["harassActive"].Value.Active)
                 OnHarass();
             // WaveClear
-            if (keyLinks["waveActive"].Value.Active)
+            if (KeyLinks["waveActive"].Value.Active)
                 OnWaveClear();
 
             // Toggles
-            if (boolLinks["harassToggleW"].Value && W.IsReady())
+            if (BoolLinks["harassToggleW"].Value && W.IsReady())
             {
                 var target = TargetSelector.GetTarget(W.Range + W.Width, TargetSelector.DamageType.Magical);
                 if (target != null)
@@ -100,26 +97,22 @@ namespace Brand
                 return;
 
             // Spell usage
-            bool useQ = boolLinks["comboUseQ"].Value;
-            bool useW = boolLinks["comboUseW"].Value;
-            bool useE = boolLinks["comboUseE"].Value;
-            bool useR = boolLinks["comboUseR"].Value;
+            var useQ = BoolLinks["comboUseQ"].Value;
+            var useW = BoolLinks["comboUseW"].Value;
+            var useE = BoolLinks["comboUseE"].Value;
+            var useR = BoolLinks["comboUseR"].Value;
 
             // Killable status
             bool mainComboKillable = target.IsMainComboKillable();
             bool bounceComboKillable = target.IsBounceComboKillable();
-            bool inMinimumRange = E.InRange(target.ServerPosition);
+            var inMinimumRange = E.InRange(target.ServerPosition);
 
             // Ignite auto cast if killable, bitch please
-            if (mainComboKillable && player.HasIgnite())
-                player.Spellbook.CastSpell(player.GetSpellSlot("SummonerDot"), target);
+            if (mainComboKillable && Player.HasIgnite())
+                Player.Spellbook.CastSpell(Player.GetSpellSlot("SummonerDot"), target);
 
-            foreach (var spell in spellList)
+            foreach (var spell in SpellList.Where(spell => spell.IsReady()))
             {
-                // Continue if spell not ready
-                if (!spell.IsReady())
-                    continue;
-
                 // Q
                 if (spell.Slot == SpellSlot.Q && useQ)
                 {
@@ -127,8 +120,10 @@ namespace Brand
                         (!useW && !useE) || // Casting when not using W and E
                         (target.IsAblazed()) || // Ablazed
                         (Q.IsKillable(target)) || // Killable
-                        (useW && !useE && !W.IsReady(250) && W.IsReady((int)(Q.Cooldown() * 1000))) || // Cooldown substraction W ready
-                        ((useE && !useW || useW && useE) && !E.IsReady(250) && E.IsReady((int)(Q.Cooldown() * 1000)))) // Cooldown substraction E ready
+                        (useW && !useE && !W.IsReady(250) && W.IsReady((int) (Q.Cooldown()*1000))) ||
+                        // Cooldown substraction W ready
+                        ((useE && !useW || useW && useE) && !E.IsReady(250) && E.IsReady((int) (Q.Cooldown()*1000))))
+                        // Cooldown substraction E ready
                     {
                         // Cast Q on high hitchance
                         Q.CastIfHitchanceEquals(target, HitChance.High);
@@ -141,8 +136,8 @@ namespace Brand
                         (!useE) || // Casting when not using E
                         (target.IsAblazed()) || // Ablazed
                         (W.IsKillable(target)) || // Killable
-                        (target.ServerPosition.Distance(player.Position, true) > Math.Pow(E.Range + 100, 2)) ||
-                        (!E.IsReady() && E.IsReady((int)(W.Cooldown() * 1000)))) // Cooldown substraction E ready
+                        (target.ServerPosition.Distance(Player.Position, true) > Math.Pow(E.Range + 100, 2)) ||
+                        (!E.IsReady() && E.IsReady((int) (W.Cooldown()*1000)))) // Cooldown substraction E ready
                     {
                         // Cast W on high hitchance
                         W.CastIfHitchanceEquals(target, HitChance.High);
@@ -152,38 +147,48 @@ namespace Brand
                 else if (spell.Slot == SpellSlot.E && useE)
                 {
                     // Distance check
-                    if (E.InRange(target.ServerPosition))
+                    if (!E.InRange(target.ServerPosition))
+                        continue;
+
+                    if ((mainComboKillable) || // Main combo killable
+                        (!useQ && !useW) || // Casting when not using Q and W
+                        (E.Level >= 4) || // E level high, damage output higher
+                        (useQ && (Q.IsReady(250) || Q.Cooldown() < 5)) || // Q ready
+                        (useW && W.IsReady(250))) // W ready
                     {
-                        if ((mainComboKillable) || // Main combo killable
-                            (!useQ && !useW) || // Casting when not using Q and W
-                            (E.Level >= 4) || // E level high, damage output higher
-                            (useQ && (Q.IsReady(250) || Q.Cooldown() < 5)) || // Q ready
-                            (useW && W.IsReady(250))) // W ready
-                        {
-                            // Cast E on target
-                            E.CastOnUnit(target, true);
-                        }
+                        // Cast E on target
+                        E.CastOnUnit(target, true);
                     }
                 }
                 // R
                 else if (spell.Slot == SpellSlot.R && useR)
                 {
                     // Distance check
-                    if (R.InRange(target.ServerPosition))
-                    {
-                        // Logic prechecks
-                        if ((useQ && Q.IsReady() && Q.GetPrediction(target).Hitchance == HitChance.High || useW && W.IsReady()) && player.Health / player.MaxHealth > 0.25f)
-                            continue;
+                    if (!R.InRange(target.ServerPosition))
+                        continue;
 
-                        // Single hit
-                        if (mainComboKillable && inMinimumRange || R.IsKillable(target))
+                    // Logic prechecks
+                    if ((useQ && Q.IsReady() && Q.GetPrediction(target).Hitchance == HitChance.High ||
+                         useW && W.IsReady()) && Player.Health/Player.MaxHealth > 0.25f)
+                        continue;
+
+                    // Single hit
+                    if (mainComboKillable && inMinimumRange || R.IsKillable(target))
+                        R.CastOnUnit(target);
+
+                    // Double bounce combo
+                    else if (bounceComboKillable && inMinimumRange || R.GetDamage(target)*2 > target.Health)
+                    {
+                        if (
+                            ObjectManager.Get<Obj_AI_Base>()
+                                .Count(
+                                    enemy =>
+                                        (enemy.Type == GameObjectType.obj_AI_Minion ||
+                                         enemy.NetworkId != target.NetworkId && enemy.Type == GameObjectType.obj_AI_Hero) &&
+                                        enemy.IsValidTarget() &&
+                                        enemy.ServerPosition.Distance(target.ServerPosition, true) <
+                                        BOUNCE_RADIUS*BOUNCE_RADIUS) > 0)
                             R.CastOnUnit(target);
-                        // Double bounce combo
-                        else if (bounceComboKillable && inMinimumRange || R.GetDamage(target) * 2 > target.Health)
-                        {
-                            if (ObjectManager.Get<Obj_AI_Base>().Count(enemy => (enemy.Type == GameObjectType.obj_AI_Minion || enemy.NetworkId != target.NetworkId && enemy.Type == GameObjectType.obj_AI_Hero) && enemy.IsValidTarget() && enemy.ServerPosition.Distance(target.ServerPosition, true) < BOUNCE_RADIUS * BOUNCE_RADIUS) > 0)
-                                R.CastOnUnit(target);
-                        }
                     }
                 }
             }
@@ -199,24 +204,22 @@ namespace Brand
                 return;
 
             // Spell usage
-            bool useQ = boolLinks["harassUseQ"].Value;
-            bool useW = boolLinks["harassUseW"].Value;
-            bool useE = boolLinks["harassUseE"].Value;
+            var useQ = BoolLinks["harassUseQ"].Value;
+            var useW = BoolLinks["harassUseW"].Value;
+            var useE = BoolLinks["harassUseE"].Value;
 
-            foreach (var spell in spellList)
+            foreach (var spell in SpellList.Where(spell => spell.IsReady()))
             {
-                // Continue if spell not ready
-                if (!spell.IsReady())
-                    continue;
-
                 // Q
                 if (spell.Slot == SpellSlot.Q && useQ)
                 {
                     if (target.IsAblazed() || // Ablazed
                         (Q.IsKillable(target)) || // Killable
                         (!useW && !useE) || // Casting when not using W and E
-                        (useW && !useE && !W.IsReady(250) && W.IsReady((int)(Q.Cooldown() * 1000))) || // Cooldown substraction W ready
-                        ((useE && !useW || useW && useE) && !E.IsReady(250) && E.IsReady((int)(Q.Cooldown() * 1000)))) // Cooldown substraction E ready
+                        (useW && !useE && !W.IsReady(250) && W.IsReady((int) (Q.Cooldown()*1000))) ||
+                        // Cooldown substraction W ready
+                        ((useE && !useW || useE) && !E.IsReady(250) && E.IsReady((int) (Q.Cooldown()*1000))))
+                        // Cooldown substraction E ready
                     {
                         // Cast Q on high hitchance
                         Q.CastIfHitchanceEquals(target, HitChance.High);
@@ -229,7 +232,7 @@ namespace Brand
                         (target.IsAblazed()) || // Ablazed
                         (W.IsKillable(target)) || // Killable
                         (E.InRange(target.ServerPosition)) ||
-                        (!E.IsReady(250) && E.IsReady((int)(W.Cooldown() * 1000)))) // Cooldown substraction E ready
+                        (!E.IsReady(250) && E.IsReady((int) (W.Cooldown()*1000)))) // Cooldown substraction E ready
                     {
                         // Cast W on high hitchance
                         W.CastIfHitchanceEquals(target, HitChance.High);
@@ -239,16 +242,16 @@ namespace Brand
                 else if (spell.Slot == SpellSlot.E && useE)
                 {
                     // Distance check
-                    if (E.InRange(target.ServerPosition))
+                    if (!E.InRange(target.ServerPosition))
+                        continue;
+
+                    if ((!useQ && !useW) || // Casting when not using Q and W
+                        E.IsKillable(target) || // Killable
+                        (useQ && (Q.IsReady(250) || Q.Cooldown() < 5)) || // Q ready
+                        (useW && W.IsReady(250))) // W ready
                     {
-                        if ((!useQ && !useW) || // Casting when not using Q and W
-                            E.IsKillable(target) || // Killable
-                            (useQ && (Q.IsReady(250) || Q.Cooldown() < 5)) || // Q ready
-                            (useW && W.IsReady(250))) // W ready
-                        {
-                            // Cast E on target
-                            E.CastOnUnit(target);
-                        }
+                        // Cast E on target
+                        E.CastOnUnit(target);
                     }
                 }
             }
@@ -257,29 +260,28 @@ namespace Brand
         private static void OnWaveClear()
         {
             // Minions around
-            var minions = MinionManager.GetMinions(player.Position, W.Range + W.Width / 2);
+            var minions = MinionManager.GetMinions(Player.Position, W.Range + W.Width/2);
 
             // Spell usage
-            bool useQ = boolLinks["waveUseQ"].Value && Q.IsReady();
-            bool useW = boolLinks["waveUseW"].Value && W.IsReady();
-            bool useE = boolLinks["waveUseE"].Value && E.IsReady();
+            var useQ = BoolLinks["waveUseQ"].Value && Q.IsReady();
+            var useW = BoolLinks["waveUseW"].Value && W.IsReady();
+            var useE = BoolLinks["waveUseE"].Value && E.IsReady();
 
             if (useQ)
             {
                 // Loop through all minions to find a target, preferred a killable one
                 Obj_AI_Base target = null;
-                foreach (var minion in minions)
+                foreach (var minion in from minion in minions
+                    let prediction = Q.GetPrediction(minion)
+                    where prediction.Hitchance == HitChance.High
+                    select minion)
                 {
-                    var prediction = Q.GetPrediction(minion);
-                    if (prediction.Hitchance == HitChance.High)
-                    {
-                        // Set target
-                        target = minion;
+                    // Set target
+                    target = minion;
 
-                        // Break if killlable
-                        if (minion.Health > player.GetAutoAttackDamage(minion) && Q.IsKillable(minion))
-                            break;
-                    }
+                    // Break if killlable
+                    if (minion.Health > Player.GetAutoAttackDamage(minion) && Q.IsKillable(minion))
+                        break;
                 }
 
                 // Cast if target found
@@ -290,28 +292,28 @@ namespace Brand
             if (useW)
             {
                 // Get farm location
-                var farmLocation = MinionManager.GetBestCircularFarmLocation(minions.Select(minion => minion.ServerPosition.To2D()).ToList(), W.Width, W.Range);
+                var farmLocation =
+                    MinionManager.GetBestCircularFarmLocation(
+                        minions.Select(minion => minion.ServerPosition.To2D()).ToList(), W.Width, W.Range);
 
                 // Check required hitnumber and cast
-                if (farmLocation.MinionsHit >= sliderLinks["waveNumW"].Value.Value)
+                if (farmLocation.MinionsHit >= SliderLinks["waveNumW"].Value.Value)
                     W.Cast(farmLocation.Position);
             }
 
             if (useE)
             {
                 // Loop through all minions to find a target
-                foreach (var minion in minions)
+                foreach (
+                    var minion in
+                        minions.Where(minion => E.InRange(minion.ServerPosition))
+                            .Where(
+                                minion =>
+                                    minion.IsAblazed() ||
+                                    minion.Health > Player.GetAutoAttackDamage(minion) && E.IsKillable(minion)))
                 {
-                    // Distance check
-                    if (E.InRange(minion.ServerPosition))
-                    {
-                        // E only on targets that are ablaze or killable
-                        if (minion.IsAblazed() || minion.Health > player.GetAutoAttackDamage(minion) && E.IsKillable(minion))
-                        {
-                            E.CastOnUnit(minion);
-                            break;
-                        }
-                    }
+                    E.CastOnUnit(minion);
+                    break;
                 }
             }
         }
@@ -319,22 +321,22 @@ namespace Brand
         // TODO: DFG handling and so on :P
         public static double GetMainComboDamage(Obj_AI_Base target)
         {
-            double damage = player.GetAutoAttackDamage(target);
+            var damage = Player.GetAutoAttackDamage(target);
 
             if (Q.IsReady())
-                damage += player.GetSpellDamage(target, SpellSlot.Q);
+                damage += Player.GetSpellDamage(target, SpellSlot.Q);
 
             if (W.IsReady())
-                damage += player.GetSpellDamage(target, SpellSlot.W) * (target.IsAblazed() ? 1.25 : 1);
+                damage += Player.GetSpellDamage(target, SpellSlot.W)*(target.IsAblazed() ? 1.25 : 1);
 
             if (E.IsReady())
-                damage += player.GetSpellDamage(target, SpellSlot.E);
+                damage += Player.GetSpellDamage(target, SpellSlot.E);
 
             if (R.IsReady())
-                damage += player.GetSpellDamage(target, SpellSlot.R);
+                damage += Player.GetSpellDamage(target, SpellSlot.R);
 
-            if (player.HasIgnite())
-                damage += player.GetSummonerSpellDamage(target, Damage.SummonerSpell.Ignite);
+            if (Player.HasIgnite())
+                damage += Player.GetSummonerSpellDamage(target, Damage.SummonerSpell.Ignite);
 
             return damage;
         }
@@ -346,10 +348,10 @@ namespace Brand
 
         public static double GetBounceComboDamage(Obj_AI_Base target)
         {
-            double damage = GetMainComboDamage(target);
+            var damage = GetMainComboDamage(target);
 
             if (R.IsReady())
-                damage += player.GetSpellDamage(target, SpellSlot.R);
+                damage += Player.GetSpellDamage(target, SpellSlot.R);
 
             return damage;
         }
@@ -361,7 +363,7 @@ namespace Brand
 
         public static float GetHPBarComboDamage(Obj_AI_Hero target)
         {
-            return (float)GetMainComboDamage(target);
+            return (float) GetMainComboDamage(target);
         }
 
         public static bool IsAblazed(this Obj_AI_Base target)
@@ -371,64 +373,69 @@ namespace Brand
 
         public static float Cooldown(this Spell spell)
         {
-            return player.Spellbook.GetSpell(spell.Slot).Cooldown;
+            return Player.Spellbook.GetSpell(spell.Slot).Cooldown;
         }
 
         public static bool HasIgnite(this Obj_AI_Hero target, bool checkReady = true)
         {
-            if (target.IsMe)
-            {
-                var ignite = player.Spellbook.GetSpell(player.GetSpellSlot("SummonerDot"));
-                return ignite != null && ignite.Slot != SpellSlot.Unknown && (checkReady ? player.Spellbook.CanUseSpell(ignite.Slot) == SpellState.Ready && player.Distance(target, true) < 400 * 400 : true);
-            }
-            return false;
+            if (!target.IsMe)
+                return false;
+
+            var ignite = Player.Spellbook.GetSpell(Player.GetSpellSlot("SummonerDot"));
+            return ignite != null && ignite.Slot != SpellSlot.Unknown &&
+                   (!checkReady ||
+                    Player.Spellbook.CanUseSpell(ignite.Slot) == SpellState.Ready &&
+                    Player.Distance(target, true) < 400*400);
         }
 
         private static void Drawing_OnDraw(EventArgs args)
         {
             // All circles
-            foreach (var circle in circleLinks.Values.Select(link => link.Value))
+            foreach (var circle in CircleLinks.Values.Select(link => link.Value).Where(circle => circle.Active))
             {
-                if (circle.Active)
-                    Utility.DrawCircle(player.Position, circle.Radius, circle.Color);
+                Utility.DrawCircle(Player.Position, circle.Radius, circle.Color);
             }
         }
 
         private static void SetuptMenu()
         {
             // Initialize the menu
-            menu = new MenuWrapper("[Hellsing] " + CHAMP_NAME);
+            Menu = new MenuWrapper("[Hellsing] " + CHAMP_NAME);
 
             // Combo
-            var combo = menu.MainMenu.AddSubMenu("Combo");
-            boolLinks.Add("comboUseQ", combo.AddLinkedBool("Use Q"));
-            boolLinks.Add("comboUseW", combo.AddLinkedBool("Use W"));
-            boolLinks.Add("comboUseE", combo.AddLinkedBool("Use E"));
-            boolLinks.Add("comboUseR", combo.AddLinkedBool("Use R"));
-            keyLinks.Add("comboActive", combo.AddLinkedKeyBind("Combo active", 32, KeyBindType.Press));
+            var combo = Menu.MainMenu.AddSubMenu("Combo");
+            BoolLinks.Add("comboUseQ", combo.AddLinkedBool("Use Q"));
+            BoolLinks.Add("comboUseW", combo.AddLinkedBool("Use W"));
+            BoolLinks.Add("comboUseE", combo.AddLinkedBool("Use E"));
+            BoolLinks.Add("comboUseR", combo.AddLinkedBool("Use R"));
+            KeyLinks.Add("comboActive", combo.AddLinkedKeyBind("Combo active", 32, KeyBindType.Press));
 
             // Harass
-            var harass = menu.MainMenu.AddSubMenu("Harass");
-            boolLinks.Add("harassUseQ", harass.AddLinkedBool("Use Q"));
-            boolLinks.Add("harassUseW", harass.AddLinkedBool("Use W"));
-            keyLinks.Add("harassToggleW", harass.AddLinkedKeyBind("Use W (toggle)", 'T', KeyBindType.Toggle));
-            boolLinks.Add("harassUseE", harass.AddLinkedBool("Use E"));
-            keyLinks.Add("harassActive", harass.AddLinkedKeyBind("Harass active", 'C', KeyBindType.Press));
+            var harass = Menu.MainMenu.AddSubMenu("Harass");
+            BoolLinks.Add("harassUseQ", harass.AddLinkedBool("Use Q"));
+            BoolLinks.Add("harassUseW", harass.AddLinkedBool("Use W"));
+            KeyLinks.Add("harassToggleW", harass.AddLinkedKeyBind("Use W (toggle)", 'T', KeyBindType.Toggle));
+            BoolLinks.Add("harassUseE", harass.AddLinkedBool("Use E"));
+            KeyLinks.Add("harassActive", harass.AddLinkedKeyBind("Harass active", 'C', KeyBindType.Press));
 
             // Wave clear
-            var waveClear = menu.MainMenu.AddSubMenu("WaveClear");
-            boolLinks.Add("waveUseQ", waveClear.AddLinkedBool("Use Q"));
-            boolLinks.Add("waveUseW", waveClear.AddLinkedBool("Use W"));
-            sliderLinks.Add("waveNumW", waveClear.AddLinkedSlider("Minions to hit with W", 3, 1, 10));
-            boolLinks.Add("waveUseE", waveClear.AddLinkedBool("Use E"));
-            keyLinks.Add("waveActive", waveClear.AddLinkedKeyBind("WaveClear active", 'V', KeyBindType.Press));
+            var waveClear = Menu.MainMenu.AddSubMenu("WaveClear");
+            BoolLinks.Add("waveUseQ", waveClear.AddLinkedBool("Use Q"));
+            BoolLinks.Add("waveUseW", waveClear.AddLinkedBool("Use W"));
+            SliderLinks.Add("waveNumW", waveClear.AddLinkedSlider("Minions to hit with W", 3, 1, 10));
+            BoolLinks.Add("waveUseE", waveClear.AddLinkedBool("Use E"));
+            KeyLinks.Add("waveActive", waveClear.AddLinkedKeyBind("WaveClear active", 'V', KeyBindType.Press));
 
             // Drawings
-            var drawings = menu.MainMenu.AddSubMenu("Drawings");
-            circleLinks.Add("drawRangeQ", drawings.AddLinkedCircle("Q range", true, Color.FromArgb(150, Color.IndianRed), Q.Range));
-            circleLinks.Add("drawRangeW", drawings.AddLinkedCircle("W range", true, Color.FromArgb(150, Color.IndianRed), W.Range));
-            circleLinks.Add("drawRangeE", drawings.AddLinkedCircle("E range", false, Color.FromArgb(150, Color.DarkRed), E.Range));
-            circleLinks.Add("drawRangeR", drawings.AddLinkedCircle("R range", false, Color.FromArgb(150, Color.Red), R.Range));
+            var drawings = Menu.MainMenu.AddSubMenu("Drawings");
+            CircleLinks.Add("drawRangeQ",
+                drawings.AddLinkedCircle("Q range", true, Color.FromArgb(150, Color.IndianRed), Q.Range));
+            CircleLinks.Add("drawRangeW",
+                drawings.AddLinkedCircle("W range", true, Color.FromArgb(150, Color.IndianRed), W.Range));
+            CircleLinks.Add("drawRangeE",
+                drawings.AddLinkedCircle("E range", false, Color.FromArgb(150, Color.DarkRed), E.Range));
+            CircleLinks.Add("drawRangeR",
+                drawings.AddLinkedCircle("R range", false, Color.FromArgb(150, Color.Red), R.Range));
         }
     }
 }
