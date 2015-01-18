@@ -73,9 +73,9 @@ namespace Gnar
             Spellbook.OnCastSpell += Spellbook_OnCastSpell;
         }
 
-        private static void Spellbook_OnCastSpell(GameObject sender, SpellbookCastSpellEventArgs args)
+        private static void Spellbook_OnCastSpell(Spellbook sender, SpellbookCastSpellEventArgs args)
         {
-            if (sender.IsMe && player.IsMegaGnar())
+            if (sender.Owner.IsMe && player.IsMegaGnar())
             {
                 switch (args.Slot)
                 {
