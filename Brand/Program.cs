@@ -108,7 +108,7 @@ namespace Brand
             // Killable status
             bool mainComboKillable = target.IsMainComboKillable();
             bool bounceComboKillable = target.IsBounceComboKillable();
-            bool inMinimumRange = E.InRange(target.ServerPosition);
+            bool inMinimumRange = E.IsInRange(target.ServerPosition);
 
             // Ignite auto cast if killable, bitch please
             if (mainComboKillable && player.HasIgnite())
@@ -152,7 +152,7 @@ namespace Brand
                 else if (spell.Slot == SpellSlot.E && useE)
                 {
                     // Distance check
-                    if (E.InRange(target.ServerPosition))
+                    if (E.IsInRange(target.ServerPosition))
                     {
                         if ((mainComboKillable) || // Main combo killable
                             (!useQ && !useW) || // Casting when not using Q and W
@@ -169,7 +169,7 @@ namespace Brand
                 else if (spell.Slot == SpellSlot.R && useR)
                 {
                     // Distance check
-                    if (R.InRange(target.ServerPosition))
+                    if (R.IsInRange(target.ServerPosition))
                     {
                         // Logic prechecks
                         if ((useQ && Q.IsReady() && Q.GetPrediction(target).Hitchance == HitChance.High || useW && W.IsReady()) && player.Health / player.MaxHealth > 0.25f)
@@ -228,7 +228,7 @@ namespace Brand
                     if ((!useE) || // Casting when not using E
                         (target.IsAblazed()) || // Ablazed
                         (W.IsKillable(target)) || // Killable
-                        (E.InRange(target.ServerPosition)) ||
+                        (E.IsInRange(target.ServerPosition)) ||
                         (!E.IsReady(250) && E.IsReady((int)(W.Cooldown() * 1000)))) // Cooldown substraction E ready
                     {
                         // Cast W on high hitchance
@@ -239,7 +239,7 @@ namespace Brand
                 else if (spell.Slot == SpellSlot.E && useE)
                 {
                     // Distance check
-                    if (E.InRange(target.ServerPosition))
+                    if (E.IsInRange(target.ServerPosition))
                     {
                         if ((!useQ && !useW) || // Casting when not using Q and W
                             E.IsKillable(target) || // Killable
@@ -303,7 +303,7 @@ namespace Brand
                 foreach (var minion in minions)
                 {
                     // Distance check
-                    if (E.InRange(minion.ServerPosition))
+                    if (E.IsInRange(minion.ServerPosition))
                     {
                         // E only on targets that are ablaze or killable
                         if (minion.IsAblazed() || minion.Health > player.GetAutoAttackDamage(minion) && E.IsKillable(minion))
@@ -390,7 +390,7 @@ namespace Brand
             foreach (var circle in circleLinks.Values.Select(link => link.Value))
             {
                 if (circle.Active)
-                    Utility.DrawCircle(player.Position, circle.Radius, circle.Color);
+                    Render.Circle.DrawCircle(player.Position, circle.Radius, circle.Color);
             }
         }
 
