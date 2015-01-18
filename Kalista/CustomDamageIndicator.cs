@@ -47,25 +47,28 @@ namespace Kalista
 
         private static void Drawing_OnDraw(EventArgs args)
         {
-            foreach (var unit in ObjectManager.Get<Obj_AI_Hero>().FindAll(u => u.IsValidTarget() && u.IsHPBarRendered))
+            if (Enabled)
             {
-                // Get damage to unit
-                var damage = damageToUnit(unit);
+                foreach (var unit in ObjectManager.Get<Obj_AI_Hero>().FindAll(u => u.IsValidTarget() && u.IsHPBarRendered))
+                {
+                    // Get damage to unit
+                    var damage = damageToUnit(unit);
 
-                // Continue on 0 damage
-                if (damage <= 0)
-                    continue;
+                    // Continue on 0 damage
+                    if (damage <= 0)
+                        continue;
 
-                // Get remaining HP after damage applied in percent and the current percent of health
-                var damagePercentage = ((unit.Health - damage) > 0 ? (unit.Health - damage) : 0) / unit.MaxHealth;
-                var currentHealthPercentage = unit.Health / unit.MaxHealth;
+                    // Get remaining HP after damage applied in percent and the current percent of health
+                    var damagePercentage = ((unit.Health - damage) > 0 ? (unit.Health - damage) : 0) / unit.MaxHealth;
+                    var currentHealthPercentage = unit.Health / unit.MaxHealth;
 
-                // Calculate start and end point of the bar indicator
-                var startPoint = new Vector2((int)(unit.HPBarPosition.X + BarOffset.X + damagePercentage * BAR_WIDTH), (int)(unit.HPBarPosition.Y + BarOffset.Y) - 5);
-                var endPoint = new Vector2((int)(unit.HPBarPosition.X + BarOffset.X + currentHealthPercentage * BAR_WIDTH) + 1, (int)(unit.HPBarPosition.Y + BarOffset.Y) - 5);
+                    // Calculate start and end point of the bar indicator
+                    var startPoint = new Vector2((int)(unit.HPBarPosition.X + BarOffset.X + damagePercentage * BAR_WIDTH), (int)(unit.HPBarPosition.Y + BarOffset.Y) - 5);
+                    var endPoint = new Vector2((int)(unit.HPBarPosition.X + BarOffset.X + currentHealthPercentage * BAR_WIDTH) + 1, (int)(unit.HPBarPosition.Y + BarOffset.Y) - 5);
 
-                // Draw the line
-                Drawing.DrawLine(startPoint, endPoint, LINE_THICKNESS, DrawingColor);
+                    // Draw the line
+                    Drawing.DrawLine(startPoint, endPoint, LINE_THICKNESS, DrawingColor);
+                }
             }
         }
     }
