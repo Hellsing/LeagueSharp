@@ -349,13 +349,13 @@ namespace Viktor
 
         private static void Interrupter_OnPossibleToInterrupt(Obj_AI_Base unit, InterruptableSpell spell)
         {
-            if (boolLinks["miscInterrupt"].Value && spell.DangerLevel == InterruptableDangerLevel.High && R.InRange(unit.ServerPosition))
+            if (boolLinks["miscInterrupt"].Value && spell.DangerLevel == InterruptableDangerLevel.High && R.IsInRange(unit.ServerPosition))
                 R.Cast(unit.ServerPosition.To2D(), true);
         }
 
         private static void AntiGapcloser_OnEnemyGapcloser(ActiveGapcloser gapcloser)
         {
-            if (boolLinks["miscGapcloser"].Value && W.InRange(gapcloser.End))
+            if (boolLinks["miscGapcloser"].Value && W.IsInRange(gapcloser.End))
                 W.Cast(gapcloser.End.To2D(), true);
         }
 
@@ -365,7 +365,7 @@ namespace Viktor
             foreach (var circle in circleLinks.Values.Select(link => link.Value))
             {
                 if (circle.Active)
-                    Utility.DrawCircle(player.Position, circle.Radius, circle.Color);
+                    Render.Circle.DrawCircle(player.Position, circle.Radius, circle.Color);
             }
         }
 
