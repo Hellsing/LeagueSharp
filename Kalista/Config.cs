@@ -104,6 +104,7 @@ namespace Kalista
 
             // Drawings
             subMenu = _menu.MainMenu.AddSubMenu("Drawings");
+            ProcessLink("drawDamageE", subMenu.AddLinkedCircle("E damage on healthbar", true, Color.FromArgb(150, Color.Green), 0));
             ProcessLink("drawRangeQ", subMenu.AddLinkedCircle("Q range", true, Color.FromArgb(150, Color.IndianRed), SpellManager.Q.Range));
             ProcessLink("drawRangeW", subMenu.AddLinkedCircle("W range", true, Color.FromArgb(150, Color.MediumPurple), SpellManager.W.Range));
             ProcessLink("drawRangeEsmall", subMenu.AddLinkedCircle("E range (leaving)", false, Color.FromArgb(150, Color.DarkRed), SpellManager.E.Range - 200));

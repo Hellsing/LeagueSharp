@@ -105,7 +105,7 @@ namespace Kalista
                     if (player.Distance(target, true) > Math.Pow(Orbwalking.GetRealAutoAttackRange(target), 2))
                     {
                         // Get minions around
-                        var minions = ObjectManager.Get<Obj_AI_Minion>().Where(m => m.IsValidTarget(Orbwalking.GetRealAutoAttackRange(m)));
+                        var minions = ObjectManager.Get<Obj_AI_Minion>().FindAll(m => m.IsValidTarget(Orbwalking.GetRealAutoAttackRange(m)));
 
                         // Check if a minion can die with the current E stacks
                         if (minions.Any(m => m.IsRendKillable()))
@@ -234,7 +234,7 @@ namespace Kalista
                 int hitNumber = Config.SliderLinks["waveNumE"].Value.Value;
 
                 // Get minions in E range
-                var minionsInRange = minions.Where(m => E.IsInRange(m));
+                var minionsInRange = minions.FindAll(m => E.IsInRange(m));
 
                 // Validate available minions
                 if (minionsInRange.Count() >= hitNumber)

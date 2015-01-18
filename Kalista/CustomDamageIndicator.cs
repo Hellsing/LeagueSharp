@@ -19,7 +19,7 @@ namespace Kalista
     public class CustomDamageIndicator
     {
         private const int BAR_WIDTH = 104;
-        private const int LINE_THICKNESS = 4;
+        private const int LINE_THICKNESS = 9;
 
         private static Utility.HpBarDamageIndicator.DamageToUnitDelegate damageToUnit;
 
@@ -29,14 +29,17 @@ namespace Kalista
         public static System.Drawing.Color DrawingColor
         {
             get { return _drawingColor; }
-            set { _drawingColor = Color.FromArgb(80, value); }
+            set { _drawingColor = Color.FromArgb(170, value); }
         }
+
+        public static bool Enabled { get; set; }
 
         public static void Initialize(Utility.HpBarDamageIndicator.DamageToUnitDelegate damageToUnit)
         {
             // Apply needed field delegate for damage calculation
             CustomDamageIndicator.damageToUnit = damageToUnit;
-            DrawingColor = System.Drawing.Color.OrangeRed;
+            DrawingColor = System.Drawing.Color.Green;
+            Enabled = true;
 
             // Register event handlers
             Drawing.OnDraw += Drawing_OnDraw;
@@ -44,7 +47,7 @@ namespace Kalista
 
         private static void Drawing_OnDraw(EventArgs args)
         {
-            foreach (var unit in ObjectManager.Get<Obj_AI_Hero>().Where(u => u.IsValidTarget() && u.IsHPBarRendered))
+            foreach (var unit in ObjectManager.Get<Obj_AI_Hero>().FindAll(u => u.IsValidTarget() && u.IsHPBarRendered))
             {
                 // Get damage to unit
                 var damage = damageToUnit(unit);
@@ -58,8 +61,8 @@ namespace Kalista
                 var currentHealthPercentage = unit.Health / unit.MaxHealth;
 
                 // Calculate start and end point of the bar indicator
-                var startPoint = new Vector2((int)(unit.HPBarPosition.X + BarOffset.X + damagePercentage * BAR_WIDTH), (int)(unit.HPBarPosition.Y + BarOffset.Y) + 4);
-                var endPoint = new Vector2((int)(unit.HPBarPosition.X + BarOffset.X + currentHealthPercentage * BAR_WIDTH) + 1, (int)(unit.HPBarPosition.Y + BarOffset.Y) + 4);
+                var startPoint = new Vector2((int)(unit.HPBarPosition.X + BarOffset.X + damagePercentage * BAR_WIDTH), (int)(unit.HPBarPosition.Y + BarOffset.Y) - 5);
+                var endPoint = new Vector2((int)(unit.HPBarPosition.X + BarOffset.X + currentHealthPercentage * BAR_WIDTH) + 1, (int)(unit.HPBarPosition.Y + BarOffset.Y) - 5);
 
                 // Draw the line
                 Drawing.DrawLine(startPoint, endPoint, LINE_THICKNESS, DrawingColor);

@@ -120,11 +120,15 @@ namespace Kalista
         private static void Drawing_OnDraw(EventArgs args)
         {
             // All circles
-            foreach (var circle in Config.CircleLinks.Values.Select(link => link.Value))
+            foreach (var entry in Config.CircleLinks)
             {
-                if (circle.Active)
-                    Render.Circle.DrawCircle(player.Position, circle.Radius, circle.Color);
+                if (entry.Value.Value.Active && entry.Key != "drawDamageE")
+                    Render.Circle.DrawCircle(player.Position, entry.Value.Value.Radius, entry.Value.Value.Color);
             }
+
+            // E damage on healthbar
+            CustomDamageIndicator.DrawingColor = Config.CircleLinks["drawDamageE"].Value.Color;
+            CustomDamageIndicator.Enabled = Config.CircleLinks["drawDamageE"].Value.Active;
 
             // Flee position the player moves to
             if (ActiveModes.fleeTargetPosition.HasValue)
