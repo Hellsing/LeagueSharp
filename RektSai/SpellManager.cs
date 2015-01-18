@@ -141,9 +141,9 @@ namespace Rekt_Sai
                 player.Spellbook.CastSpell(player.GetSmiteSpell().Slot, target);
         }
         
-        private static void Spellbook_OnCastSpell(GameObject sender, SpellbookCastSpellEventArgs args)
+        private static void Spellbook_OnCastSpell(Spellbook sender, SpellbookCastSpellEventArgs args)
         {
-            if (sender.IsMe)
+            if (sender.Owner.IsMe)
             {
                 var spell = GetSpellFromSlot(args.Slot);
 
