@@ -107,10 +107,10 @@ namespace Kalista
             }
         }
 
-        private static void Spellbook_OnCastSpell(GameObject sender, SpellbookCastSpellEventArgs args)
+        private static void Spellbook_OnCastSpell(Spellbook sender, SpellbookCastSpellEventArgs args)
         {
             // Avoid stupic Q casts while jumping in mid air!
-            if (sender.IsMe && args.Slot == SpellSlot.Q && player.IsDashing())
+            if (sender.Owner.IsMe && args.Slot == SpellSlot.Q && player.IsDashing())
             {
                 // Don't process the packet since we are jumping!
                 args.Process = false;
