@@ -56,7 +56,7 @@ namespace Gnar
                 foreach (var entry in Config.CircleLinks)
                 {
                     if (!entry.Key.Contains("Mega") && entry.Value.Value.Active)
-                        Utility.DrawCircle(player.Position, entry.Value.Value.Radius, entry.Value.Value.Color);
+                        Render.Circle.DrawCircle(player.Position, entry.Value.Value.Radius, entry.Value.Value.Color);
                 }
             }
             // Mega
@@ -65,7 +65,7 @@ namespace Gnar
                 foreach (var entry in Config.CircleLinks)
                 {
                     if (entry.Key.Contains("Mega") && entry.Value.Value.Active)
-                        Utility.DrawCircle(player.Position, entry.Value.Value.Radius, entry.Value.Value.Color);
+                        Render.Circle.DrawCircle(player.Position, entry.Value.Value.Radius, entry.Value.Value.Color);
                 }
             }
         }

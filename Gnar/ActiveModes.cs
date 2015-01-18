@@ -159,7 +159,7 @@ namespace Gnar
                     if (target != null && target.GetStunDuration() < R.Delay)
                     {
                         var prediction = Prediction.GetPrediction(target, R.Delay);
-                        if (prediction.Hitchance >= HitChance.High && R.InRange(prediction.UnitPosition))
+                        if (prediction.Hitchance >= HitChance.High && R.IsInRange(prediction.UnitPosition))
                         {
                             // 12 angle checks for casting, prefer to player direction
                             var direction = (player.ServerPosition - prediction.UnitPosition).Normalized();
