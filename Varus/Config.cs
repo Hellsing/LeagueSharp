@@ -39,11 +39,6 @@ namespace Varus
 
         static Config()
         {
-            Program.OnPostLoad += OnPostLoad;
-        }
-
-        private static void OnPostLoad()
-        {
             Menu = new MenuWrapper(MENU_NAME);
 
             BoolLinks = new Dictionary<string, MenuWrapper.BoolLink>();
@@ -61,13 +56,42 @@ namespace Varus
             var subMenu = Menu.MainMenu.AddSubMenu("Combo");
             var subSubMenu = subMenu.AddSubMenu("Use Q");
             ProcessLink("comboUseQ", subSubMenu.AddLinkedBool("Enabled"));
+            ProcessLink("comboFullQ", subSubMenu.AddLinkedBool("Always full range (max damage)"));
             ProcessLink("comboRangeQ", subSubMenu.AddLinkedSlider("Extra range on cast", 200, 0, 200));
             ProcessLink("comboStacksQ", subSubMenu.AddLinkedSlider("W stacks to begin the charge", 3, 0, 3));
-            ProcessLink("comboUseW", subMenu.AddLinkedBool("Use W"));
             ProcessLink("comboUseE", subMenu.AddLinkedBool("Use E"));
             ProcessLink("comboUseR", subMenu.AddLinkedBool("Use R"));
             ProcessLink("comboItems", subMenu.AddLinkedBool("Use items"));
             ProcessLink("comboActive", subMenu.AddLinkedKeyBind("Combo active", 32, KeyBindType.Press));
+
+            // ----- Harass
+            subMenu = Menu.MainMenu.AddSubMenu("Harass");
+            subSubMenu = subMenu.AddSubMenu("Use Q");
+            ProcessLink("harassUseQ", subSubMenu.AddLinkedBool("Enabled"));
+            ProcessLink("harassFullQ", subSubMenu.AddLinkedBool("Always full range (max damage)"));
+            ProcessLink("harassExtraRangeQ", subSubMenu.AddLinkedSlider("Extra range on cast", 200, 0, 200));
+            ProcessLink("harassStacksQ", subSubMenu.AddLinkedSlider("W stacks to begin the charge", 0, 0, 3));
+            ProcessLink("harassUseE", subMenu.AddLinkedBool("Use E", false));
+            ProcessLink("harassMana", subMenu.AddLinkedSlider("Mana usage in percent (%)", 30));
+            ProcessLink("harassActive", subMenu.AddLinkedKeyBind("Harass active", 'C', KeyBindType.Press));
+
+            // ----- WaveClear
+            subMenu = Menu.MainMenu.AddSubMenu("WaveClear");
+            ProcessLink("waveUseE", subMenu.AddLinkedBool("Use E"));
+            ProcessLink("waveNumE", subMenu.AddLinkedSlider("Hit number for E", 3, 1, 10));
+            ProcessLink("waveMana", subMenu.AddLinkedSlider("Mana usage in percent (%)", 30));
+            ProcessLink("waveActive", subMenu.AddLinkedKeyBind("WaveClear active", 'V', KeyBindType.Press));
+
+            // ----- JungleClear
+            subMenu = Menu.MainMenu.AddSubMenu("JungleClear");
+            ProcessLink("jungleUseQ", subMenu.AddLinkedBool("Use Q"));
+            ProcessLink("jungleUseE", subMenu.AddLinkedBool("Use E"));
+            ProcessLink("jungleActive", subMenu.AddLinkedKeyBind("JungleClear active", 'V', KeyBindType.Press));
+
+            // ----- Flee
+            subMenu = Menu.MainMenu.AddSubMenu("Flee");
+            ProcessLink("fleeNothing", subMenu.AddLinkedBool("Nothing yet Kappa"));
+            ProcessLink("fleeActive", subMenu.AddLinkedKeyBind("Flee active", 'T', KeyBindType.Press));
 
             // ----- Drawings
             subMenu = Menu.MainMenu.AddSubMenu("Drawings");

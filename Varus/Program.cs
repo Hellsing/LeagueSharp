@@ -9,12 +9,8 @@ using LeagueSharp.Common;
 
 namespace Varus
 {
-    public class Program
+    public static class Program
     {
-        public delegate void VoidNoArgsHandler();
-        public static event VoidNoArgsHandler OnLoad;
-        public static event VoidNoArgsHandler OnPostLoad;
-
         public const string CHAMP_NAME = "Varus";
         private static readonly Obj_AI_Hero player = ObjectManager.Player;
 
@@ -28,12 +24,6 @@ namespace Varus
             // Validate champion
             if (player.ChampionName != CHAMP_NAME)
                 return;
-
-            // Call events
-            if (OnLoad != null)
-                OnLoad();
-            if (OnPostLoad != null)
-                OnPostLoad();
 
             // Draw damage on enemy champs
             Utility.HpBarDamageIndicator.DamageToUnit = Damages.GetTotalDamage;

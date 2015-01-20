@@ -18,11 +18,6 @@ namespace Varus
 
         static SpellManager()
         {
-            Program.OnLoad += OnLoad;
-        }
-
-        private static void OnLoad()
-        {
             // Initialize spells
             Q = new Spell(SpellSlot.Q, 1600);
             W = new Spell(SpellSlot.W);
@@ -33,7 +28,7 @@ namespace Varus
             Q.SetSkillshot(0, 70, 1900, false, SkillshotType.SkillshotLine);
             Q.SetCharged("VarusQ", "VarusQ", 925, (int)Q.Range, 1.25f);
             E.SetSkillshot(0.5f, 235, float.MaxValue, false, SkillshotType.SkillshotCircle);
-            R.SetSkillshot(0.25f, 100, 1950, true, SkillshotType.SkillshotLine);
+            R.SetSkillshot(0.25f, 100, 1950, false, SkillshotType.SkillshotLine);
         }
 
         public static bool IsEnabled(this Spell spell, string mode)

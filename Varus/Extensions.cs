@@ -11,10 +11,26 @@ namespace Varus
 {
     public static class Extensions
     {
-        public static int GetWStacks(this Obj_AI_Base target)
+        public static float AttackSpeed(this Obj_AI_Base target)
         {
-            // TODO: Get actual stacks
-            return 0;
+            return 1 / target.AttackDelay;
+        }
+
+        public static float GetStunDuration(this Obj_AI_Base target)
+        {
+            return target.Buffs.FindAll(b => b.IsActive && Game.Time < b.EndTime &&
+                (b.Type == BuffType.Charm ||
+                b.Type == BuffType.Knockback ||
+                b.Type == BuffType.Stun ||
+                b.Type == BuffType.Suppression ||
+                b.Type == BuffType.Snare)).Aggregate(0f, (current, buff) => Math.Max(current, buff.EndTime)) -
+                Game.Time;
+        }
+
+        public static int GetBlightStacks(this Obj_AI_Base target)
+        {
+            var buff = target.Buffs.Find(b => b.Caster.IsMe && b.DisplayName == "VarusWDebuff");
+            return buff != null ? buff.Count : 0;
         }
     }
 }

@@ -70,9 +70,9 @@ namespace Varus
                     damage = new float[] { 10, 14, 18, 22, 26 }[spellLevel] + 0.25f * player.TotalMagicalDamage();
 
                     // Varus' other abilities detonate Blight, dealing magic damage equal to 2/2.75/3.5/4.25/5% (+0.02%) of the target's maximum Health per stack (Max: 360 total damage vs Monsters).
-                    if (target.GetWStacks() > 0)
+                    if (target.GetBlightStacks() > 0)
                     {
-                        extraDamage = (float)player.CalcDamage(target, Damage.DamageType.Magical, (new float[] { 2, 2.75f, 3.5f, 4.25f, 5 }[spellLevel] * target.MaxHealth) * target.GetWStacks());
+                        extraDamage = (float)player.CalcDamage(target, Damage.DamageType.Magical, (new float[] { 2, 2.75f, 3.5f, 4.25f, 5 }[spellLevel] * target.MaxHealth) * target.GetBlightStacks());
                         if (target is Obj_AI_Minion)
                         {
                             // Special case: max damage 360
