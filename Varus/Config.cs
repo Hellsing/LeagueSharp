@@ -60,8 +60,7 @@ namespace Varus
             ProcessLink("comboRangeQ", subSubMenu.AddLinkedSlider("Extra range on cast", 200, 0, 200));
             ProcessLink("comboStacksQ", subSubMenu.AddLinkedSlider("W stacks to begin the charge", 3, 0, 3));
             ProcessLink("comboUseE", subMenu.AddLinkedBool("Use E"));
-            ProcessLink("comboUseR", subMenu.AddLinkedBool("Use R"));
-            ProcessLink("comboItems", subMenu.AddLinkedBool("Use items"));
+            ProcessLink("comboUseR", subMenu.AddLinkedKeyBind("Use R", 'A', KeyBindType.Press));
             ProcessLink("comboActive", subMenu.AddLinkedKeyBind("Combo active", 32, KeyBindType.Press));
 
             // ----- Harass

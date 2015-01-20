@@ -77,7 +77,7 @@ namespace Varus
                 E.CastOnBestTarget();
             }
 
-            if (R.IsEnabledAndReady(Mode.COMBO))
+            if (Config.KeyLinks["comboUseR"].Value.Active)
             {
                 R.CastOnBestTarget();
             }
