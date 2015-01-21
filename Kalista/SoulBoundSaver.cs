@@ -40,7 +40,7 @@ namespace Kalista
             else if (R.IsEnabledAndReady("misc"))
             {
                 // Ult casting
-                if (SoulBound.HealthPercentage() < 5 && SoulBound.CountEnemysInRange(500) > 0 ||
+                if (SoulBound.HealthPercentage() < 5 && SoulBound.CountEnemiesInRange(500) > 0 ||
                     IncomingDamage > SoulBound.Health)
                     R.Cast();
             }
