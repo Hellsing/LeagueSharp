@@ -75,7 +75,8 @@ namespace Kalista
             for (float d = 0; d < from.Distance(to); d = d + step)
             {
                 var testPoint = from + d * direction;
-                if (NavMesh.GetCollisionFlags(testPoint.X, testPoint.Y).HasFlag(CollisionFlags.Wall | CollisionFlags.Building))
+                var flags = NavMesh.GetCollisionFlags(testPoint.X, testPoint.Y);
+                if (flags.HasFlag(CollisionFlags.Wall) || flags.HasFlag(CollisionFlags.Building))
                 {
                     return from + (d - step) * direction;
                 }
