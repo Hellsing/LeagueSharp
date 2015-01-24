@@ -18,7 +18,7 @@ namespace Xerath
 
         public static float GetStunDuration(this Obj_AI_Base target)
         {
-            return target.Buffs.Where(b => b.IsActive && Game.Time < b.EndTime &&
+            return target.Buffs.FindAll(b => b.IsActive && Game.Time < b.EndTime &&
                 (b.Type == BuffType.Charm ||
                 b.Type == BuffType.Knockback ||
                 b.Type == BuffType.Stun ||
