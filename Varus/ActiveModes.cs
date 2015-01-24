@@ -29,7 +29,11 @@ namespace Varus
 
         public static void OnPermaActive()
         {
-            ;
+            // R usage
+            if (Config.KeyLinks["comboUseR"].Value.Active && R.IsReady())
+            {
+                R.CastOnBestTarget();
+            }
         }
 
         public static void OnCombo(Obj_AI_Base afterAttackTarget = null)
@@ -49,7 +53,8 @@ namespace Varus
                                 // Cast if already on max range
                                 if (Q.Range == Q.ChargedMaxRange)
                                 {
-                                    Q.Cast(prediction.CastPosition);
+                                    if (Q.Cast(prediction.CastPosition))
+                                        return;
                                 }
                                 // Only continue if we don't always want full Q damage or the target is killable
                                 else if (!Config.BoolLinks["comboFullQ"].Value || Q.GetRealDamage(target) > target.Health)
@@ -58,7 +63,8 @@ namespace Varus
                                     var distance = player.ServerPosition.Distance(prediction.UnitPosition + extraRange * (prediction.UnitPosition - player.ServerPosition).Normalized(), true);
                                     if (distance < Q.RangeSqr)
                                     {
-                                        Q.Cast(prediction.CastPosition);
+                                        if (Q.Cast(prediction.CastPosition))
+                                            return;
                                     }
                                 }
                             }
@@ -68,64 +74,78 @@ namespace Varus
                     else if (W.Level == 0 || target.GetBlightStacks() >= Config.SliderLinks["comboStacksQ"].Value.Value)
                     {
                         Q.StartCharging();
+                        return;
                     }
                 }
             }
 
+            // Validate that Q is not charging
+            if (Q.IsCharging)
+                return;
+
             if (E.IsEnabledAndReady(Mode.COMBO))
             {
-                E.CastOnBestTarget();
-            }
-
-            if (Config.KeyLinks["comboUseR"].Value.Active)
-            {
-                R.CastOnBestTarget();
+                if (E.CastOnBestTarget() == Spell.CastStates.SuccessfullyCasted)
+                    return;
             }
         }
 
         public static void OnHarass()
         {
-            // Mana check
-            if (player.ManaPercentage() < Config.SliderLinks["harassMana"].Value.Value)
-                return;
-
-            if (Q.IsEnabledAndReady(Mode.HARASS))
+            // Q is already charging, ignore mana check
+            if (Q.IsEnabledAndReady(Mode.HARASS) && Q.IsCharging)
             {
                 var target = TargetSelector.GetTarget(Q.ChargedMaxRange, TargetSelector.DamageType.Physical);
                 if (target != null)
                 {
-                    if (Q.IsCharging)
+                    if (Q.IsInRange(target))
                     {
-                        if (Q.IsInRange(target))
+                        var prediction = Q.GetPrediction(target);
+                        if (prediction.Hitchance >= HitChance.High)
                         {
-                            var prediction = Q.GetPrediction(target);
-                            if (prediction.Hitchance >= HitChance.High)
+                            // Cast if already on max range
+                            if (Q.Range == Q.ChargedMaxRange)
                             {
-                                // Cast if already on max range
-                                if (Q.Range == Q.ChargedMaxRange)
+                                if (Q.Cast(prediction.CastPosition))
+                                    return;
+                            }
+                            // Only continue if we don't always want full Q damage or the target is killable
+                            else if (!Config.BoolLinks["harassFullQ"].Value || Q.GetRealDamage(target) > target.Health)
+                            {
+                                var extraRange = Config.SliderLinks["harassRangeQ"].Value.Value;
+                                var distance = player.ServerPosition.Distance(prediction.UnitPosition + extraRange * (prediction.UnitPosition - player.ServerPosition).Normalized(), true);
+                                if (distance < Q.RangeSqr)
                                 {
-                                    Q.Cast(prediction.CastPosition);
-                                }
-                                // Only continue if we don't always want full Q damage or the target is killable
-                                else if (!Config.BoolLinks["harassFullQ"].Value || Q.GetRealDamage(target) > target.Health)
-                                {
-                                    var extraRange = Config.SliderLinks["harassRangeQ"].Value.Value;
-                                    var distance = player.ServerPosition.Distance(prediction.UnitPosition + extraRange * (prediction.UnitPosition - player.ServerPosition).Normalized(), true);
-                                    if (distance < Q.RangeSqr)
-                                    {
-                                        Q.Cast(prediction.CastPosition);
-                                    }
+                                    if (Q.Cast(prediction.CastPosition))
+                                        return;
                                 }
                             }
                         }
                     }
+                }
+            }
+
+            // Mana check
+            if (player.ManaPercentage() < Config.SliderLinks["harassMana"].Value.Value)
+                return;
+
+            if (Q.IsEnabledAndReady(Mode.HARASS) && !Q.IsCharging)
+            {
+                var target = TargetSelector.GetTarget(Q.ChargedMaxRange, TargetSelector.DamageType.Physical);
+                if (target != null)
+                {
                     // Conditions to start the chargeup
-                    else if (W.Level == 0 || target.GetBlightStacks() >= Config.SliderLinks["harassStacksQ"].Value.Value || Q.GetRealDamage(target) > target.Health)
+                    if (W.Level == 0 || target.GetBlightStacks() >= Config.SliderLinks["harassStacksQ"].Value.Value || Q.GetRealDamage(target) > target.Health)
                     {
                         Q.StartCharging();
+                        return;
                     }
                 }
             }
+
+            // Validate that Q is not charging
+            if (Q.IsCharging)
+                return;
 
             if (E.IsEnabledAndReady(Mode.HARASS))
             {
@@ -142,7 +162,7 @@ namespace Varus
             if (E.IsEnabledAndReady(Mode.WAVE))
             {
                 var minions = MinionManager.GetMinions(E.Range);
-                if (minions.Count > 0 && minions.Count >= Config.SliderLinks["waveNumE"].Value.Value)
+                if (minions.Count >= Config.SliderLinks["waveNumE"].Value.Value)
                 {
                     var prediction = E.GetCircularFarmLocation(minions);
                     if (prediction.MinionsHit >= Config.SliderLinks["waveNumE"].Value.Value)
@@ -165,10 +185,12 @@ namespace Varus
                     if (!Q.IsCharging)
                     {
                         Q.StartCharging();
+                        return;
                     }
                     else if (Q.IsInRange(minions[0]))
                     {
-                        Q.Cast(minions[0]);
+                        if (Q.Cast(minions[0]) == Spell.CastStates.SuccessfullyCasted)
+                            return;
                     }
                 }
             }
