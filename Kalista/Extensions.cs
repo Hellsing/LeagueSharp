@@ -22,5 +22,21 @@ namespace Kalista
         {
             return target.Buffs.Find(b => b.DisplayName == E_BUFF_NAME);
         }
+
+        public static List<TSource> MakeUnique<TSource>(this List<TSource> list) where TSource : Obj_AI_Base
+        {
+            List<TSource> uniqueList = new List<TSource>();
+
+            foreach(var entry in list)
+            {
+                if (uniqueList.All(e => e.NetworkId != entry.NetworkId))
+                    uniqueList.Add(entry);
+            }
+
+            list.Clear();
+            list.AddRange(uniqueList);
+
+            return list;
+        }
     }
 }

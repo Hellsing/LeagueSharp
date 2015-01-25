@@ -182,49 +182,71 @@ namespace Kalista
                 // Validate available minions
                 if (minions.Count >= hitNumber)
                 {
-                    // Sort by distance
-                    minions.OrderByDescending(m => m.Distance(player, true));
-
-                    // Helpers
-                    int bestHitCount = 0;
-                    PredictionOutput bestResult = null;
-
-                    foreach (var minion in minions)
+                    // Get only killable minions
+                    var killable = minions.FindAll(m => m.Health < Q.GetDamage(m));
+                    if (killable.Count > 0)
                     {
-                        var prediction = Q.GetPrediction(minion);
-
-                        // Validate prediction and collision objects
-                        if (prediction.Hitchance == HitChance.Collision || prediction.CollisionObjects.Count < hitNumber)
-                            continue;
-
-                        // Get targets being hit with colliding Q
-                        var targets = prediction.CollisionObjects;
-                        // Sort them by distance
-                        targets.OrderBy(t => t.Distance(player, true));
-                        // Add the initial minion as it won't be in the list
-                        targets.Add(minion);
-
-                        // Loop through the next targets to see if they will die with the Q hitting
-                        for (int i = 0; i < targets.Count; i++)
+                        // Prepare prediction input for Collision check
+                        var input = new PredictionInput()
                         {
-                            if (player.GetSpellDamage(targets[i], SpellSlot.Q) < targets[i].Health || i == targets.Count)
-                            {
-                                // Can't kill this minion, check result so far
-                                if (i >= hitNumber && (bestResult == null || bestHitCount < i))
-                                {
-                                    bestHitCount = i;
-                                    bestResult = prediction;
-                                }
+                            From = Q.From,
+                            Collision = Q.Collision,
+                            Delay = Q.Delay,
+                            Radius = Q.Width,
+                            Range = Q.Range,
+                            RangeCheckFrom = Q.RangeCheckFrom,
+                            Speed = Q.Speed,
+                            Type = Q.Type,
+                            CollisionObjects = new[] { CollisionableObjects.Heroes, CollisionableObjects.Minions, CollisionableObjects.YasuoWall }
+                        };
 
-                                // Break the loop cuz can't kill target
-                                break;
+                        // Helpers
+                        var currentHitNumber = 0;
+                        var castPosition = Vector3.Zero;
+
+                        // Validate the collision
+                        foreach (var target in killable)
+                        {
+                            // Update unit in the input
+                            input.Unit = target;
+
+                            // Get colliding objects
+                            var colliding = LeagueSharp.Common.Collision.GetCollision(new List<Vector3>() { player.ServerPosition.Extend(Prediction.GetPrediction(input).UnitPosition, Q.Range) }, input)
+                                .MakeUnique()
+                                .OrderBy(e => e.Distance(player, true))
+                                .ToList();
+
+                            // Validate collision
+                            if (colliding.Count >= hitNumber && !colliding.Contains(player))
+                            {
+                                // Calculate hit number
+                                int i = 0;
+                                foreach (var collide in colliding)
+                                {
+                                    // Break loop here since we can't kill the target
+                                    if (Q.GetDamage(collide) < collide.Health)
+                                    {
+                                        if (currentHitNumber < i && i >= hitNumber)
+                                        {
+                                            currentHitNumber = i;
+                                            castPosition = Q.GetPrediction(collide).CastPosition;
+                                        }
+                                        break;
+                                    }
+
+                                    // Increase hit count
+                                    i++;
+                                }
                             }
                         }
-                    }
 
-                    // Check if we have a valid target with enough targets being hit
-                    if (bestResult != null)
-                        Q.Cast(bestResult.CastPosition);
+                        // Check if we have a valid target with enough targets being killed
+                        if (castPosition != Vector3.Zero)
+                        {
+                            if (Q.Cast(castPosition))
+                                return;
+                        }
+                    }
                 }
             }
 
@@ -237,19 +259,27 @@ namespace Kalista
                 var minionsInRange = minions.FindAll(m => E.IsInRange(m));
 
                 // Validate available minions
-                if (minionsInRange.Count() >= hitNumber)
+                if (minionsInRange.Count >= hitNumber)
                 {
                     // Check if enough minions die with E
                     int killableNum = 0;
                     foreach (var minion in minionsInRange)
                     {
                         if (minion.IsRendKillable())
+                        {
+                            // Increase kill number
                             killableNum++;
-                    }
 
-                    // Cast on condition met
-                    if (killableNum >= hitNumber)
-                        E.Cast(true);
+                            // Cast on condition met
+                            if (killableNum >= hitNumber)
+                            {
+                                if (E.Cast(true))
+                                    return;
+
+                                break;
+                            }
+                        }
+                    }
                 }
             }
         }
