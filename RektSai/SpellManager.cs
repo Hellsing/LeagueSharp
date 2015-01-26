@@ -11,37 +11,15 @@ namespace Rekt_Sai
 {
     public static class SpellManager
     {
-        private static Obj_AI_Hero player = ObjectManager.Player;
+        private static readonly Obj_AI_Hero player = ObjectManager.Player;
 
-        private static Spell _r;
-        private static Spell _qNormal, _wNormal, _eNormal;
-        private static Spell _qBurrowed, _wBurrowed, _eBurrowed;
+        public static Spell QNormal { get; private set; }
+        public static Spell WNormal { get; private set; }
+        public static Spell ENormal { get; private set; }
 
-        public static Spell QNormal
-        {
-            get { return _qNormal; }
-        }
-        public static Spell WNormal
-        {
-            get { return _wNormal; }
-        }
-        public static Spell ENormal
-        {
-            get { return _eNormal; }
-        }
-
-        public static Spell QBurrowed
-        {
-            get { return _qBurrowed; }
-        }
-        public static Spell WBurrowed
-        {
-            get { return _wBurrowed; }
-        }
-        public static Spell EBurrowed
-        {
-            get { return _eBurrowed; }
-        }
+        public static Spell QBurrowed { get; private set; }
+        public static Spell WBurrowed { get; private set; }
+        public static Spell EBurrowed { get; private set; }
 
         public static Spell Q
         {
@@ -55,10 +33,7 @@ namespace Rekt_Sai
         {
             get { return player.IsBurrowed() ? EBurrowed : ENormal; }
         }
-        public static Spell R
-        {
-            get { return _r; }
-        }
+        public static Spell R { get; private set; }
 
         private static Dictionary<string, float[]> cooldowns;
         private static readonly Dictionary<Spell, float> cooldownExpires = new Dictionary<Spell, float>();
@@ -66,20 +41,20 @@ namespace Rekt_Sai
         private static bool smiteSearched = false;
         private static bool hasSmite = false;
 
-        public static void Initialize()
+        static SpellManager()
         {
             // General
-            _r = new Spell(SpellSlot.R);
+            R = new Spell(SpellSlot.R);
 
             // Unburrowed
-            _qNormal = new Spell(SpellSlot.Q, 300);
-            _wNormal = new Spell(SpellSlot.W, 0);
-            _eNormal = new Spell(SpellSlot.E, 250);
+            QNormal = new Spell(SpellSlot.Q, 300);
+            WNormal = new Spell(SpellSlot.W, 250);
+            ENormal = new Spell(SpellSlot.E, 250);
 
             // Burrowed
-            _qBurrowed = new Spell(SpellSlot.Q, 1500);
-            _wBurrowed = new Spell(SpellSlot.W, 0);
-            _eBurrowed = new Spell(SpellSlot.E, 750);
+            QBurrowed = new Spell(SpellSlot.Q, 1500, TargetSelector.DamageType.Magical);
+            WBurrowed = new Spell(SpellSlot.W, 250);
+            EBurrowed = new Spell(SpellSlot.E, 750);
 
             // Finetune spells
             QBurrowed.SetSkillshot(0.125f, 60, 4000, true, SkillshotType.SkillshotLine);
@@ -106,7 +81,7 @@ namespace Rekt_Sai
         public static float Cooldown(this Spell spell)
         {
             if (cooldownExpires.ContainsKey(spell))
-                return cooldownExpires[spell] - Game.Time;
+                return Math.Max(0, cooldownExpires[spell] - Game.Time);
 
             return 0;
         }
@@ -114,7 +89,7 @@ namespace Rekt_Sai
         public static bool IsReallyReady(this Spell spell, int timeInMillis = 0)
         {
             if (cooldownExpires.ContainsKey(spell))
-                return spell.Cooldown() - (float)timeInMillis / 1000f <= 0;
+                return spell.Cooldown() - timeInMillis / 1000f <= 0;
 
             return true;
         }
@@ -166,6 +141,16 @@ namespace Rekt_Sai
                         break;
                 }
             }
+        }
+
+        public static bool IsEnabled(this Spell spell, string mode, bool secondStage = false)
+        {
+            return Config.BoolLinks[string.Concat(mode, "Use", spell.Slot.ToString(), secondStage ? "Burrow" : "")].Value;
+        }
+
+        public static bool IsEnabledAndReady(this Spell spell, string mode, bool secondStage = false)
+        {
+            return spell.IsEnabled(mode, secondStage) && spell.Cooldown() == 0;
         }
     }
 }

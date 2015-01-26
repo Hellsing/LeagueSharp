@@ -56,7 +56,7 @@ namespace Rekt_Sai
         {
             var buff = target.GetBurrowBuff();
             if (buff != null)
-                return buff.EndTime - Game.Time;
+                return Math.Max(0, buff.EndTime - Game.Time);
 
             return 0f;
         }

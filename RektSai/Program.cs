@@ -14,7 +14,7 @@ namespace Rekt_Sai
     public class Program
     {
         public const string CHAMP_NAME = "RekSai";
-        private static Obj_AI_Hero player = ObjectManager.Player;
+        private static readonly Obj_AI_Hero player = ObjectManager.Player;
 
         public static void Main(string[] args)
         {
@@ -26,10 +26,6 @@ namespace Rekt_Sai
             // Validate champ name
             if (player.ChampionName != CHAMP_NAME)
                 return;
-
-            // Initialize spells
-            SpellManager.Initialize();
-            Config.Initialize();
 
             // Initialize damage indicator
             Utility.HpBarDamageIndicator.DamageToUnit = Damages.GetFullDamage;
