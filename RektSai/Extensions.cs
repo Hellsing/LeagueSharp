@@ -21,7 +21,7 @@ namespace Rekt_Sai
 
         public static bool IsBurrowed(this Obj_AI_Hero target)
         {
-            return ObjectManager.Player.HasBuff("RekSaiW");
+            return target.Buffs.Any(b => b.Caster.NetworkId == target.NetworkId && b.IsValidBuff() && b.DisplayName == "RekSaiW");
         }
 
         public static float AttackSpeed(this Obj_AI_Base target)
@@ -36,20 +36,17 @@ namespace Rekt_Sai
 
         public static bool HasQActive(this Obj_AI_Hero target)
         {
-            if (!target.IsMe)
-                return false;
-
-            return target.HasBuff(Q_ACTIVE_NAME);
+            return target.Buffs.Any(b => b.Caster.NetworkId == target.NetworkId && b.IsValidBuff() && b.DisplayName == Q_ACTIVE_NAME);
         }
 
         public static bool HasBurrowBuff(this Obj_AI_Base target)
         {
-            return target.HasBuff(TARGET_BURROW_NAME);
+            return target.Buffs.Any(b => b.Caster.IsMe && b.IsValidBuff() && b.DisplayName == TARGET_BURROW_NAME);
         }
 
         public static BuffInstance GetBurrowBuff(this Obj_AI_Base target)
         {
-            return target.Buffs.FirstOrDefault(b => b.DisplayName == TARGET_BURROW_NAME);
+            return target.Buffs.Find(b => b.Caster.IsMe && b.IsValidBuff() && b.DisplayName == TARGET_BURROW_NAME);
         }
 
         public static float GetBurrowBuffDuration(this Obj_AI_Base target)
@@ -58,7 +55,7 @@ namespace Rekt_Sai
             if (buff != null)
                 return Math.Max(0, buff.EndTime - Game.Time);
 
-            return 0f;
+            return 0;
         }
 
         public static bool CanBeKnockedUp(this Obj_AI_Base target)
