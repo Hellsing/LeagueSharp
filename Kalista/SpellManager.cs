@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-using LeagueSharp;
+﻿using LeagueSharp;
 using LeagueSharp.Common;
 
 namespace Kalista
@@ -30,7 +24,9 @@ namespace Kalista
 
         public static Spell GetSpellFromSlot(SpellSlot slot)
         {
-            return slot == SpellSlot.Q ? Q : slot == SpellSlot.W ? W : slot == SpellSlot.E ? E : slot == SpellSlot.R ? R : null;
+            return slot == SpellSlot.Q
+                ? Q
+                : slot == SpellSlot.W ? W : slot == SpellSlot.E ? E : slot == SpellSlot.R ? R : null;
         }
 
         public static bool IsEnabled(this Spell spell, string mode)

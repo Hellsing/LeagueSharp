@@ -1,9 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
 using LeagueSharp;
 using LeagueSharp.Common;
 
@@ -25,9 +21,9 @@ namespace Kalista
 
         public static List<TSource> MakeUnique<TSource>(this List<TSource> list) where TSource : Obj_AI_Base
         {
-            List<TSource> uniqueList = new List<TSource>();
+            var uniqueList = new List<TSource>();
 
-            foreach(var entry in list)
+            foreach (var entry in list)
             {
                 if (uniqueList.All(e => e.NetworkId != entry.NetworkId))
                     uniqueList.Add(entry);

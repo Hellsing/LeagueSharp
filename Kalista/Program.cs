@@ -1,22 +1,18 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
+using System.Drawing;
 using LeagueSharp;
 using LeagueSharp.Common;
-
-using SharpDX;
-
-using Color = System.Drawing.Color;
+using LeagueSharp.Common.CustomEvents;
+using LeagueSharp.Common.Dash;
+using LeagueSharp.Common.Utility;
+using Game = LeagueSharp.Game;
 
 namespace Kalista
 {
     public class Program
     {
         public const string CHAMP_NAME = "Kalista";
-        private static Obj_AI_Hero player = ObjectManager.Player;
+        private static readonly Obj_AI_Hero player = ObjectManager.Player;
 
         public static void Main(string[] args)
         {
@@ -35,8 +31,8 @@ namespace Kalista
             SoulBoundSaver.Initialize();
 
             // Enable damage indicators
-            Utility.HpBarDamageIndicator.DamageToUnit = Damages.GetTotalDamage;
-            Utility.HpBarDamageIndicator.Enabled = true;
+            HpBarDamageIndicator.DamageToUnit = Damages.GetTotalDamage;
+            HpBarDamageIndicator.Enabled = true;
 
             // Enable E damage indicators
             CustomDamageIndicator.Initialize(Damages.GetRendDamage);
@@ -46,7 +42,7 @@ namespace Kalista
             Spellbook.OnCastSpell += Spellbook_OnCastSpell;
             Drawing.OnDraw += Drawing_OnDraw;
             Obj_AI_Base.OnProcessSpellCast += Obj_AI_Base_OnProcessSpellCast;
-            CustomEvents.Unit.OnDash += Unit_OnDash;
+            Unit.OnDash += Unit_OnDash;
             Orbwalking.AfterAttack += ActiveModes.Orbwalking_AfterAttack;
             Orbwalking.OnNonKillableMinion += Orbwalking_OnNonKillableMinion;
         }
@@ -70,7 +66,7 @@ namespace Kalista
                 ActiveModes.fleeTargetPosition = null;
         }
 
-        private static void Unit_OnDash(Obj_AI_Base sender, Dash.DashItem args)
+        private static void Unit_OnDash(Obj_AI_Base sender, DashItem args)
         {
             if (sender.IsMe)
             {
@@ -102,7 +98,7 @@ namespace Kalista
                 if (args.SData.Name == "KalistaExpungeWrapper")
                 {
                     // Make the orbwalker attack again, might get stuck after casting E
-                    Utility.DelayAction.Add(250, Orbwalking.ResetAutoAttackTimer);
+                    DelayAction.Add(250, Orbwalking.ResetAutoAttackTimer);
                 }
             }
         }
@@ -132,7 +128,8 @@ namespace Kalista
 
             // Flee position the player moves to
             if (ActiveModes.fleeTargetPosition.HasValue)
-                Render.Circle.DrawCircle(ActiveModes.fleeTargetPosition.Value, 50, ActiveModes.wallJumpPossible ? Color.Green : SpellManager.Q.IsReady() ? Color.Red : Color.Teal, 10);
+                Render.Circle.DrawCircle(ActiveModes.fleeTargetPosition.Value, 50,
+                    ActiveModes.wallJumpPossible ? Color.Green : SpellManager.Q.IsReady() ? Color.Red : Color.Teal, 10);
         }
     }
 }

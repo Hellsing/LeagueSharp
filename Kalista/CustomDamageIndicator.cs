@@ -1,15 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
 using LeagueSharp;
 using LeagueSharp.Common;
-
+using LeagueSharp.Common.Utility.HpBarDamageIndicator;
 using SharpDX;
-
 using Color = System.Drawing.Color;
 
 namespace Kalista
@@ -20,13 +13,11 @@ namespace Kalista
     {
         private const int BAR_WIDTH = 104;
         private const int LINE_THICKNESS = 9;
-
-        private static Utility.HpBarDamageIndicator.DamageToUnitDelegate damageToUnit;
-
+        private static DamageToUnitDelegate damageToUnit;
         private static readonly Vector2 BarOffset = new Vector2(10, 25);
+        private static Color _drawingColor;
 
-        private static System.Drawing.Color _drawingColor;
-        public static System.Drawing.Color DrawingColor
+        public static Color DrawingColor
         {
             get { return _drawingColor; }
             set { _drawingColor = Color.FromArgb(170, value); }
@@ -34,11 +25,11 @@ namespace Kalista
 
         public static bool Enabled { get; set; }
 
-        public static void Initialize(Utility.HpBarDamageIndicator.DamageToUnitDelegate damageToUnit)
+        public static void Initialize(DamageToUnitDelegate damageToUnit)
         {
             // Apply needed field delegate for damage calculation
             CustomDamageIndicator.damageToUnit = damageToUnit;
-            DrawingColor = System.Drawing.Color.Green;
+            DrawingColor = Color.Green;
             Enabled = true;
 
             // Register event handlers
@@ -49,7 +40,8 @@ namespace Kalista
         {
             if (Enabled)
             {
-                foreach (var unit in ObjectManager.Get<Obj_AI_Hero>().FindAll(u => u.IsValidTarget() && u.IsHPBarRendered))
+                foreach (
+                    var unit in ObjectManager.Get<Obj_AI_Hero>().FindAll(u => u.IsValidTarget() && u.IsHPBarRendered))
                 {
                     // Get damage to unit
                     var damage = damageToUnit(unit);
@@ -59,12 +51,16 @@ namespace Kalista
                         continue;
 
                     // Get remaining HP after damage applied in percent and the current percent of health
-                    var damagePercentage = ((unit.Health - damage) > 0 ? (unit.Health - damage) : 0) / unit.MaxHealth;
-                    var currentHealthPercentage = unit.Health / unit.MaxHealth;
+                    var damagePercentage = ((unit.Health - damage) > 0 ? (unit.Health - damage) : 0)/unit.MaxHealth;
+                    var currentHealthPercentage = unit.Health/unit.MaxHealth;
 
                     // Calculate start and end point of the bar indicator
-                    var startPoint = new Vector2((int)(unit.HPBarPosition.X + BarOffset.X + damagePercentage * BAR_WIDTH), (int)(unit.HPBarPosition.Y + BarOffset.Y) - 5);
-                    var endPoint = new Vector2((int)(unit.HPBarPosition.X + BarOffset.X + currentHealthPercentage * BAR_WIDTH) + 1, (int)(unit.HPBarPosition.Y + BarOffset.Y) - 5);
+                    var startPoint = new Vector2(
+                        (int) (unit.HPBarPosition.X + BarOffset.X + damagePercentage*BAR_WIDTH),
+                        (int) (unit.HPBarPosition.Y + BarOffset.Y) - 5);
+                    var endPoint =
+                        new Vector2((int) (unit.HPBarPosition.X + BarOffset.X + currentHealthPercentage*BAR_WIDTH) + 1,
+                            (int) (unit.HPBarPosition.Y + BarOffset.Y) - 5);
 
                     // Draw the line
                     Drawing.DrawLine(startPoint, endPoint, LINE_THICKNESS, DrawingColor);
