@@ -55,7 +55,7 @@ namespace Gnar
                 _sliderLinks.Add(key, value as MenuWrapper.SliderLink);
         }
 
-        public static void Initialize()
+        static Config()
         {
             // Create menu
             _menu = new MenuWrapper(MENU_NAME);

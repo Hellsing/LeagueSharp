@@ -32,8 +32,7 @@ namespace Gnar
                 return;
 
             // Initialize
-            SpellManager.Initialize();
-            Config.Initialize();
+            SpellQueue.Initialize();
 
             // Check if the player has ignite
             HasIgnite = player.GetSpellSlot("SummonerDot") != SpellSlot.Unknown;
@@ -75,14 +74,17 @@ namespace Gnar
             // Always active stuff, ignite and stuff :P
             ActiveModes.OnPermaActive();
 
-            if (Config.KeyLinks["comboActive"].Value.Active)
-                ActiveModes.OnCombo();
-            if (Config.KeyLinks["harassActive"].Value.Active)
-                ActiveModes.OnHarass();
-            if (Config.KeyLinks["waveActive"].Value.Active)
-                ActiveModes.OnWaveClear();
-            if (Config.KeyLinks["jungleActive"].Value.Active)
-                ActiveModes.OnJungleClear();
+            if (SpellQueue.IsReady)
+            {
+                if (Config.KeyLinks["comboActive"].Value.Active)
+                    ActiveModes.OnCombo();
+                if (Config.KeyLinks["harassActive"].Value.Active)
+                    ActiveModes.OnHarass();
+                if (Config.KeyLinks["waveActive"].Value.Active)
+                    ActiveModes.OnWaveClear();
+                if (Config.KeyLinks["jungleActive"].Value.Active)
+                    ActiveModes.OnJungleClear();
+            }
             if (Config.KeyLinks["fleeActive"].Value.Active)
                 ActiveModes.OnFlee();
         }

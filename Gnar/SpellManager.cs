@@ -46,7 +46,7 @@ namespace Gnar
             get { return Game.Time - lastCastedStun < 0.25; }
         }
 
-        public static void Initialize()
+        static SpellManager()
         {
             // Initialize spells
             // Mini
