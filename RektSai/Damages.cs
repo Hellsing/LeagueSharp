@@ -64,8 +64,8 @@ namespace Rekt_Sai
 
                     if (state == BurrowState.UNBURROWED || state == BurrowState.AUTOMATIC && !player.IsBurrowed())
                     {
-                        // Rek'Sai's next 3 basic attacks within 5 seconds deal 15/30/45/60/75 (+0.3) bonus Physical Damage to nearby enemies.
-                        damage = new float[] { 15, 30, 45, 60, 75 }[spellLevel] + 0.3f * player.TotalAttackDamage();
+                        // Rek'Sai's next 3 basic attacks within 5 seconds deal 15/25/35/45/55 (+0.3) bonus Physical Damage to nearby enemies.
+                        damage = new float[] { 15, 25, 35, 45, 55 }[spellLevel] + 0.3f * player.TotalAttackDamage();
                         extraDamage = (float)player.GetAutoAttackDamage(target);
                     }
                     else
@@ -82,11 +82,11 @@ namespace Rekt_Sai
 
                     if (state == BurrowState.BURROWED || state == BurrowState.AUTOMATIC && player.IsBurrowed())
                     {
-                        // Un-burrow, dealing 60/110/160/210/260 (+0.4) Physical Damage and knocking up nearby enemies for up to 1 second based on their proximity to Rek'Sai.
+                        // Un-burrow, dealing 40/80/120/160/200 (+0.4) Physical Damage and knocking up nearby enemies for up to 1 second based on their proximity to Rek'Sai.
                         // A unit cannot be hit by Un-burrow more than once every 10 seconds.
                         if (!target.HasBurrowBuff())
                         {
-                            damage = new float[] { 60, 110, 160, 210, 260 }[spellLevel] + 0.4f * player.TotalAttackDamage();
+                            damage = new float[] { 40, 80, 120, 160, 200 }[spellLevel] + 0.4f * player.TotalAttackDamage();
                         }
                     }
 
