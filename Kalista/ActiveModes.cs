@@ -48,6 +48,14 @@ namespace Kalista
 
         public static void OnPermaActive()
         {
+            var debug = TargetSelector.GetTarget(float.MaxValue, TargetSelector.DamageType.Physical);
+            if (debug != null)
+            {
+                var buff = debug.Buffs.Find(b => b.DisplayName == "KalistaCoopStrikeProtect" && b.Caster.IsMe);
+                //Game.PrintChat("Waiting time: " + (buff != null ? buff.EndTime - Game.Time : 0));
+                // Game.PrintChat(string.Join(" | ", debug.Buffs.FindAll(b => b.Caster.IsMe).Select(b => b.DisplayName)));
+            }
+
             // Clear the forced target
             Config.Menu.Orbwalker.ForceTarget(null);
 

@@ -16,7 +16,7 @@ namespace Kalista
         public static Spell E { get; private set; }
         public static Spell R { get; private set; }
 
-        public static void Initialize()
+        static SpellManager()
         {
             // Initialize spells
             Q = new Spell(SpellSlot.Q, 1150);

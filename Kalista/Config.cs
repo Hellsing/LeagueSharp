@@ -42,12 +42,8 @@ namespace Kalista
                 _sliderLinks.Add(key, value as MenuWrapper.SliderLink);
         }
 
-        public static void Initialize()
+        static Config()
         {
-            if (initialized)
-                return;
-            initialized = true;
-
             // Create menu
             _menu = new MenuWrapper(MENU_TITLE);
 

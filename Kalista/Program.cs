@@ -30,8 +30,7 @@ namespace Kalista
                 return;
 
             // Initialize classes
-            SpellManager.Initialize();
-            Config.Initialize();
+            SpellQueue.Initialize();
             SoulBoundSaver.Initialize();
 
             // Enable damage indicators
@@ -56,14 +55,17 @@ namespace Kalista
             // Permanent checks for something like killsteal
             ActiveModes.OnPermaActive();
 
-            if (Config.KeyLinks["comboActive"].Value.Active)
-                ActiveModes.OnCombo();
-            if (Config.KeyLinks["harassActive"].Value.Active)
-                ActiveModes.OnHarass();
-            if (Config.KeyLinks["waveActive"].Value.Active)
-                ActiveModes.OnWaveClear();
-            if (Config.KeyLinks["jungleActive"].Value.Active)
-                ActiveModes.OnJungleClear();
+            if (SpellQueue.IsReady)
+            {
+                if (Config.KeyLinks["comboActive"].Value.Active)
+                    ActiveModes.OnCombo();
+                if (Config.KeyLinks["harassActive"].Value.Active)
+                    ActiveModes.OnHarass();
+                if (Config.KeyLinks["waveActive"].Value.Active)
+                    ActiveModes.OnWaveClear();
+                if (Config.KeyLinks["jungleActive"].Value.Active)
+                    ActiveModes.OnJungleClear();
+            }
             if (Config.KeyLinks["fleeActive"].Value.Active)
                 ActiveModes.OnFlee();
             else
@@ -133,6 +135,8 @@ namespace Kalista
             // Flee position the player moves to
             if (ActiveModes.fleeTargetPosition.HasValue)
                 Render.Circle.DrawCircle(ActiveModes.fleeTargetPosition.Value, 50, ActiveModes.wallJumpPossible ? Color.Green : SpellManager.Q.IsReady() ? Color.Red : Color.Teal, 10);
+
+            // Remaining time for E stacks and 
         }
     }
 }
