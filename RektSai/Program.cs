@@ -27,6 +27,11 @@ namespace Rekt_Sai
             if (player.ChampionName != CHAMP_NAME)
                 return;
 
+            Utils.ClearConsole();
+
+            // Initialize SpellQueue
+            SpellQueue.Initialize();
+
             // Initialize damage indicator
             Utility.HpBarDamageIndicator.DamageToUnit = Damages.GetFullDamage;
             Utility.HpBarDamageIndicator.Color = Color.Aqua;
@@ -70,14 +75,17 @@ namespace Rekt_Sai
             // Always active stuff, ignite and stuff :P
             ActiveModes.OnPermaActive();
 
-            if (Config.KeyLinks["comboActive"].Value.Active)
-                ActiveModes.OnCombo();
-            if (Config.KeyLinks["harassActive"].Value.Active)
-                ActiveModes.OnHarass();
-            if (Config.KeyLinks["waveActive"].Value.Active)
-                ActiveModes.OnWaveClear();
-            if (Config.KeyLinks["jungleActive"].Value.Active)
-                ActiveModes.OnJungleClear();
+            if (SpellQueue.IsReady)
+            {
+                if (Config.KeyLinks["comboActive"].Value.Active)
+                    ActiveModes.OnCombo();
+                if (Config.KeyLinks["harassActive"].Value.Active)
+                    ActiveModes.OnHarass();
+                if (Config.KeyLinks["waveActive"].Value.Active)
+                    ActiveModes.OnWaveClear();
+                if (Config.KeyLinks["jungleActive"].Value.Active)
+                    ActiveModes.OnJungleClear();
+            }
             if (Config.KeyLinks["fleeActive"].Value.Active)
                 ActiveModes.OnFlee();
         }

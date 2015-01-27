@@ -200,9 +200,6 @@ namespace Rekt_Sai
 
         public static void OnWaveClear(Obj_AI_Base afterAttackTarget = null)
         {
-            // Config values
-            var numQ = Config.SliderLinks["waveNumQ"].Value.Value;
-
             // Unburrowed
             if (!player.IsBurrowed())
             {
@@ -224,7 +221,7 @@ namespace Rekt_Sai
                         if (Q.IsEnabledAndReady(Mode.WAVE))
                         {
                             // Check the number of Minions we would hit with Q,
-                            if (minions.FindAll(m => m.Distance(player, true) < 450 * 450).Count >= numQ)
+                            if (minions.FindAll(m => m.Distance(player, true) < 450 * 450).Count >= Config.SliderLinks["waveNumQ"].Value.Value)
                             {
                                 if (Q.Cast())
                                     return;
