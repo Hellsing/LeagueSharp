@@ -16,11 +16,6 @@ namespace Veigar
         public static float GetFullDamage(Obj_AI_Hero target)
         {
             float damage = 0;
-            bool dfgFound = false;
-
-            // DFG
-            if (Config.BoolLinks["itemsDfg"].Value && ItemManager.DFG.IsReady())
-                dfgFound = true;
 
             // Q
             if (SpellManager.Q.IsReady())
@@ -35,8 +30,7 @@ namespace Veigar
                 damage += SpellManager.R.GetRealDamage(target);
 
             // Full combo damage respecting DFG and ignite
-            return (dfgFound ? (float)player.GetItemDamage(target, Damage.DamageItems.Dfg) : 0) + damage * (dfgFound ? 1.2f : 1) +
-                (player.HasIgniteReady() ? (float)player.GetSummonerSpellDamage(target, Damage.SummonerSpell.Ignite) : 0);
+            return damage + (player.HasIgniteReady() ? (float)player.GetSummonerSpellDamage(target, Damage.SummonerSpell.Ignite) : 0);
         }
 
         public static float GetRealDamage(this Spell spell, Obj_AI_Base target)

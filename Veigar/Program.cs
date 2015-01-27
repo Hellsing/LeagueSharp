@@ -46,7 +46,7 @@ namespace Veigar
             foreach (var circle in Config.CircleLinks.Values.Select(link => link.Value))
             {
                 if (circle.Active)
-                    Utility.DrawCircle(player.Position, circle.Radius, circle.Color);
+                    Render.Circle.DrawCircle(player.Position, circle.Radius, circle.Color);
             }
         }
 

@@ -109,7 +109,6 @@ namespace Veigar
 
         public enum ComboSpell
         {
-            DFG,
             Q,
             W,
             E,
@@ -142,8 +141,6 @@ namespace Veigar
                 case ComboSpell.E:
                 case ComboSpell.R:
                     return new[] { spell.GetSpell().Slot };
-                case ComboSpell.DFG:
-                    return ItemManager.DFG.IsOwned() ? ItemManager.DFG.Slots.ToArray() : ItemManager.B_TORCH.Slots.ToArray();
                 case ComboSpell.IGNITE:
                     return new[] { player.GetIngiteSlot() };
                 default:

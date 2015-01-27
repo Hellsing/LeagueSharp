@@ -36,7 +36,6 @@ namespace Veigar
 
         private static readonly Dictionary<ComboSpell, bool> comboSpells = new Dictionary<ComboSpell, bool>()
         {
-            { ComboSpell.DFG, false },
             { ComboSpell.Q, false },
             { ComboSpell.W, false },
             { ComboSpell.E, false },
@@ -49,15 +48,11 @@ namespace Veigar
             { new[] { ComboSpell.Q } },
             { new[] { ComboSpell.Q, ComboSpell.W } },
             { new[] { ComboSpell.R } },
-            { new[] { ComboSpell.DFG, ComboSpell.Q } },
             { new[] { ComboSpell.Q, ComboSpell.R } },
-            { new[] { ComboSpell.DFG, ComboSpell.R } },
-            { new[] { ComboSpell.DFG, ComboSpell.Q, ComboSpell.R } },
             { new[] { ComboSpell.Q, ComboSpell.IGNITE } },
             { new[] { ComboSpell.R, ComboSpell.IGNITE } },
-            { new[] { ComboSpell.DFG, ComboSpell.Q, ComboSpell.R, ComboSpell.W } },
-            { new[] { ComboSpell.DFG, ComboSpell.Q, ComboSpell.R, ComboSpell.IGNITE } },
-            { new[] { ComboSpell.DFG, ComboSpell.Q, ComboSpell.R, ComboSpell.IGNITE, ComboSpell.W } },
+            { new[] { ComboSpell.Q, ComboSpell.R, ComboSpell.W } },
+            { new[] { ComboSpell.Q, ComboSpell.R, ComboSpell.IGNITE, ComboSpell.W } },
         };
 
         private static Obj_AI_Hero comboTarget;
@@ -103,7 +98,6 @@ namespace Veigar
             if (target != null)
             {
                 // Spells for our combo and their state
-                comboSpells[ComboSpell.DFG] = Config.BoolLinks["comboUseItems"].Value && Config.BoolLinks["itemsDfg"].Value && (ItemManager.DFG.IsReady() || ItemManager.B_TORCH.IsReady());
                 comboSpells[ComboSpell.Q] = Config.BoolLinks["comboUseQ"].Value && Q.IsReady();
                 comboSpells[ComboSpell.W] = W.IsReady() && target.GetStunDuration() > 1;
                 comboSpells[ComboSpell.E] = Config.BoolLinks["comboUseE"].Value && E.IsReady();
@@ -126,9 +120,6 @@ namespace Veigar
                         float damage = 0;
                         switch (spell)
                         {
-                            case ComboSpell.DFG:
-                                damage = (float)player.GetItemDamage(target, ItemManager.DFG.IsReady() ? Damage.DamageItems.Dfg : Damage.DamageItems.BlackFireTorch);
-                                break;
                             case ComboSpell.Q:
                             case ComboSpell.W:
                             case ComboSpell.R:
@@ -145,18 +136,14 @@ namespace Veigar
                     // Now we need to check if the target can die with one of our evil combos
                     foreach (var combo in availableCombos)
                     {
-                        bool useDfg = combo.Contains(ComboSpell.DFG);
-
                         // Spell damage without items/summoners
-                        float damage = combo.Where(s => s != ComboSpell.DFG && s != ComboSpell.IGNITE).Sum(s => damages[s]);
+                        float damage = combo.Where(s => s != ComboSpell.IGNITE).Sum(s => damages[s]);
 
                         // Full damage on target respecting DFG damge, DFG multiplier and Ignite damage
-                        damage = (useDfg ? damages[ComboSpell.DFG] : 0) +
-                            damage * (useDfg ? 1.2f : 1) +
-                            (combo.Contains(ComboSpell.IGNITE) ? damages[ComboSpell.IGNITE] : 0);
+                        damage += combo.Contains(ComboSpell.IGNITE) ? damages[ComboSpell.IGNITE] : 0;
 
                         // If the damage is higher than the targets health, also check the mana
-                        if (damage > target.Health && combo.Where(c => c != ComboSpell.DFG && c != ComboSpell.IGNITE).Sum(s => mana[s]) < player.Mana)
+                        if (damage > target.Health && combo.Where(c => c != ComboSpell.IGNITE).Sum(s => mana[s]) < player.Mana)
                         {
                             // Set active combo
                             comboTarget = target;
@@ -206,9 +193,6 @@ namespace Veigar
                 var success = false;
                 switch (spell)
                 {
-                    case ComboSpell.DFG:
-                        success = args.SData.Name == player.GetSpell(ItemManager.DFG.IsReady() ? ItemManager.DFG.Slots[0] : ItemManager.B_TORCH.Slots[0]).SData.Name;
-                        break;
                     case ComboSpell.Q:
                     case ComboSpell.W:
                     case ComboSpell.R:
