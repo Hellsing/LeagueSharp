@@ -57,15 +57,24 @@ namespace Kalista
         {
             if (sender.Owner.IsMe)
             {
-                if (IsReady)
+                switch (args.Slot)
                 {
-                    // We are safe to cast a spell
-                    sendTime = TickCount;
-                }
-                else
-                {
-                    // Don't allow the spellcast
-                    args.Process = false;
+                    case SpellSlot.Q:
+                    case SpellSlot.W:
+                    case SpellSlot.E:
+                    case SpellSlot.R:
+
+                        if (IsReady)
+                        {
+                            // We are safe to cast a spell
+                            sendTime = TickCount;
+                        }
+                        else
+                        {
+                            // Don't allow the spellcast
+                            args.Process = false;
+                        }
+                        break;
                 }
             }
         }
