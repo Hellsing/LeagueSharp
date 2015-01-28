@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 
 using LeagueSharp;
 using LeagueSharp.Common;
+using LeagueSharp.Common.Data;
 
 using Item = LeagueSharp.Common.Items.Item;
 
