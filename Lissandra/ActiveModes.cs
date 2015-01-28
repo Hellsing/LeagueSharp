@@ -89,7 +89,7 @@ namespace Lissandra
                     if (R.IsInRange(target) && killable)
                     {
                         // Prefer enemy cast
-                        if (player.HealthPercentage() > target.HealthPercentage() || target.CountEnemysInRange(R.Width) > player.CountEnemysInRange(R.Width))
+                        if (player.HealthPercentage() > target.HealthPercentage() || target.CountEnemiesInRange(R.Width) > player.CountEnemiesInRange(R.Width))
                         {
                             R.CastOnUnit(target);
                         }
