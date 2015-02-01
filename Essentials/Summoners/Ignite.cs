@@ -57,7 +57,10 @@ namespace Essentials.Summoners
                 }
 
                 // Get a killable target with Ignite
-                var target = HeroManager.Enemies.Find(o => o.Health < ObjectManager.Player.GetSummonerSpellDamage(o, Damage.SummonerSpell.Ignite));
+                var target = HeroManager.Enemies.Find(
+                    o => 
+                        o.IsValidTarget(600) &&
+                        o.Health < ObjectManager.Player.GetSummonerSpellDamage(o, Damage.SummonerSpell.Ignite));
                 if (target != null)
                 {
                     // Cast ignite on the target
