@@ -46,14 +46,14 @@ namespace Essentials
                             {
                                 // TODO: Use Regex for this...
                                 int length = (line.Length - 4) - 28 + 1;
-                                var serverVersion = line.Substring(28, length);
+                                var serverVersion = new System.Version(line.Substring(28, length));
 
                                 // Compare both versions
-                                if (!serverVersion.Equals(Assembly.GetExecutingAssembly().GetName().Version))
+                                if (serverVersion > Assembly.GetExecutingAssembly().GetName().Version)
                                 {
                                     Utility.DelayAction.Add(5000, () =>
                                     {
-                                        Game.PrintChat("[Essentials] There is an updated version available: {0}", serverVersion);
+                                        Game.PrintChat("[Essentials] There is an updated version available: {0} => {1}!", Assembly.GetExecutingAssembly().GetName().Version, serverVersion);
                                     });
                                 }
                             }

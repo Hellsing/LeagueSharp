@@ -59,6 +59,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SummonerBase.cs" />
     <Compile Include="SummonerHandler.cs" />
+    <Compile Include="Summoners\Ignite.cs" />
     <Compile Include="Summoners\Smite.cs" />
   </ItemGroup>
   <ItemGroup>

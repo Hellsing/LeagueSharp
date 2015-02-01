@@ -69,8 +69,8 @@ namespace Essentials.Summoners
         }
 
         // Config values
-        private MenuWrapper.BoolLink Enabled;
-        private MenuWrapper.KeyBindLink EnabledHold;
+        private MenuWrapper.BoolLink Enabled { get; set; }
+        private MenuWrapper.KeyBindLink EnabledHold { get; set; }
         private Dictionary<string, MenuWrapper.BoolLink> Camps = new Dictionary<string, MenuWrapper.BoolLink>();
 
         private IEnumerable<string> EnabledCamps
