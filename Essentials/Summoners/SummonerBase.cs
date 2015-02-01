@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using LeagueSharp;
 using LeagueSharp.Common;
 
-namespace Essentials
+namespace Essentials.Summoners
 {
     public abstract class SummonerBase
     {

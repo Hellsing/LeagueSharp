@@ -8,6 +8,8 @@ using System.Threading.Tasks;
 using LeagueSharp;
 using LeagueSharp.Common;
 
+using Essentials.Summoners;
+
 namespace Essentials
 {
     public class SummonerHandler
@@ -58,7 +60,7 @@ namespace Essentials
 
         private static void SetupMenu()
         {
-            var menu = Config.Menu.MainMenu.AddSubMenu("SummonerSpells");
+            var menu = Config.Menu.MainMenu.AddSubMenu("Summoner Spells");
             foreach (var spell in SummonerSpells)
             {
                 spell.AddToMenu(menu);

@@ -29,10 +29,10 @@ namespace Essentials.Summoners
             Enabled = subMenu.AddLinkedBool("Enabled");
 
             subMenu = subMenu.AddSubMenu("Don't use when these spells are ready");
-            Q = new MenuWrapper.BoolLink(subMenu, subMenu.MenuHandle.AddItem(new MenuItem(ObjectManager.Player.ChampionName + "Q", "Q").SetValue(false)).Name);
-            W = new MenuWrapper.BoolLink(subMenu, subMenu.MenuHandle.AddItem(new MenuItem(ObjectManager.Player.ChampionName + "W", "W").SetValue(false)).Name);
-            E = new MenuWrapper.BoolLink(subMenu, subMenu.MenuHandle.AddItem(new MenuItem(ObjectManager.Player.ChampionName + "E", "E").SetValue(false)).Name);
-            R = new MenuWrapper.BoolLink(subMenu, subMenu.MenuHandle.AddItem(new MenuItem(ObjectManager.Player.ChampionName + "R", "R").SetValue(false)).Name);
+            Q = subMenu.AddLinkedBool(ObjectManager.Player.ChampionName + " Q", false);
+            W = subMenu.AddLinkedBool(ObjectManager.Player.ChampionName + " W", false);
+            E = subMenu.AddLinkedBool(ObjectManager.Player.ChampionName + " E", false);
+            R = subMenu.AddLinkedBool(ObjectManager.Player.ChampionName + " R", false);
         }
 
         public override void OnGameUpdate()

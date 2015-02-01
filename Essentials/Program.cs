@@ -70,6 +70,7 @@ namespace Essentials
 
             // Initialize classes
             SummonerHandler.Initialize();
+            KillMarker.Initialize();
         }
     }
 }
