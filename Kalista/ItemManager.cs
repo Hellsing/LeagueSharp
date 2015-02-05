@@ -1,13 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-using LeagueSharp;
+﻿using LeagueSharp;
 using LeagueSharp.Common;
+using LeagueSharp.Common.Data;
 
-using Data = LeagueSharp.Common.Data;
 using Item = LeagueSharp.Common.Items.Item;
 
 namespace Kalista
@@ -17,10 +11,10 @@ namespace Kalista
         private static Obj_AI_Hero player = ObjectManager.Player;
 
         // Offensive items
-        public static readonly Item CUTLASS = Data.ItemData.Bilgewater_Cutlass.GetItem();
-        public static readonly Item BOTRK = Data.ItemData.Blade_of_the_Ruined_King.GetItem();
+        public static readonly Item CUTLASS = ItemData.Bilgewater_Cutlass.GetItem();
+        public static readonly Item BOTRK = ItemData.Blade_of_the_Ruined_King.GetItem();
 
-        public static readonly Item YOUMUU = Data.ItemData.Youmuus_Ghostblade.GetItem();
+        public static readonly Item YOUMUU = ItemData.Youmuus_Ghostblade.GetItem();
 
         public static bool UseBotrk(Obj_AI_Hero target)
         {

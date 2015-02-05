@@ -68,6 +68,7 @@
     <Compile Include="SoulBoundSaver.cs" />
     <Compile Include="SpellManager.cs" />
     <Compile Include="SpellQueue.cs" />
+    <Compile Include="UpdateChecker.cs" />
     <Compile Include="VectorHelper.cs" />
   </ItemGroup>
   <ItemGroup>

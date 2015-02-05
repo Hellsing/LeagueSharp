@@ -1,13 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 using LeagueSharp;
 using LeagueSharp.Common;
-
-using SharpDX;
 
 using Color = System.Drawing.Color;
 
@@ -20,6 +14,9 @@ namespace Kalista
 
         public static void Main(string[] args)
         {
+            // Clear console from previous errors
+            Utils.ClearConsole();
+
             CustomEvents.Game.OnGameLoad += Game_OnGameLoad;
         }
 
@@ -30,6 +27,7 @@ namespace Kalista
                 return;
 
             // Initialize classes
+            UpdateChecker.Initialize("Hellsing/LeagueSharp/master/Kalista");
             SpellQueue.Initialize();
             SoulBoundSaver.Initialize();
 
@@ -83,12 +81,10 @@ namespace Kalista
 
         private static void Orbwalking_OnNonKillableMinion(AttackableUnit minion)
         {
-            // Check if the minion has some rend stacks
-            if (minion is Obj_AI_Base)
+            if (Config.BoolLinks["miscAutoE"].Value && SpellManager.E.IsReady())
             {
-                // Check if minion is killable with E
                 var target = minion as Obj_AI_Base;
-                if (target.IsRendKillable() && SpellManager.E.IsReady())
+                if (target != null && target.IsRendKillable())
                 {
                     // Cast since it's killable with E
                     SpellManager.E.Cast();
@@ -111,7 +107,7 @@ namespace Kalista
 
         private static void Spellbook_OnCastSpell(Spellbook sender, SpellbookCastSpellEventArgs args)
         {
-            // Avoid stupic Q casts while jumping in mid air!
+            // Avoid stupid Q casts while jumping in mid air!
             if (sender.Owner.IsMe && args.Slot == SpellSlot.Q && player.IsDashing())
             {
                 // Don't process the packet since we are jumping!

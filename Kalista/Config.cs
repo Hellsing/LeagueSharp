@@ -1,10 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 
-using LeagueSharp;
 using LeagueSharp.Common;
 
 using Color = System.Drawing.Color;
@@ -87,6 +82,7 @@ namespace Kalista
             ProcessLink("miscKillstealE", subMenu.AddLinkedBool("Killsteal with E"));
             ProcessLink("miscBigE", subMenu.AddLinkedBool("Always E big minions / monsters"));
             ProcessLink("miscUseR", subMenu.AddLinkedBool("Use R to save your soulbound"));
+            ProcessLink("miscAutoE", subMenu.AddLinkedBool("Auto E when you can't kill a minion with AA"));
 
             // Spell settings
             subMenu = _menu.MainMenu.AddSubMenu("SpellSettings");
