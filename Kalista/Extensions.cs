@@ -18,6 +18,30 @@ namespace Kalista
             return target.Buffs.Find(b => b.Caster.IsMe && b.IsValidBuff() && b.DisplayName == "KalistaExpungeMarker");
         }
 
+        public static bool HasUndyingBuff(this Obj_AI_Hero target)
+        {
+            // Tryndamere R
+            if (target.ChampionName == "Tryndamere" &&
+                target.Buffs.Find(b => b.Caster.NetworkId == target.NetworkId && b.IsValidBuff() && b.DisplayName == "Undying Rage") != null)
+            {
+                return true;
+            }
+
+            // Zilean R
+            if (target.Buffs.Find(b => b.IsValidBuff() && b.DisplayName == "Chrono Shift") != null)
+            {
+                return true;
+            }
+
+            // Kayle R
+            if (target.Buffs.Find(b => b.IsValidBuff() && b.DisplayName == "JudicatorIntervention") != null)
+            {
+                return true;
+            }
+
+            return false;
+        }
+
         public static List<TSource> MakeUnique<TSource>(this List<TSource> list) where TSource : Obj_AI_Base
         {
             List<TSource> uniqueList = new List<TSource>();

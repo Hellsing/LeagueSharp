@@ -14,7 +14,8 @@ namespace Kalista
 
         public static bool IsRendKillable(this Obj_AI_Base target)
         {
-            return GetRendDamage(target) > target.Health;
+            var hero = target as Obj_AI_Hero;
+            return GetRendDamage(target) > target.Health && (hero == null || !hero.HasUndyingBuff());
         }
 
         public static float GetRendDamage(Obj_AI_Hero target)
@@ -25,7 +26,7 @@ namespace Kalista
         public static float GetRendDamage(Obj_AI_Base target, int customStacks = -1)
         {
             // Calculate the damage and return
-            return (float)player.CalcDamage(target, Damage.DamageType.Physical, GetRawRendDamage(target, customStacks)) - Config.SliderLinks["spellReductionE"].Value.Value;
+            return ((float)player.CalcDamage(target, Damage.DamageType.Physical, GetRawRendDamage(target, customStacks)) - Config.SliderLinks["spellReductionE"].Value.Value) * 0.98f;
         }
 
         public static float GetRawRendDamage(Obj_AI_Base target, int customStacks = -1)
