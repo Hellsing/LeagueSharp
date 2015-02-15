@@ -22,21 +22,32 @@ namespace Kalista
         {
             // Tryndamere R
             if (target.ChampionName == "Tryndamere" &&
-                target.Buffs.Find(b => b.Caster.NetworkId == target.NetworkId && b.IsValidBuff() && b.DisplayName == "Undying Rage") != null)
+                target.Buffs.Any(b => b.Caster.NetworkId == target.NetworkId && b.IsValidBuff() && b.DisplayName == "Undying Rage"))
             {
                 return true;
             }
 
             // Zilean R
-            if (target.Buffs.Find(b => b.IsValidBuff() && b.DisplayName == "Chrono Shift") != null)
+            if (target.Buffs.Any(b => b.IsValidBuff() && b.DisplayName == "Chrono Shift"))
             {
                 return true;
             }
 
             // Kayle R
-            if (target.Buffs.Find(b => b.IsValidBuff() && b.DisplayName == "JudicatorIntervention") != null)
+            if (target.Buffs.Any(b => b.IsValidBuff() && b.DisplayName == "JudicatorIntervention"))
             {
                 return true;
+            }
+
+            // Poppy R
+            if (target.ChampionName == "Poppy")
+            {
+                if (HeroManager.Allies.Any(o =>
+                    !o.IsMe &&
+                    o.Buffs.Any(b => b.Caster.NetworkId == target.NetworkId && b.IsValidBuff() && b.DisplayName == "PoppyDITarget")))
+                {
+                    return true;
+                }
             }
 
             return false;
