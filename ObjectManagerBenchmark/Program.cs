@@ -58,7 +58,7 @@ namespace ObjectManagerBenchmark
             };
         }
 
-        private static void DoBenchmark<T>(this ObjectManagerEnumerator<T> enumerator)
+        private static void DoBenchmark<T>(this ObjectManagerEnumerator<T> enumerator) where T : GameObject, new()
         {
             var timer = new System.Diagnostics.Stopwatch();
             var benchmarks = new List<long>();
