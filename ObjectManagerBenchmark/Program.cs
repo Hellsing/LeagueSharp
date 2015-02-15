@@ -14,6 +14,8 @@ namespace ObjectManagerBenchmark
     {
         public static void Main(string[] args)
         {
+            Utils.ClearConsole();
+
             CustomEvents.Game.OnGameLoad += uselessArgs =>
             {
                 var sync = new object();
@@ -23,7 +25,7 @@ namespace ObjectManagerBenchmark
                 Game.OnWndProc += wndArgs =>
                 {
                     if (wndArgs.Msg == (uint)WindowsMessages.WM_KEYUP &&
-                        wndArgs.WParam == 't')
+                        wndArgs.WParam == 'T')
                     {
                         new Thread(() =>
                         {
@@ -31,7 +33,9 @@ namespace ObjectManagerBenchmark
                             {
                                 try
                                 {
-                                    Console.WriteLine("--------------------------------------------------------------------------------");
+                                    Console.WriteLine();
+                                    Console.WriteLine("-------------------------------- New benchmark --------------------------------");
+                                    Console.WriteLine();
                                     
                                     // Obj_AI_Base
                                     benchmarks = new List<long>();
