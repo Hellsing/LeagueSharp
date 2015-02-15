@@ -19,8 +19,6 @@ namespace ObjectManagerBenchmark
             CustomEvents.Game.OnGameLoad += uselessArgs =>
             {
                 var sync = new object();
-                var timer = new System.Diagnostics.Stopwatch();
-                var benchmarks = new List<long>();
 
                 Game.OnWndProc += wndArgs =>
                 {
@@ -33,84 +31,20 @@ namespace ObjectManagerBenchmark
                             {
                                 try
                                 {
-                                    Console.WriteLine();
                                     Console.WriteLine("-------------------------------- New benchmark --------------------------------");
                                     Console.WriteLine();
                                     
                                     // Obj_AI_Base
-                                    benchmarks = new List<long>();
-                                    for (int i = 0; i < 1000; i++)
-                                    {
-                                        timer.Start();
-
-                                        ObjectManager.Get<Obj_AI_Base>();
-
-                                        timer.Stop();
-                                        benchmarks.Add(timer.ElapsedTicks);
-                                        timer.Reset();
-                                    }
-                                    Console.WriteLine("Obj_AI_Base");
-                                    Console.WriteLine("-----------");
-                                    Console.WriteLine("Average: {0}ms", (benchmarks.Sum() / benchmarks.Count).ToMilliseconds());
-                                    Console.WriteLine("Min:     {0}ms", benchmarks.Min().ToMilliseconds());
-                                    Console.WriteLine("Max:     {0}ms", benchmarks.Max().ToMilliseconds());
+                                    ObjectManager.Get<Obj_AI_Base>().DoBenchmark();
 
                                     // Obj_AI_Minion
-                                    Console.WriteLine();
-                                    benchmarks = new List<long>();
-                                    for (int i = 0; i < 1000; i++)
-                                    {
-                                        timer.Start();
-
-                                        ObjectManager.Get<Obj_AI_Minion>();
-
-                                        timer.Stop();
-                                        benchmarks.Add(timer.ElapsedTicks);
-                                        timer.Reset();
-                                    }
-                                    Console.WriteLine("Obj_AI_Minion");
-                                    Console.WriteLine("-------------");
-                                    Console.WriteLine("Average: {0}ms", (benchmarks.Sum() / benchmarks.Count).ToMilliseconds());
-                                    Console.WriteLine("Min:     {0}ms", benchmarks.Min().ToMilliseconds());
-                                    Console.WriteLine("Max:     {0}ms", benchmarks.Max().ToMilliseconds());
+                                    ObjectManager.Get<Obj_AI_Minion>().DoBenchmark();
 
                                     // Obj_AI_Turret
-                                    Console.WriteLine();
-                                    benchmarks = new List<long>();
-                                    for (int i = 0; i < 1000; i++)
-                                    {
-                                        timer.Start();
-
-                                        ObjectManager.Get<Obj_AI_Turret>();
-
-                                        timer.Stop();
-                                        benchmarks.Add(timer.ElapsedTicks);
-                                        timer.Reset();
-                                    }
-                                    Console.WriteLine("Obj_AI_Turret");
-                                    Console.WriteLine("-------------");
-                                    Console.WriteLine("Average: {0}ms", (benchmarks.Sum() / benchmarks.Count).ToMilliseconds());
-                                    Console.WriteLine("Min:     {0}ms", benchmarks.Min().ToMilliseconds());
-                                    Console.WriteLine("Max:     {0}ms", benchmarks.Max().ToMilliseconds());
+                                    ObjectManager.Get<Obj_AI_Turret>().DoBenchmark();
 
                                     // Obj_AI_Hero
-                                    Console.WriteLine();
-                                    benchmarks = new List<long>();
-                                    for (int i = 0; i < 1000; i++)
-                                    {
-                                        timer.Start();
-
-                                        ObjectManager.Get<Obj_AI_Hero>();
-
-                                        timer.Stop();
-                                        benchmarks.Add(timer.ElapsedTicks);
-                                        timer.Reset();
-                                    }
-                                    Console.WriteLine("Obj_AI_Hero");
-                                    Console.WriteLine("-----------");
-                                    Console.WriteLine("Average: {0}ms", (benchmarks.Sum() / benchmarks.Count).ToMilliseconds());
-                                    Console.WriteLine("Min:     {0}ms", benchmarks.Min().ToMilliseconds());
-                                    Console.WriteLine("Max:     {0}ms", benchmarks.Max().ToMilliseconds());
+                                    ObjectManager.Get<Obj_AI_Hero>().DoBenchmark();
                                 }
                                 catch (Exception e)
                                 {
@@ -122,6 +56,32 @@ namespace ObjectManagerBenchmark
                     }
                 };
             };
+        }
+
+        private static void DoBenchmark<T>(this ObjectManagerEnumerator<T> enumerator)
+        {
+            var timer = new System.Diagnostics.Stopwatch();
+            var benchmarks = new List<long>();
+
+            for (int i = 0; i < 1000; i++)
+            {
+                timer.Start();
+
+                foreach (var obj in enumerator)
+                {
+                    ; // Kappa
+                }
+
+                timer.Stop();
+                benchmarks.Add(timer.ElapsedTicks);
+            }
+
+            Console.WriteLine(typeof(T).Name);
+            Console.WriteLine("--------------------");
+            Console.WriteLine("Average: {0}ms", (benchmarks.Sum() / benchmarks.Count).ToMilliseconds());
+            Console.WriteLine("Min:     {0}ms", benchmarks.Min().ToMilliseconds());
+            Console.WriteLine("Max:     {0}ms", benchmarks.Max().ToMilliseconds());
+            Console.WriteLine();
         }
 
         private static double ToMilliseconds(this long ticks)
