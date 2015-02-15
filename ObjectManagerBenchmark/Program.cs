@@ -10,7 +10,7 @@ using LeagueSharp.Common;
 
 namespace ObjectManagerBenchmark
 {
-    public class Program
+    public static class Program
     {
         public static void Main(string[] args)
         {
@@ -51,11 +51,12 @@ namespace ObjectManagerBenchmark
                                     }
                                     Console.WriteLine("Obj_AI_Base");
                                     Console.WriteLine("-----------");
-                                    Console.WriteLine("Average: {0}", benchmarks.Sum() / benchmarks.Count);
-                                    Console.WriteLine("Min:     {0}", benchmarks.Min());
-                                    Console.WriteLine("Max:     {0}", benchmarks.Max());
+                                    Console.WriteLine("Average: {0}ms", (benchmarks.Sum() / benchmarks.Count).ToMilliseconds());
+                                    Console.WriteLine("Min:     {0}ms", benchmarks.Min().ToMilliseconds());
+                                    Console.WriteLine("Max:     {0}ms", benchmarks.Max().ToMilliseconds());
 
                                     // Obj_AI_Minion
+                                    Console.WriteLine();
                                     benchmarks = new List<long>();
                                     for (int i = 0; i < 1000; i++)
                                     {
@@ -69,11 +70,12 @@ namespace ObjectManagerBenchmark
                                     }
                                     Console.WriteLine("Obj_AI_Minion");
                                     Console.WriteLine("-------------");
-                                    Console.WriteLine("Average: {0}", benchmarks.Sum() / benchmarks.Count);
-                                    Console.WriteLine("Min:     {0}", benchmarks.Min());
-                                    Console.WriteLine("Max:     {0}", benchmarks.Max());
+                                    Console.WriteLine("Average: {0}ms", (benchmarks.Sum() / benchmarks.Count).ToMilliseconds());
+                                    Console.WriteLine("Min:     {0}ms", benchmarks.Min().ToMilliseconds());
+                                    Console.WriteLine("Max:     {0}ms", benchmarks.Max().ToMilliseconds());
 
                                     // Obj_AI_Turret
+                                    Console.WriteLine();
                                     benchmarks = new List<long>();
                                     for (int i = 0; i < 1000; i++)
                                     {
@@ -87,11 +89,12 @@ namespace ObjectManagerBenchmark
                                     }
                                     Console.WriteLine("Obj_AI_Turret");
                                     Console.WriteLine("-------------");
-                                    Console.WriteLine("Average: {0}", benchmarks.Sum() / benchmarks.Count);
-                                    Console.WriteLine("Min:     {0}", benchmarks.Min());
-                                    Console.WriteLine("Max:     {0}", benchmarks.Max());
+                                    Console.WriteLine("Average: {0}ms", (benchmarks.Sum() / benchmarks.Count).ToMilliseconds());
+                                    Console.WriteLine("Min:     {0}ms", benchmarks.Min().ToMilliseconds());
+                                    Console.WriteLine("Max:     {0}ms", benchmarks.Max().ToMilliseconds());
 
                                     // Obj_AI_Hero
+                                    Console.WriteLine();
                                     benchmarks = new List<long>();
                                     for (int i = 0; i < 1000; i++)
                                     {
@@ -105,9 +108,9 @@ namespace ObjectManagerBenchmark
                                     }
                                     Console.WriteLine("Obj_AI_Hero");
                                     Console.WriteLine("-----------");
-                                    Console.WriteLine("Average: {0}", benchmarks.Sum() / benchmarks.Count);
-                                    Console.WriteLine("Min:     {0}", benchmarks.Min());
-                                    Console.WriteLine("Max:     {0}", benchmarks.Max());
+                                    Console.WriteLine("Average: {0}ms", (benchmarks.Sum() / benchmarks.Count).ToMilliseconds());
+                                    Console.WriteLine("Min:     {0}ms", benchmarks.Min().ToMilliseconds());
+                                    Console.WriteLine("Max:     {0}ms", benchmarks.Max().ToMilliseconds());
                                 }
                                 catch (Exception e)
                                 {
@@ -119,6 +122,11 @@ namespace ObjectManagerBenchmark
                     }
                 };
             };
+        }
+
+        private static double ToMilliseconds(this long ticks)
+        {
+            return (double)ticks / (double)TimeSpan.TicksPerMillisecond;
         }
     }
 }
