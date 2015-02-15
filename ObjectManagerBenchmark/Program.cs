@@ -74,6 +74,7 @@ namespace ObjectManagerBenchmark
 
                 timer.Stop();
                 benchmarks.Add(timer.ElapsedTicks);
+                timer.Reset();
             }
 
             Console.WriteLine(typeof(T).Name);
