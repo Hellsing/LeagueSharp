@@ -26,6 +26,12 @@ namespace Essentials
 
         public static void Initialize()
         {
+            // Kalista currently bugsplats :/
+            if (ObjectManager.Player.Name == "Kalista")
+            {
+                return;
+            }
+
             // Setup menu
             SetupMenu();
 
