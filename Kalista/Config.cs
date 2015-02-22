@@ -83,6 +83,7 @@ namespace Kalista
             ProcessLink("miscBigE", subMenu.AddLinkedBool("Always E big minions / monsters"));
             ProcessLink("miscUseR", subMenu.AddLinkedBool("Use R to save your soulbound"));
             ProcessLink("miscAutoE", subMenu.AddLinkedBool("Auto E when you can't kill a minion with AA"));
+            ProcessLink("miscAutoEchamp", subMenu.AddLinkedBool("Auto E when a minion can die and enemies have 1+ stacks"));
 
             // Spell settings
             subMenu = _menu.MainMenu.AddSubMenu("SpellSettings");

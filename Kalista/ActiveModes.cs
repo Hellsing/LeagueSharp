@@ -57,31 +57,47 @@ namespace Kalista
             // Clear the forced target
             Config.Menu.Orbwalker.ForceTarget(null);
 
-            #region Killsteal
-
-            // Check killsteal
-            if (E.IsReady() && Config.BoolLinks["miscKillstealE"].Value)
+            if (E.IsReady())
             {
-                var target = ObjectManager.Get<Obj_AI_Hero>().Find(h => h.IsValidTarget(E.Range) && h.IsRendKillable());
-                if (target != null)
-                    E.Cast(true);
-            }
+                #region Killsteal
 
-            #endregion
-
-            #region E on big mobs
-
-            // Always E on big mobs
-            if (E.IsReady() && Config.BoolLinks["miscBigE"].Value)
-            {
-                // Check if a big minion could die from the E
-                if (ObjectManager.Get<Obj_AI_Minion>().Any(m => m.IsValidTarget(E.Range) && (m.BaseSkinName.Contains("MinionSiege") || m.BaseSkinName.Contains("Dragon") || m.BaseSkinName.Contains("Baron")) && m.IsRendKillable()))
+                if (Config.BoolLinks["miscKillstealE"].Value &&
+                    HeroManager.Enemies.Any(h => h.IsValidTarget(E.Range) && h.IsRendKillable()))
                 {
-                    E.Cast(true);
+                    E.Cast();
                 }
-            }
 
-            #endregion
+                #endregion
+
+                #region E on big mobs
+
+                else if (Config.BoolLinks["miscBigE"].Value &&
+                    ObjectManager.Get<Obj_AI_Minion>().Any(m => m.IsValidTarget(E.Range) && (m.BaseSkinName.Contains("MinionSiege") || m.BaseSkinName.Contains("Dragon") || m.BaseSkinName.Contains("Baron")) && m.IsRendKillable()))
+                {
+                    E.Cast();
+                }
+
+                #endregion
+
+                #region E combo (minion + champ)
+
+                else if (Config.BoolLinks["miscAutoEchamp"].Value)
+                {
+                    var enemy = HeroManager.Enemies.FindAll(o => o.HasRendBuff()).OrderBy(o => o.Distance(player, true)).FirstOrDefault();
+                    if (enemy != null)
+                    {
+                        if (enemy.Distance(player, true) < Math.Pow(E.Range + 200, 2))
+                        {
+                            if (ObjectManager.Get<Obj_AI_Minion>().Any(o => o.IsRendKillable() && E.IsInRange(o)))
+                            {
+                                E.Cast();
+                            }
+                        }
+                    }
+                }
+
+                #endregion
+            }
         }
 
         public static void OnCombo(bool afterAttack = false, Obj_AI_Base afterAttackTarget = null)

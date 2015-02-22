@@ -44,7 +44,7 @@ namespace Kalista
         {
             if (Enabled)
             {
-                foreach (var unit in ObjectManager.Get<Obj_AI_Hero>().FindAll(u => u.IsValidTarget() && u.IsHPBarRendered))
+                foreach (var unit in HeroManager.Enemies.FindAll(u => u.IsValidTarget() && u.IsHPBarRendered))
                 {
                     // Get damage to unit
                     var damage = damageToUnit(unit);

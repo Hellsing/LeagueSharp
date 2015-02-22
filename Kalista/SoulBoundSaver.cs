@@ -33,7 +33,7 @@ namespace Kalista
             if (SoulBound == null)
             {
                 // TODO: Get the buff display name, I'm not at home so I needed to use xQx' method, which I don't like :D
-                SoulBound = ObjectManager.Get<Obj_AI_Hero>().Find(h => h.IsAlly && h.Buffs.Any(b => b.Caster.IsMe && b.Name.Contains("kalistacoopstrikeally")));
+                SoulBound = HeroManager.Allies.Find(h => h.Buffs.Any(b => b.Caster.IsMe && b.Name.Contains("kalistacoopstrikeally")));
             }
             else if (R.IsEnabledAndReady("misc"))
             {
