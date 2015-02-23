@@ -21,6 +21,11 @@ namespace Avoid
         {
             if (sender.IsMe)
             {
+                if (!Config.Enabled)
+                {
+                    return;
+                }
+
                 switch (args.Order)
                 {
                     case GameObjectOrder.AttackTo:

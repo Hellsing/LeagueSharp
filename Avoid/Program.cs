@@ -6,7 +6,6 @@ namespace Avoid
     {
         public static void Main(string[] args)
         {
-            Utils.ClearConsole();
             CustomEvents.Game.OnGameLoad += uselessArgs => Avoid.OnGameStart();
         }
     }
