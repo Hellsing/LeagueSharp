@@ -31,6 +31,16 @@ namespace Avoid
                     case GameObjectOrder.AttackTo:
                     case GameObjectOrder.MoveTo:
 
+                        // Skip everything if we are stuck
+                        if (_avoidableObjects.Any(
+                                o =>
+                                    o.Value.MenuState.Value &&
+                                    o.Value.ShouldBeAvoided(o.Key) &&
+                                    ObjectManager.Player.Distance(o.Key.Position, true) < Math.Pow(ObjectManager.Player.BoundingRadius + 25, 2)))
+                        {
+                            return;
+                        }
+
                         var path = ObjectManager.Player.GetPath(args.TargetPosition);
                         for (int i = 1; i < path.Length; i++)
                         {
