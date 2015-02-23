@@ -14,7 +14,11 @@ namespace Avoid
 
         static ObjectDatabase()
         {
+#if !DEBUG
             foreach (var enemy in HeroManager.Enemies)
+#else
+            foreach (var enemy in HeroManager.AllHeroes)
+#endif
             {
                 switch (enemy.ChampionName)
                 {
@@ -28,6 +32,12 @@ namespace Avoid
 
                         // E
                         _avoidObjects.Add(new AvoidObject("Jinx - Flame Chompers! (E)", "jinxmine", 75, "JinxEMine"));
+                        break;
+
+                    case "Nidalee":
+
+                        // W
+                        _avoidObjects.Add(new AvoidObject("Nidalee - Bushwhack (W)", "Nidalee_Spear", 65, ""));
                         break;
 
                     case "Teemo":

@@ -29,8 +29,14 @@ namespace Avoid
                 return false;
             }
 
-            if (!string.IsNullOrWhiteSpace(BuffName))
+            if (BuffName != null)
             {
+                // Special cases
+                if (BuffName == "")
+                {
+                    return true;
+                }
+
                 var baseObject = target as Obj_AI_Base;
                 if (baseObject != null)
                 {

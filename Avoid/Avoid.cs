@@ -90,17 +90,41 @@ namespace Avoid
             // Check for updates
             UpdateChecker.Initialize("Hellsing/LeagueSharp/master/Avoid");
 
+#if !DEBUG
             // Validate that there are avoidable objects in the current matchup
             if (ObjectDatabase.AvoidObjects.Count == 0)
             {
                 return;
             }
+#endif
 
             // Listen to events
             ObjectDetector.OnAvoidObjectAdded += OnAvoidObjectAdded;
             GameObject.OnDelete += OnDelete;
+            GameObject.OnPropertyChange += OnPropertyChange;
             Drawing.OnDraw += OnDraw;
             Obj_AI_Base.OnIssueOrder += OnIssueOrder;
+        }
+
+        private static void OnPropertyChange(GameObject sender, GameObjectPropertyChangeEventArgs args)
+        {
+            var key = _avoidableObjects.Find(e => e.Key.NetworkId == sender.NetworkId).Key;
+            if (key != null)
+            {
+                // Nidalee W
+                if (sender.Name == "Noxious Trap" &&
+                    args.Property == "mPercentBubbleRadiusMod" &&
+                    args.OldValue == -1 &&
+                    args.NewValue == 0)
+                {
+                    var baseObject = sender as Obj_AI_Base;
+                    // Yes, it is named nidalee spear... Rito please...
+                    if (baseObject != null && baseObject.BaseSkinName == "Nidalee_Spear")
+                    {
+                        _avoidableObjects.Remove(key);
+                    }
+                }
+            }
         }
 
         private static void OnDraw(EventArgs args)
@@ -110,19 +134,19 @@ namespace Avoid
                 return;
             }
 
-            /* DEBUG CODE
+#if DEBUG
             foreach (var obj in ObjectManager.Get<Obj_AI_Base>())
             {
                 if (!obj.IsMe && ObjectManager.Player.Distance(obj.Position, true) < 400 * 400)
                 {
-                    Render.Circle.DrawCircle(obj.Position, obj.BoundingRadius, Color.Red);
+                    //Render.Circle.DrawCircle(obj.Position, obj.BoundingRadius, Color.Red);
                     //var pos = Drawing.WorldToScreen(obj.Position);
                     //Drawing.DrawText(pos.X, pos.Y, Color.White, obj.Name);
-                    //Game.PrintChat("{0}: {1}", obj.BaseSkinName, obj.BoundingRadius);
-                    Game.PrintChat("{0}: {1}", obj.BaseSkinName, string.Join(" | ", obj.Buffs.Select(b => b.DisplayName)));
+                    //Game.PrintChat("{0}: {1}", obj.Name, obj.BoundingRadius);
+                    //Game.PrintChat("{0} ({1}): {2}", obj.BaseSkinName, obj.BoundingRadius, string.Join(" | ", obj.Buffs.Select(b => b.DisplayName)));
                 }
             }
-            */
+#endif
 
             foreach (var entry in _avoidableObjects)
             {
