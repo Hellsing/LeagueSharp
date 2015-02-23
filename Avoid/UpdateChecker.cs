@@ -19,33 +19,22 @@ namespace Avoid
                     try
                     {
                         var data = await client.DownloadStringTaskAsync(string.Format("https://raw.github.com/{0}/Properties/AssemblyInfo.cs", path));
-                        foreach (var line in data.Split('\n'))
+                    
+                        var version =
+                            Version.Parse(new Regex("AssemblyFileVersion\\((\"(.+?)\")\\)").Match(data).Groups[1].Value.Replace(
+                                "\"", ""));
+
+                        // Compare both versions
+                        var assemblyName = Assembly.GetExecutingAssembly().GetName();
+                        if (serverVersion > assemblyName.Version)
                         {
-                            // Skip comments
-                            if (line.StartsWith("//"))
+                            Utility.DelayAction.Add(5000, () =>
                             {
-                                continue;
-                            }
-
-                            // Search for AssemblyVersion
-                            if (line.StartsWith("[assembly: AssemblyVersion"))
-                            {
-                                // TODO: Use Regex for this...
-                                var serverVersion = new System.Version(line.Substring(28, (line.Length - 4) - 28 + 1));
-
-                                // Compare both versions
-                                var assemblyName = Assembly.GetExecutingAssembly().GetName();
-                                if (serverVersion > assemblyName.Version)
-                                {
-                                    Utility.DelayAction.Add(5000, () =>
-                                    {
-                                        Game.PrintChat("[{0}] Update available: {1} => {2}!",
-                                            assemblyName.Name,
-                                            assemblyName.Version,
-                                            serverVersion);
-                                    });
-                                }
-                            }
+                                Game.PrintChat("[{0}] Update available: {1} => {2}!",
+                                    assemblyName.Name,
+                                    assemblyName.Version,
+                                    serverVersion);
+                            });
                         }
                     }
                     catch (Exception e)
