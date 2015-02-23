@@ -18,7 +18,9 @@ namespace Avoid
         {
             foreach (var avoidObject in ObjectDatabase.AvoidObjects)
             {
-                if (avoidObject.ObjectName == sender.Name)
+                var baseObject = sender as Obj_AI_Base;
+                var objectName = sender == null ? sender.Name : baseObject.BaseSkinName;
+                if (avoidObject.ObjectName == objectName)
                 {
                     if (!string.IsNullOrWhiteSpace(avoidObject.BuffName) && !sender.IsEnemy)
                     {

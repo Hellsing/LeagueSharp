@@ -101,15 +101,15 @@ namespace Avoid
             }
 
             /* DEBUG CODE
-            foreach (var obj in ObjectManager.Get<GameObject>())
+            foreach (var obj in ObjectManager.Get<Obj_AI_Base>())
             {
-                if (ObjectManager.Player.Distance(obj.Position, true) < 400 * 400)
+                if (!obj.IsMe && ObjectManager.Player.Distance(obj.Position, true) < 400 * 400)
                 {
                     Render.Circle.DrawCircle(obj.Position, obj.BoundingRadius, Color.Red);
                     //var pos = Drawing.WorldToScreen(obj.Position);
                     //Drawing.DrawText(pos.X, pos.Y, Color.White, obj.Name);
-                    Game.PrintChat("{0}", obj.BoundingRadius);
-                    //Game.PrintChat("{0}: {1}", obj.Name, string.Join(" | ", (obj as Obj_AI_Base).Buffs.Select(b => b.DisplayName)));
+                    //Game.PrintChat("{0}: {1}", obj.BaseSkinName, obj.BoundingRadius);
+                    Game.PrintChat("{0}: {1}", obj.BaseSkinName, string.Join(" | ", obj.Buffs.Select(b => b.DisplayName)));
                 }
             }
             */
