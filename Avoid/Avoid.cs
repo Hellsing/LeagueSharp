@@ -36,7 +36,7 @@ namespace Avoid
                                 o =>
                                     o.Value.MenuState.Value &&
                                     o.Value.ShouldBeAvoided(o.Key) &&
-                                    ObjectManager.Player.Distance(o.Key.Position, true) < Math.Pow(ObjectManager.Player.BoundingRadius + 25, 2)))
+                                    ObjectManager.Player.Distance(o.Key.Position, true) < Math.Pow(ObjectManager.Player.BoundingRadius, 2)))
                         {
                             return;
                         }
