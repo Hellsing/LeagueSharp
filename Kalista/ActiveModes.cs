@@ -83,7 +83,7 @@ namespace Kalista
 
                 else if (Config.BoolLinks["miscAutoEchamp"].Value)
                 {
-                    var enemy = HeroManager.Enemies.FindAll(o => o.HasRendBuff()).OrderBy(o => o.Distance(player, true)).FirstOrDefault();
+                    var enemy = HeroManager.Enemies.Where(o => o.HasRendBuff()).OrderBy(o => o.Distance(player, true)).FirstOrDefault();
                     if (enemy != null)
                     {
                         if (enemy.Distance(player, true) < Math.Pow(E.Range + 200, 2))
@@ -127,7 +127,7 @@ namespace Kalista
                     if (player.Distance(target, true) > Math.Pow(Orbwalking.GetRealAutoAttackRange(target), 2))
                     {
                         // Get minions around
-                        var minions = ObjectManager.Get<Obj_AI_Minion>().FindAll(m => m.IsValidTarget(Orbwalking.GetRealAutoAttackRange(m)));
+                        var minions = ObjectManager.Get<Obj_AI_Minion>().Where(m => m.IsValidTarget(Orbwalking.GetRealAutoAttackRange(m)));
 
                         // Check if a minion can die with the current E stacks
                         if (minions.Any(m => m.IsRendKillable()))
@@ -205,8 +205,8 @@ namespace Kalista
                 if (minions.Count >= hitNumber)
                 {
                     // Get only killable minions
-                    var killable = minions.FindAll(m => m.Health < Q.GetDamage(m));
-                    if (killable.Count > 0)
+                    var killable = minions.Where(m => m.Health < Q.GetDamage(m));
+                    if (killable.Count() > 0)
                     {
                         // Prepare prediction input for Collision check
                         var input = new PredictionInput()
@@ -278,10 +278,10 @@ namespace Kalista
                 int hitNumber = Config.SliderLinks["waveNumE"].Value.Value;
 
                 // Get minions in E range
-                var minionsInRange = minions.FindAll(m => E.IsInRange(m));
+                var minionsInRange = minions.Where(m => E.IsInRange(m));
 
                 // Validate available minions
-                if (minionsInRange.Count >= hitNumber)
+                if (minionsInRange.Count() >= hitNumber)
                 {
                     // Check if enough minions die with E
                     int killableNum = 0;

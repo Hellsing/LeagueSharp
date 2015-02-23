@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 
 using LeagueSharp;
 using LeagueSharp.Common;
@@ -44,7 +45,7 @@ namespace Kalista
         {
             if (Enabled)
             {
-                foreach (var unit in HeroManager.Enemies.FindAll(u => u.IsValidTarget() && u.IsHPBarRendered))
+                foreach (var unit in HeroManager.Enemies.Where(u => u.IsValidTarget() && u.IsHPBarRendered))
                 {
                     // Get damage to unit
                     var damage = damageToUnit(unit);
