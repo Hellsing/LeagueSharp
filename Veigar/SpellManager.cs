@@ -41,9 +41,9 @@ namespace Veigar
         public static void Initialize()
         {
             // Initialize spells
-            _q = new Spell(SpellSlot.Q, 650);
+            _q = new Spell(SpellSlot.Q, 850);
             _w = new Spell(SpellSlot.W, 900);
-            _e = new Spell(SpellSlot.E, 650);
+            _e = new Spell(SpellSlot.E, 700);
             _r = new Spell(SpellSlot.R, 650);
 
             // Finetune spells
