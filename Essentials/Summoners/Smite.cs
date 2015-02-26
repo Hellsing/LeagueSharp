@@ -75,7 +75,7 @@ namespace Essentials.Summoners
 
         private IEnumerable<string> EnabledCamps
         {
-            get { return Camps.FindAll(c => c.Value.Value).Select(c => c.Key); }
+            get { return Camps.Where(c => c.Value.Value).Select(c => c.Key); }
         }
 
         // Damages for smite
@@ -105,10 +105,10 @@ namespace Essentials.Summoners
                 // Get all enabled camps
                 var enabled = EnabledCamps;
 
-                foreach (var monster in ObjectManager.Get<Obj_AI_Base>())
+                foreach (var monster in ObjectManager.Get<Obj_AI_Minion>())
                 {
                     // Skip monsters which are out of smite range
-                    if (monster.Distance(ObjectManager.Player, true) > 750 * 750)
+                    if (monster.Distance(ObjectManager.Player, false) - (ObjectManager.Player.BoundingRadius + monster.BoundingRadius) > 500)
                     {
                         continue;
                     }
