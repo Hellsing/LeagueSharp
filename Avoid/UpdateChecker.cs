@@ -22,19 +22,19 @@ namespace Avoid
                         var data = await client.DownloadStringTaskAsync(string.Format("https://raw.github.com/{0}/Properties/AssemblyInfo.cs", path));
                     
                         var version =
-                            Version.Parse(new Regex("AssemblyFileVersion\\((\"(.+?)\")\\)").Match(data).Groups[1].Value.Replace(
+                            System.Version.Parse(new Regex("AssemblyFileVersion\\((\"(.+?)\")\\)").Match(data).Groups[1].Value.Replace(
                                 "\"", ""));
 
                         // Compare both versions
                         var assemblyName = Assembly.GetExecutingAssembly().GetName();
-                        if (serverVersion > assemblyName.Version)
+                        if (version > assemblyName.Version)
                         {
                             Utility.DelayAction.Add(5000, () =>
                             {
                                 Game.PrintChat("[{0}] Update available: {1} => {2}!",
                                     assemblyName.Name,
                                     assemblyName.Version,
-                                    serverVersion);
+                                    version);
                             });
                         }
                     }
