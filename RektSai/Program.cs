@@ -38,7 +38,7 @@ namespace Rekt_Sai
             Utility.HpBarDamageIndicator.Enabled = true;
 
             // Listen to other events
-            Game.OnGameUpdate += Game_OnGameUpdate;
+            Game.OnUpdate += Game_OnGameUpdate;
             Orbwalking.AfterAttack += ActiveModes.AfterAttack;
             Obj_AI_Hero.OnProcessSpellCast += Obj_AI_Hero_OnProcessSpellCast;
             Drawing.OnDraw += Drawing_OnDraw;

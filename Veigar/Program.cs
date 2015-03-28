@@ -35,7 +35,7 @@ namespace Veigar
             Utility.HpBarDamageIndicator.Enabled = true;
 
             // Listen to several events
-            Game.OnGameUpdate += Game_OnGameUpdate;
+            Game.OnUpdate += Game_OnGameUpdate;
             Drawing.OnDraw += Drawing_OnDraw;
             //Spellbook.OnCastSpell += ActiveModes.Spellbook_OnCastSpell;
             Obj_AI_Base.OnProcessSpellCast += ActiveModes.Obj_AI_Base_OnProcessSpellCast;

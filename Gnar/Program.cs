@@ -42,7 +42,7 @@ namespace Gnar
             Utility.HpBarDamageIndicator.Enabled = true;
 
             // Listen to some events
-            Game.OnGameUpdate += Game_OnGameUpdate;
+            Game.OnUpdate += Game_OnGameUpdate;
             Drawing.OnDraw += Drawing_OnDraw;
             Orbwalking.AfterAttack += ActiveModes.Orbwalking_AfterAttack;
         }

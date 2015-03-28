@@ -69,7 +69,7 @@ namespace Essentials
 
         private static void SetupUpdateLoop()
         {
-            Game.OnGameUpdate += 
+            Game.OnUpdate += 
                 args =>
                 {
                     SummonerSpells.ForEach(

@@ -101,12 +101,12 @@ namespace Avoid
             // Listen to events
             ObjectDetector.OnAvoidObjectAdded += OnAvoidObjectAdded;
             GameObject.OnDelete += OnDelete;
-            GameObject.OnPropertyChange += OnPropertyChange;
+            GameObject.OnIntegerPropertyChange += OnPropertyChange;
             Drawing.OnDraw += OnDraw;
             Obj_AI_Base.OnIssueOrder += OnIssueOrder;
         }
 
-        private static void OnPropertyChange(GameObject sender, GameObjectPropertyChangeEventArgs args)
+        private static void OnPropertyChange(GameObject sender, GameObjectIntegerPropertyChangeEventArgs args)
         {
             var key = _avoidableObjects.Find(e => e.Key.NetworkId == sender.NetworkId).Key;
             if (key != null)

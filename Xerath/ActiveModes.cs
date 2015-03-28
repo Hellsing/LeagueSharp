@@ -42,10 +42,10 @@ namespace Xerath
             {
                 // Get targets that can die with R
                 var killableTargets = ObjectManager.Get<Obj_AI_Hero>()
-                    .FindAll(h =>h.IsValidTarget(R.Range) && h.Health < (SpellManager.IsCastingUlt ? SpellManager.ChargesRemaining : 3) * R.GetRealDamage(h))
+                    .Where(h =>h.IsValidTarget(R.Range) && h.Health < (SpellManager.IsCastingUlt ? SpellManager.ChargesRemaining : 3) * R.GetRealDamage(h))
                     .OrderByDescending(h => R.GetRealDamage(h));
 
-                if (killableTargets.Count() > 0)
+                if (killableTargets.Any())
                 {
                     lastAltert = Environment.TickCount;
                     var time = TimeSpan.FromSeconds(Game.ClockTime);
@@ -144,11 +144,12 @@ namespace Xerath
                             break;
 
                         // Get all enemy heroes in a distance of 500 from the mouse
-                        var targets = ObjectManager.Get<Obj_AI_Hero>().FindAll(h => h.IsValidTarget(R.Range) && h.Distance(Game.CursorPos, true) < 500 * 500);
-                        if (targets.Count() > 0)
+                        var targets = ObjectManager.Get<Obj_AI_Hero>().Where(h => h.IsValidTarget(R.Range) && h.Distance(Game.CursorPos, true) < 500 * 500);
+                        var objAiHeroes = targets as Obj_AI_Hero[] ?? targets.ToArray();
+                        if (objAiHeroes.Any())
                         {
                             // Get a killable target
-                            var killable = targets.FindAll(t => t.Health < R.GetRealDamage(t) * SpellManager.ChargesRemaining).OrderByDescending(t => R.GetRealDamage(t)).FirstOrDefault();
+                            var killable = objAiHeroes.Where(t => t.Health < R.GetRealDamage(t) * SpellManager.ChargesRemaining).OrderByDescending(t => R.GetRealDamage(t)).FirstOrDefault();
                             if (killable != null)
                             {
                                 // Shoot on the killable target
@@ -157,7 +158,7 @@ namespace Xerath
                             else
                             {
                                 // Get the best target out of the found targets
-                                var target = targets.OrderByDescending(t => R.GetRealDamage(t)).FirstOrDefault();
+                                var target = objAiHeroes.OrderByDescending(t => R.GetRealDamage(t)).FirstOrDefault();
 
                                 // Shoot
                                 R.Cast(target);
