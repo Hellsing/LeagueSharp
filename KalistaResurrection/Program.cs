@@ -28,7 +28,7 @@ namespace KalistaResurrection
             }
 
             // Initialize classes
-            UpdateChecker.Initialize("Hellsing/LeagueSharp/master/Kalista");
+            UpdateChecker.Initialize("Hellsing/LeagueSharp/master/KalistaResurrection");
             SoulBoundSaver.Initialize();
 
             // Enable damage indicators
