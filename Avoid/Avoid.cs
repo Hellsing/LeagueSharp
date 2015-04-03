@@ -6,6 +6,7 @@ using LeagueSharp;
 using LeagueSharp.Common;
 
 using Color = System.Drawing.Color;
+using SharpDX;
 
 namespace Avoid
 {
@@ -36,7 +37,11 @@ namespace Avoid
                                 o =>
                                     o.Value.MenuState.Value &&
                                     o.Value.ShouldBeAvoided(o.Key) &&
-                                    ObjectManager.Player.Distance(o.Key.Position, true) < Math.Pow(ObjectManager.Player.BoundingRadius, 2)))
+                                    Geometry.CircleCircleIntersection(
+                                        ObjectManager.Player.ServerPosition.To2D(),
+                                        o.Key.Position.To2D(),
+                                        ObjectManager.Player.BoundingRadius,
+                                        o.Value.BoundingRadius).Length > 1))
                         {
                             return;
                         }
@@ -48,12 +53,13 @@ namespace Avoid
                             var end = path[i].To2D();     
                             
                             // Minimalize the amount of avoidable objects to loop through
-                            var distanceSqr = start.Distance(path[i], true);
+                            var distanceSqr = start.Distance(end, true);
                             var entries = _avoidableObjects.Where(
                                 o =>
                                     o.Value.MenuState.Value &&
                                     o.Value.ShouldBeAvoided(o.Key) &&
-                                    start.Distance(o.Key.Position, true) < distanceSqr)
+                                    start.Distance(o.Key.Position, true) < distanceSqr &&
+                                    end.Distance(o.Key.Position, true) < distanceSqr)
                                         .OrderBy(
                                             o =>
                                                 ObjectManager.Player.Distance(o.Key.Position.To2D(), true));
@@ -68,13 +74,51 @@ namespace Avoid
                                     var checkPoint = start.Extend(end, j);
 
                                     // Calculate intersection points
-                                    var intersections = Geometry.CircleCircleIntersection(checkPoint, avoidPosition, ObjectManager.Player.BoundingRadius, entry.Value.BoundingRadius);
+                                    var intersections = Geometry.CircleCircleIntersection(
+                                        checkPoint,
+                                        avoidPosition,
+                                        ObjectManager.Player.BoundingRadius,
+                                        entry.Value.BoundingRadius);
+
                                     if (intersections.Length > 1)
                                     {
-                                        // Move to new end and cancel the current order
-                                        ObjectManager.Player.IssueOrder(args.Order, start.Extend(end, j - 25).To3D2(), false);
-                                        args.Process = false;
-                                        return;
+                                        // Update NavCells
+                                        var cells = new Dictionary<NavMeshCell, CollisionFlags>();
+                                        var step = 2 * Math.PI / 8;
+                                        for (var theta = 0d; theta < 2 * Math.PI + step; theta += step)
+                                        {
+                                            var pos = NavMesh.WorldToGrid((float)(avoidPosition.X + entry.Value.BoundingRadius * Math.Cos(theta)),
+                                                                          (float)(avoidPosition.Y - entry.Value.BoundingRadius * Math.Sin(theta)));
+                                            
+                                            var cell = pos.ToCell();
+                                            if (!cells.Keys.Any(o => o.GridX == cell.GridX && o.GridY == cell.GridY))
+                                            {
+                                                cells.Add(cell, cell.CollFlags);
+                                                cell.CollFlags = CollisionFlags.Wall;
+                                            }
+                                        }
+
+                                        // Get new path
+                                        var newPath = ObjectManager.Player.GetPath(args.TargetPosition);
+
+                                        // Revert old flags
+                                        foreach (var cell in cells)
+                                        {
+                                            cell.Key.CollFlags = cell.Value;
+                                        }
+
+                                        // Get new end
+                                        for (var k = 0; k < newPath.Length; k++)
+                                        {
+                                            if (newPath[k].To2D().Distance(start, true) < 10 * 10 &&
+                                                k + 1 < newPath.Length)
+                                            {
+                                                // Move to new end and cancel the current order
+                                                ObjectManager.Player.IssueOrder(args.Order, newPath[k + 1], false);
+                                                args.Process = false;
+                                                return;
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -101,12 +145,12 @@ namespace Avoid
             // Listen to events
             ObjectDetector.OnAvoidObjectAdded += OnAvoidObjectAdded;
             GameObject.OnDelete += OnDelete;
-            GameObject.OnIntegerPropertyChange += OnPropertyChange;
+            GameObject.OnFloatPropertyChange += OnPropertyChange;
             Drawing.OnDraw += OnDraw;
             Obj_AI_Base.OnIssueOrder += OnIssueOrder;
         }
 
-        private static void OnPropertyChange(GameObject sender, GameObjectIntegerPropertyChangeEventArgs args)
+        private static void OnPropertyChange(GameObject sender, GameObjectFloatPropertyChangeEventArgs args)
         {
             var key = _avoidableObjects.Find(e => e.Key.NetworkId == sender.NetworkId).Key;
             if (key != null)
@@ -133,7 +177,6 @@ namespace Avoid
             {
                 return;
             }
-
 #if DEBUG
             foreach (var obj in ObjectManager.Get<Obj_AI_Base>())
             {
@@ -147,13 +190,12 @@ namespace Avoid
                 }
             }
 #endif
-
             foreach (var entry in _avoidableObjects)
             {
                 if (entry.Value.ShouldBeAvoided(entry.Key))
                 {
                     // Draw a circle around the avoid object
-                    Render.Circle.DrawCircle(entry.Key.Position, entry.Value.BoundingRadius, Config.Enabled ? Color.White : Color.Red);
+                    Render.Circle.DrawCircle(entry.Key.Position, entry.Value.BoundingRadius, (Config.Enabled && entry.Value.MenuState.Value) ? Color.White : Color.Red);
                 }
             }
         }
