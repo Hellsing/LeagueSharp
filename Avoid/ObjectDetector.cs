@@ -16,17 +16,13 @@ namespace Avoid
 
         private static void OnCreate(GameObject sender, EventArgs args)
         {
-            if (!sender.IsValid)
-            {
-                return;
-            }
 #if DEBUG
             Console.WriteLine("Type: {0} | Name: {1}", sender.GetType().Name, sender.Name);
 #endif
             foreach (var avoidObject in ObjectDatabase.AvoidObjects)
             {
                 var baseObject = sender as Obj_AI_Base;
-                var objectName = sender == null ? sender.Name : baseObject.BaseSkinName;
+                var objectName = baseObject == null ? sender.Name : baseObject.BaseSkinName;
                 if (avoidObject.ObjectName == objectName)
                 {
 #if !DEBUG

@@ -21,7 +21,8 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\Release</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DefineConstants>
+    </DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
@@ -30,20 +31,19 @@
     <DebugType>pdbonly</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\Release</OutputPath>
-    <DefineConstants>
-    </DefineConstants>
+    <DefineConstants>DEBUG</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="LeagueSharp">
-      <HintPath>C:\Users\Hellsing\OneDrive\Development\LeagueSharp\\System\LeagueSharp.dll</HintPath>
+      <HintPath>C:\Users\Hellsing\Desktop\LeagueSharp\\System\LeagueSharp.dll</HintPath>
     </Reference>
     <Reference Include="LeagueSharp.Common">
-      <HintPath>C:\Users\Hellsing\OneDrive\Development\LeagueSharp\\System\LeagueSharp.Common.dll</HintPath>
+      <HintPath>C:\Users\Hellsing\Desktop\LeagueSharp\\System\LeagueSharp.Common.dll</HintPath>
     </Reference>
     <Reference Include="SharpDX">
-      <HintPath>C:\Users\Hellsing\OneDrive\Development\LeagueSharp\\System\SharpDX.dll</HintPath>
+      <HintPath>C:\Users\Hellsing\Desktop\LeagueSharp\\System\SharpDX.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -58,6 +58,7 @@
     <Compile Include="Avoid.cs" />
     <Compile Include="AvoidObject.cs" />
     <Compile Include="Config.cs" />
+    <Compile Include="Extensions.cs" />
     <Compile Include="ObjectDatabase.cs" />
     <Compile Include="ObjectDetector.cs" />
     <Compile Include="Program.cs" />
