@@ -30,6 +30,7 @@ namespace KalistaResurrection
             // Initialize classes
             UpdateChecker.Initialize("Hellsing/LeagueSharp/master/KalistaResurrection");
             SoulBoundSaver.Initialize();
+            ModeLogic.Initialize();
 
             // Enable damage indicators
             Utility.HpBarDamageIndicator.DamageToUnit = Damages.GetTotalDamage;
