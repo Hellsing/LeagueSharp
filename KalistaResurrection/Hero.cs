@@ -41,23 +41,23 @@ namespace KalistaResurrection
                 var mode = ActiveModes.None;
                 if (Config.Keys.Combo.Value.Key == args.WParam)
                 {
-                    mode = ActiveModes.Combo;
+                    mode = mode | ActiveModes.Combo;
                 }
-                else if (Config.Keys.Harass.Value.Key == args.WParam)
+                if (Config.Keys.Harass.Value.Key == args.WParam)
                 {
-                    mode = ActiveModes.Harass;
+                    mode = mode | ActiveModes.Harass;
                 }
-                else if (Config.Keys.WaveClear.Value.Key == args.WParam)
+                if (Config.Keys.WaveClear.Value.Key == args.WParam)
                 {
-                    mode = ActiveModes.WaveClear;
+                    mode = mode | ActiveModes.WaveClear;
                 }
-                else if (Config.Keys.JungleClear.Value.Key == args.WParam)
+                if (Config.Keys.JungleClear.Value.Key == args.WParam)
                 {
-                    mode = ActiveModes.JungleClear;
+                    mode = mode | ActiveModes.JungleClear;
                 }
-                else if (Config.Keys.Flee.Value.Key == args.WParam)
+                if (Config.Keys.Flee.Value.Key == args.WParam)
                 {
-                    mode = ActiveModes.Flee;
+                    mode = mode | ActiveModes.Flee;
                 }
 
                 switch (args.Msg)
