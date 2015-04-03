@@ -56,11 +56,14 @@ namespace KalistaResurrection
 
         public class Keys
         {
-            public static MenuWrapper.KeyBindLink Combo { get; private set; }
-            public static MenuWrapper.KeyBindLink Harass { get; private set; }
-            public static MenuWrapper.KeyBindLink WaveClear { get; private set; }
-            public static MenuWrapper.KeyBindLink JungleClear { get; private set; }
-            public static MenuWrapper.KeyBindLink Flee { get; private set; }
+            public static KeyBindLink Combo { get; private set; }
+            public static KeyBindLink Harass { get; private set; }
+            public static KeyBindLink WaveClear { get; private set; }
+            public static KeyBindLink JungleClear { get; private set; }
+            public static KeyBindLink Flee { get; private set; }
+
+            public static Dictionary<KeyBindLink, ActiveModes> ActiveModeLinks { get; private set; }
+            public static uint[] AllKeys { get; private set; }
 
             public static void Initialize()
             {
@@ -85,21 +88,16 @@ namespace KalistaResurrection
                     // Flee
                     Config.Flee.Menu.AddSeparator();
                     Flee = Config.Flee.Menu.AddLinkedKeyBind("Active", 'T', KeyBindType.Press);
-                }
-            }
 
-            public static uint[] AllKeys
-            {
-                get
-                {
-                    return new[]
+                    ActiveModeLinks = new Dictionary<KeyBindLink, ActiveModes>()
                     {
-                        Combo.Value.Key,
-                        Harass.Value.Key,
-                        WaveClear.Value.Key,
-                        JungleClear.Value.Key,
-                        Flee.Value.Key
+                        { Combo, ActiveModes.Combo },
+                        { Harass, ActiveModes.Harass },
+                        { WaveClear, ActiveModes.WaveClear },
+                        { JungleClear, ActiveModes.JungleClear },
+                        { Flee, ActiveModes.Flee },
                     };
+                    AllKeys = ActiveModeLinks.Keys.Select(o => o.Value.Key).ToArray();
                 }
             }
         }

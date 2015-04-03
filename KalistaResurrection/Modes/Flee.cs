@@ -35,15 +35,6 @@ namespace KalistaResurrection.Modes
             return Hero.ActiveMode.HasFlag(ActiveModes.Flee);
         }
 
-        private void OnDash(Obj_AI_Base sender, Dash.DashItem args)
-        {
-            if (sender.IsMe)
-            {
-                InitTime = 0;
-                Target = Vector3.Zero;
-            }
-        }
-
         public override void Execute()
         {
             // A jump has been triggered, move into the set direction and
@@ -204,6 +195,15 @@ namespace KalistaResurrection.Modes
                 {
                     Orbwalking.Orbwalk(target, movePosition, 90f, 0f, false, false);
                 }
+            }
+        }
+
+        private void OnDash(Obj_AI_Base sender, Dash.DashItem args)
+        {
+            if (sender.IsMe)
+            {
+                InitTime = 0;
+                Target = Vector3.Zero;
             }
         }
 

@@ -33,31 +33,19 @@ namespace KalistaResurrection
         {
             if (MenuGUI.IsChatOpen)
             {
+                ActiveMode = ActiveModes.None;
                 return;
             }
 
             if (Config.Keys.AllKeys.Contains(args.WParam))
             {
                 var mode = ActiveModes.None;
-                if (Config.Keys.Combo.Value.Key == args.WParam)
+                foreach (var entry in Config.Keys.ActiveModeLinks)
                 {
-                    mode = mode | ActiveModes.Combo;
-                }
-                if (Config.Keys.Harass.Value.Key == args.WParam)
-                {
-                    mode = mode | ActiveModes.Harass;
-                }
-                if (Config.Keys.WaveClear.Value.Key == args.WParam)
-                {
-                    mode = mode | ActiveModes.WaveClear;
-                }
-                if (Config.Keys.JungleClear.Value.Key == args.WParam)
-                {
-                    mode = mode | ActiveModes.JungleClear;
-                }
-                if (Config.Keys.Flee.Value.Key == args.WParam)
-                {
-                    mode = mode | ActiveModes.Flee;
+                    if (entry.Key.Value.Key == args.WParam)
+                    {
+                        mode = mode | entry.Value;
+                    }
                 }
 
                 switch (args.Msg)
