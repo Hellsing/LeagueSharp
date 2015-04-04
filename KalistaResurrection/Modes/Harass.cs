@@ -21,7 +21,9 @@ namespace KalistaResurrection.Modes
         public override void Execute()
         {
             // Mana check
-            if (Player.ManaPercent < Settings.MinMana)
+            // Jodus please...
+            //if (Player.ManaPercent < Settings.MinMana)
+            if (((Player.Mana / Player.MaxMana) * 100) < Settings.MinMana)
             {
                 return;
             }
