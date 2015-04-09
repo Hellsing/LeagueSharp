@@ -25,7 +25,7 @@ namespace Xerath
 
         public static bool IsCastingUlt
         {
-            get { return player.HasBuff("XerathR"); }
+            get { return player.Buffs.Any(b => b.Caster.IsMe && b.IsValidBuff() && b.DisplayName == "XerathR"); }
         }
         public static int LastChargeTime { get; private set; }
         public static Vector3 LastChargePosition { get; private set; }

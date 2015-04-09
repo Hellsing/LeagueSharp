@@ -46,8 +46,9 @@ namespace Xerath
             Game.OnUpdate += Game_OnGameUpdate;
             Game.OnWndProc += Game_OnWndProc;
             Drawing.OnDraw += Drawing_OnDraw;
+            Drawing.OnEndScene += Drawing_OnEndScene;
             AntiGapcloser.OnEnemyGapcloser += AntiGapcloser_OnEnemyGapcloser;
-            Interrupter.OnPossibleToInterrupt += Interrupter_OnPossibleToInterrupt;
+            Interrupter2.OnInterruptableTarget += OnInterruptableTarget;
         }
 
         private static void Game_OnGameUpdate(EventArgs args)
@@ -101,7 +102,10 @@ namespace Xerath
             // Draw R range
             if (Config.CircleLinks["drawRangeR"].Value.Active)
                 Render.Circle.DrawCircle(player.Position, SpellManager.R.Range, Config.CircleLinks["drawRangeR"].Value.Color);
+        }
 
+        private static void Drawing_OnEndScene(EventArgs args)
+        {
             // Draw R on minimap
             if (Config.CircleLinks["drawRangeR"].Value.Active && SpellManager.R.Level > 0)
                 Utility.DrawCircle(player.Position, SpellManager.R.Range, Config.CircleLinks["drawRangeR"].Value.Color, 5, 30, true);
@@ -116,12 +120,12 @@ namespace Xerath
             }
         }
 
-        private static void Interrupter_OnPossibleToInterrupt(Obj_AI_Base unit, InterruptableSpell spell)
+        private static void OnInterruptableTarget(Obj_AI_Hero sender, Interrupter2.InterruptableTargetEventArgs args)
         {
-            if (spell.DangerLevel == InterruptableDangerLevel.High && Config.BoolLinks["miscInterruptE"].Value && SpellManager.E.IsReady() && SpellManager.E.IsInRange(unit))
+            if (args.DangerLevel == Interrupter2.DangerLevel.High && Config.BoolLinks["miscInterruptE"].Value && SpellManager.E.IsReady() && SpellManager.E.IsInRange(sender))
             {
                 // Cast E on the unit casting the interruptable spell
-                SpellManager.E.Cast(unit);
+                SpellManager.E.Cast(sender);
             }
         }
     }
