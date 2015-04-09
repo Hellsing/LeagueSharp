@@ -9,7 +9,7 @@ using LeagueSharp.Common;
 
 using Color = System.Drawing.Color;
 
-namespace Rekt_Sai
+namespace RektSai
 {
     public class Program
     {

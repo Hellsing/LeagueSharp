@@ -10,7 +10,7 @@ using LeagueSharp.Common.Data;
 
 using Item = LeagueSharp.Common.Items.Item;
 
-namespace Rekt_Sai
+namespace RektSai
 {
     public static class ItemManager
     {

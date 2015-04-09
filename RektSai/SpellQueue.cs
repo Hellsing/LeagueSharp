@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using LeagueSharp;
 using LeagueSharp.Common;
 
-namespace Rekt_Sai
+namespace RektSai
 {
     public class SpellQueue
     {
