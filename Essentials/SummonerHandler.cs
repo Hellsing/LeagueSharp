@@ -36,24 +36,17 @@ namespace Essentials
 
         private static void DetectSummoners()
         {
-            foreach (var type in Assembly.GetExecutingAssembly().GetTypes())
+            var summoners = new SummonerBase[]
             {
-                if (!typeof(SummonerBase).IsAssignableFrom(type) || type.Name.Equals(typeof(SummonerBase).Name))
-                {
-                    continue;
-                }
+                new Ignite(),
+                new Smite()
+            };
 
-                try
+            for (int i = 0; i < summoners.Length; i++ )
+            {
+                if (summoners[i].IsOwned())
                 {
-                    var spell = (SummonerBase)Activator.CreateInstance(type);
-                    if (spell.IsOwned())
-                    {
-                        SummonerSpells.Add(spell);
-                    }
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine("Failed to create new instance of {0}, Namespace: {1}!\nException: {2}\nTrace:\n{3}", type.Name, type.Namespace, e.Message, e.StackTrace);
+                    SummonerSpells.Add(summoners[i]);
                 }
             }
         }
