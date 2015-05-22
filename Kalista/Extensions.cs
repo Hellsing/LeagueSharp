@@ -10,12 +10,12 @@ namespace Kalista
     {
         public static bool HasRendBuff(this Obj_AI_Base target)
         {
-            return target.GetRendBuff() != null;
+            return target.HasBuff("kalistaexpungemarker");
         }
 
-        public static BuffInstance GetRendBuff(this Obj_AI_Base target)
+        public static int GetRendBuffCount(this Obj_AI_Base target)
         {
-            return target.Buffs.Find(b => b.Caster.IsMe && b.IsValidBuff() && b.DisplayName == "KalistaExpungeMarker");
+            return target.GetBuffCount("kalistaexpungemarker");
         }
 
         public static bool HasUndyingBuff(this Obj_AI_Hero target)

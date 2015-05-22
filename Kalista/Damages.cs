@@ -32,12 +32,12 @@ namespace Kalista
         public static float GetRawRendDamage(Obj_AI_Base target, int customStacks = -1)
         {
             // Get buff
-            var buff = target.GetRendBuff();
+            var buffCount = target.GetRendBuffCount();
 
-            if (buff != null || customStacks > -1)
+            if (buffCount != 0 || customStacks > -1)
             {
                 return (rawRendDamage[SpellManager.E.Level - 1] + rawRendDamageMultiplier[SpellManager.E.Level - 1] * player.TotalAttackDamage()) + // Base damage
-                       ((customStacks < 0 ? buff.Count : customStacks) - 1) * // Spear count
+                       ((customStacks < 0 ? buffCount : customStacks) - 1) * // Spear count
                        (rawRendDamagePerSpear[SpellManager.E.Level - 1] + rawRendDamagePerSpearMultiplier[SpellManager.E.Level - 1] * player.TotalAttackDamage()); // Damage per spear
             }
 

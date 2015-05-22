@@ -46,13 +46,13 @@ namespace Kalista
 
         public static void OnPermaActive()
         {
-            var debug = TargetSelector.GetTarget(float.MaxValue, TargetSelector.DamageType.Physical);
-            if (debug != null)
-            {
-                var buff = debug.Buffs.Find(b => b.DisplayName == "KalistaCoopStrikeProtect" && b.Caster.IsMe);
+            //var debug = TargetSelector.GetTarget(float.MaxValue, TargetSelector.DamageType.Physical);
+            //if (debug != null)
+            //{
+            //    var buff = debug.Buffs.Find(b => b.DisplayName == "KalistaCoopStrikeProtect" && b.Caster.IsMe);
                 //Game.PrintChat("Waiting time: " + (buff != null ? buff.EndTime - Game.Time : 0));
                 // Game.PrintChat(string.Join(" | ", debug.Buffs.FindAll(b => b.Caster.IsMe).Select(b => b.DisplayName)));
-            }
+            //}
 
             // Clear the forced target
             Config.Menu.Orbwalker.ForceTarget(null);
@@ -83,12 +83,12 @@ namespace Kalista
 
                 else if (Config.BoolLinks["miscAutoEchamp"].Value)
                 {
-                    var enemy = HeroManager.Enemies.Where(o => o.HasRendBuff()).OrderBy(o => o.Distance(player, true)).FirstOrDefault();
+                    var enemy = HeroManager.Enemies.Where(o => o.HasRendBuff()).MinOrDefault(o => o.Distance(player, true));
                     if (enemy != null)
                     {
                         if (enemy.Distance(player, true) < Math.Pow(E.Range + 200, 2))
                         {
-                            if (ObjectManager.Get<Obj_AI_Minion>().Any(o => o.IsRendKillable() && E.IsInRange(o)))
+                            if (ObjectManager.Get<Obj_AI_Minion>().Any(o => E.IsInRange(o) && o.IsRendKillable()))
                             {
                                 E.Cast();
                             }
@@ -146,7 +146,7 @@ namespace Kalista
                     }
                     // Target is in range and has at least the set amount of E stacks on
                     else if (E.IsInRange(target) &&
-                        (target.IsRendKillable() || target.GetRendBuff().Count >= Config.SliderLinks["comboNumE"].Value.Value))
+                        (target.IsRendKillable() || target.GetRendBuffCount() >= Config.SliderLinks["comboNumE"].Value.Value))
                     {
                         // Check if the target would die from E
                         if (target.IsRendKillable())
@@ -156,8 +156,7 @@ namespace Kalista
                         else
                         {
                             // Check if target is about to leave our E range or the buff is about to run out
-                            if (target.ServerPosition.Distance(player.ServerPosition, true) > Math.Pow(E.Range * 0.8, 2) ||
-                                target.GetRendBuff().EndTime - Game.Time < 0.3)
+                            if (target.ServerPosition.Distance(player.ServerPosition, true) > Math.Pow(E.Range * 0.8, 2))
                             {
                                 E.Cast(true);
                             }
@@ -172,7 +171,7 @@ namespace Kalista
             if (Q.IsEnabledAndReady(Mode.HARASS))
             {
                 // Mana check
-                if (player.ManaPercentage() < Config.SliderLinks["harassMana"].Value.Value)
+                if (player.ManaPercent < Config.SliderLinks["harassMana"].Value.Value)
                     return;
 
                 var target = Q.GetTarget();
@@ -184,7 +183,7 @@ namespace Kalista
         public static void OnWaveClear()
         {
             // Mana check
-            if (player.ManaPercentage() < Config.SliderLinks["waveMana"].Value.Value)
+            if (player.ManaPercent < Config.SliderLinks["waveMana"].Value.Value)
                 return;
 
             // Check spells
