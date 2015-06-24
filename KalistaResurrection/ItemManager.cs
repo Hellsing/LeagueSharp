@@ -10,6 +10,7 @@ using LeagueSharp.Common.Data;
 
 using Item = LeagueSharp.Common.Items.Item;
 using Settings = KalistaResurrection.Config.Items;
+using ItemData = LeagueSharp.Common.Data.ItemData;
 
 namespace KalistaResurrection
 {
