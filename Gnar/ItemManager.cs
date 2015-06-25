@@ -9,6 +9,7 @@ using LeagueSharp.Common;
 using LeagueSharp.Common.Data;
 
 using Item = LeagueSharp.Common.Items.Item;
+using ItemData = LeagueSharp.Common.Data.ItemData; 
 
 namespace Gnar
 {
