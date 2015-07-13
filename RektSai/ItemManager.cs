@@ -8,7 +8,7 @@ using LeagueSharp;
 using LeagueSharp.Common;
 using LeagueSharp.Common.Data;
 
-using Item = LeagueSharp.Common.Items.Item;
+using ItemData = LeagueSharp.Common.Data.ItemData;
 
 namespace RektSai
 {
@@ -17,35 +17,35 @@ namespace RektSai
         private static Obj_AI_Hero player = ObjectManager.Player;
 
         // Offensive items
-        public static readonly Item TIAMAT = ItemData.Tiamat_Melee_Only.GetItem();
-        public static readonly Item HYDRA = ItemData.Ravenous_Hydra_Melee_Only.GetItem();
-        public static readonly Item CUTLASS = ItemData.Bilgewater_Cutlass.GetItem();
-        public static readonly Item BOTRK = ItemData.Blade_of_the_Ruined_King.GetItem();
+        public static readonly Items.Item TIAMAT = ItemData.Tiamat_Melee_Only.GetItem();
+        public static readonly Items.Item HYDRA = ItemData.Ravenous_Hydra_Melee_Only.GetItem();
+        public static readonly Items.Item CUTLASS = ItemData.Bilgewater_Cutlass.GetItem();
+        public static readonly Items.Item BOTRK = ItemData.Blade_of_the_Ruined_King.GetItem();
 
         // Defensive items
-        public static readonly Item RANDUIN = ItemData.Randuins_Omen.GetItem();
+        public static readonly Items.Item RANDUIN = ItemData.Randuins_Omen.GetItem();
 
         // Smite items
-        public static readonly List<Item> STALKER_BLADES = new List<Item>()
+        public static readonly List<Items.Item> STALKER_BLADES = new List<Items.Item>()
         {
             // Smite that actually does damage
             ItemData.Stalkers_Blade.GetItem(),
             ItemData.Stalkers_Blade_Enchantment_Devourer.GetItem(),
-            ItemData.Stalkers_Blade_Enchantment_Juggernaut.GetItem(),
+            ItemData.Bamis_Cinder_Stalkers_Blade_Enchantment_Cinderhulk.GetItem(),
             ItemData.Stalkers_Blade_Enchantment_Magus.GetItem(),
             ItemData.Stalkers_Blade_Enchantment_Warrior.GetItem()
         };
-        public static readonly List<Item> SKIRMISHER_SABRES = new List<Item>()
+        public static readonly List<Items.Item> SKIRMISHER_SABRES = new List<Items.Item>()
         {
             // Smite that does damage on the next auto attacks
             ItemData.Skirmishers_Sabre.GetItem(),
             ItemData.Skirmishers_Sabre_Enchantment_Devourer.GetItem(),
-            ItemData.Skirmishers_Sabre_Enchantment_Juggernaut.GetItem(),
+            ItemData.Bamis_Cinder_Skirmishers_Sabre_Enchantment_Cinderhulk.GetItem(),
             ItemData.Skirmishers_Sabre_Enchantment_Magus.GetItem(),
             ItemData.Skirmishers_Sabre_Enchantment_Warrior.GetItem()
         };
 
-        public static bool HasItem(this Obj_AI_Hero target, Item item)
+        public static bool HasItem(this Obj_AI_Hero target, Items.Item item)
         {
             return Items.HasItem(item.Id, target);
         }
@@ -68,7 +68,7 @@ namespace RektSai
         public static bool UseHydraOrTiamat(Obj_AI_Base target)
         {
             // Cast Hydra
-            if (Config.BoolLinks["itemsHydra"].Value && HYDRA.IsReady() && target.IsValidTarget(HYDRA.Range))
+            if (Config.BoolLinks["itemsHydra"].Value && HYDRA.IsOwned() && target.IsValidTarget(HYDRA.Range))
                 return HYDRA.Cast();
             // Cast Tiamat
             else if (Config.BoolLinks["itemsTiamat"].Value && TIAMAT.IsReady() && target.IsValidTarget(TIAMAT.Range))
