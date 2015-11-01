@@ -48,7 +48,7 @@ namespace Gnar
             {
                 foreach (var ally in ObjectManager.Get<Obj_AI_Hero>().Where(h => h.Team == player.Team && h.IsValidTarget(700, false)))
                 {
-                    if (ally.HealthPercentage() < 15 && ally.CountEnemysInRange(700) > 0)
+                    if (ally.HealthPercent < 15 && ally.CountEnemiesInRange(700) > 0)
                     {
                         ItemManager.FACE_MOUNTAIN.Cast(ally);
                         break;
