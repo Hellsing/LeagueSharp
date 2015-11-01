@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -39,18 +39,18 @@ namespace Gnar
 
         public static bool IsMiniGnar(this Obj_AI_Hero target)
         {
-            return target.BaseSkinName == "Gnar";
+            return target.CharData.BaseSkinName == "Gnar";
         }
 
         public static bool IsMegaGnar(this Obj_AI_Hero target)
         {
-            return target.BaseSkinName == "gnarbig";
+            return target.CharData.BaseSkinName == "gnarbig";
         }
 
         public static bool IsAboutToTransform(this Obj_AI_Hero target)
         {
-            return target.IsMiniGnar() && (target.Mana == target.MaxMana && (target.HasBuff("gnartransformsoon") || target.HasBuff("gnartransform"))) || // Mini to mega
-                target.IsMegaGnar() && target.ManaPercentage() <= 0.1; // Mega to mini
+            return target.IsMiniGnar() && (Math.Abs(target.Mana - target.MaxMana) < 0.00001 && (target.HasBuff("gnartransformsoon") || target.HasBuff("gnartransform"))) || // Mini to mega
+                target.IsMegaGnar() && target.ManaPercent <= 0.1; // Mega to mini
         }
     }
 }
