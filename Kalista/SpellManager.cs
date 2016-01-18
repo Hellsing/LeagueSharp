@@ -19,7 +19,7 @@ namespace Kalista
             R = new Spell(SpellSlot.R, 1500);
 
             // Finetune spells
-            Q.SetSkillshot(0.25f, 40, 1200, true, SkillshotType.SkillshotLine);
+            Q.SetSkillshot(0.25f, 40, 2400, true, SkillshotType.SkillshotLine);
         }
 
         public static Spell GetSpellFromSlot(SpellSlot slot)
